@@ -1,0 +1,15 @@
+# Arquitectura y capa domain/ — Estefanía (Arquitecta Líder)
+src/main/java/com/udea/bancodigital/*/domain/     @egp1020
+src/main/java/com/udea/bancodigital/*/infrastructure/config/ @egp1020
+
+# DevOps / CI / Docker — Manuel
+.github/workflows/   @ManuelAlvarez-R
+Dockerfile           @ManuelAlvarez-R
+docker-compose*.yml  @ManuelAlvarez-R
+render.yaml          @ManuelAlvarez-R
+
+# Documentación y ADRs — Carlos (Docs Lead)
+docs/                @carlosvanegas
+
+# Todo el equipo debe aprobar cambios en shared/
+src/main/java/com/udea/bancodigital/shared/ @egp1020 @santije23 @ManuelAlvarez-R @carlosvanegas
