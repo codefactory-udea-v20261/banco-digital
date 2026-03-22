@@ -1,0 +1,39 @@
+# render.yaml — Infraestructura como Código para Render.com
+# Documentación: https://render.com/docs/infrastructure-as-code
+services:
+  - type: web
+    name: banco-digital-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_HOST
+        fromDatabase:
+          name: banco-digital-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: banco-digital-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: banco-digital-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: banco-digital-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: banco-digital-db
+          property: password
+      - key: JWT_SECRET
+        sync: false  # Se configura manualmente en el dashboard de Render
+
+databases:
+  - name: banco-digital-db
+    databaseName: banco_digital
+    plan: free
