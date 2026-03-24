@@ -1,4 +1,4 @@
-package com.udea.bancodigital.accounts.application.dto;
+package com.udea.bancodigital.customers.application.dto;
 
 
 import jakarta.validation.constraints.Email;
