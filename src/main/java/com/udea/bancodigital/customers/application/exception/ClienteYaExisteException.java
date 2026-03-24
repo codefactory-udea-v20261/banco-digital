@@ -1,4 +1,4 @@
-package com.udea.bancodigital.accounts.application.exception;
+package com.udea.bancodigital.customers.application.exception;
 
 
 public class ClienteYaExisteException extends RuntimeException {
