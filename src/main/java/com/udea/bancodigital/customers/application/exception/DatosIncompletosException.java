@@ -1,12 +1,15 @@
 package com.udea.bancodigital.customers.application.exception;
 
-public class DatosIncompletosException extends RuntimeException {
+import com.udea.bancodigital.shared.exception.BusinessException;
+import org.springframework.http.HttpStatus;
+
+public class DatosIncompletosException extends BusinessException {
 
     public DatosIncompletosException() {
-        super("La información proporcionada es insuficiente");
-    }
-
-    public DatosIncompletosException(String message) {
-        super(message);
+        super(
+                "DATOS_INCOMPLETOS",
+                "La información proporcionada es insuficiente",
+                HttpStatus.BAD_REQUEST
+        );
     }
 }
