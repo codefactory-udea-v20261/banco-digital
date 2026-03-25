@@ -1,4 +1,4 @@
-package com.udea.bancodigital.customers.application.exception;
+package com.udea.bancodigital.customers.shared.exception;
 
 
 
