@@ -4,10 +4,10 @@ import org.springframework.http.HttpStatus;
 
 public class ClienteYaExisteException extends BusinessException {
 
-    public ClienteYaExisteException(String campo, String valor) {
+    public ClienteYaExisteException() {
         super(
                 "CLIENTE_YA_EXISTE",
-                "Ya existe un cliente con " + campo + ": " + valor,
+                "El cliente ya se encuentra registrado",
                 HttpStatus.CONFLICT
         );
     }
