@@ -2,7 +2,9 @@ package com.udea.bancodigital.customers.infrastructure.adapter.in.web;
 
 import com.udea.bancodigital.customers.application.dto.ClienteResponseDto;
 import com.udea.bancodigital.customers.application.dto.CrearClienteRequestDto;
+import com.udea.bancodigital.customers.application.dto.ActualizarClienteRequestDto;
 import com.udea.bancodigital.customers.domain.port.in.CrearClientePort;
+import com.udea.bancodigital.customers.domain.port.in.ActualizarClientePort;
 import com.udea.bancodigital.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -32,6 +34,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 public class ClienteController {
 
     private final CrearClientePort crearClientePort;
+    private final ActualizarClientePort actualizarClientePort;
     // TODO Sprint 1: inyectar puertos de HU2, HU3, HU5
 
     // ── HU1 — Registro de nuevo cliente ────────────────────────────────────
@@ -74,12 +77,22 @@ public class ClienteController {
 
     // ── HU3 — Actualización parcial de cliente ──────────────────────────────
     @PatchMapping("/{id}")
-    @Operation(summary = "HU3 — Actualizar cliente (parcial) — cédula es inmutable")
+    @Operation(
+            summary = "HU3 — Actualizar cliente (parcial) — cédula es inmutable",
+            description = "Actualiza parcialmente los datos de un cliente. La cédula no puede ser modificada."
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cliente actualizado correctamente"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Cliente no encontrado")
+    })
     public ResponseEntity<ApiResponse<ClienteResponseDto>> actualizarCliente(
             @PathVariable java.util.UUID id,
-            @Valid @RequestBody Object request) {
-        // TODO Sprint 1 — Carlos: implementar con validación de campos inmutables
-        throw new UnsupportedOperationException("TODO: Sprint 1 — HU3");
+            @Valid @RequestBody ActualizarClienteRequestDto request) {
+
+        ClienteResponseDto response = actualizarClientePort.actualizarCliente(id, request);
+
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     // ── HU5 — Consulta cuentas por cliente ──────────────────────────────────

@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.Map;
 
 @Configuration
-public class OpenApiConfig {
+public class CustomerOpenApiConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
