@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * Controlador REST — Módulo Customers.
@@ -52,10 +53,22 @@ public class ClienteController {
 
     // ── HU2 — Consulta cliente por ID (HATEOAS) ─────────────────────────────
     @GetMapping("/{id}")
-    @Operation(summary = "HU2 — Consultar cliente por ID")
+    @Operation(
+            summary = "HU2 — Consultar cliente por ID",
+            description = "Obtiene la información de un cliente registrado en el sistema"
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    ref = "#/components/responses/ClienteOK"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    ref = "#/components/responses/ClienteNotFound"
+            )
+    })
     public ResponseEntity<ApiResponse<ClienteResponseDto>> obtenerCliente(
             @PathVariable java.util.UUID id) {
-        // TODO Sprint 1 — Santiago: implementar con HATEOAS links
         throw new UnsupportedOperationException("TODO: Sprint 1 — HU2");
     }
 
