@@ -7,8 +7,8 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
- * HU7 / HU8 — Se lanza cuando el saldo disponible no cubre el monto de la operación.
- * La lógica transaccional que la genera vive en la capa application (@Transactional) — ADR-001.
+ * Se lanza cuando el saldo disponible no cubre el monto de la operación.
+ * La lógica transaccional que la genera vive en la capa application.
  */
 public class SaldoInsuficienteException extends BusinessException {
 

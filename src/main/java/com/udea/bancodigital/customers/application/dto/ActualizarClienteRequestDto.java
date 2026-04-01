@@ -9,14 +9,12 @@ import lombok.Getter;
 import java.time.LocalDate;
 
 /**
- * HU3 — DTO de entrada para actualización parcial de cliente (PATCH).
+ * DTO de entrada para actualización parcial de cliente (PATCH).
  *
  * REGLAS:
  * - Todos los campos son opcionales (actualización parcial)
  * - numeroCedula NO se incluye (campo inmutable)
  * - Validaciones aplican SOLO si el campo viene en el request
- *
- * Responsable: Carlos
  */
 @Getter
 @Builder

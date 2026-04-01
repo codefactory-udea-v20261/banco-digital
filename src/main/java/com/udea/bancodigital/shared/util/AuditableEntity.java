@@ -3,6 +3,8 @@ package com.udea.bancodigital.shared.util;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedBy;
@@ -18,7 +20,7 @@ import java.time.Instant;
  * Proporciona los campos de auditoría automáticamente via Spring Data Auditing.
  * <p>
  * IMPORTANTE: Para activar el llenado automático de createdBy/updatedBy,
- * se debe implementar AuditorAware<String> en Sprint 3 (cuando haya usuario autenticado).
+ * se debe implementar AuditorAware<String> cuando haya un usuario autenticado.
  * <p>
  * Uso:
  *   @Entity
@@ -29,6 +31,8 @@ import java.time.Instant;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 public abstract class AuditableEntity {
+
+    private static final String DEFAULT_AUDITOR = "SYSTEM";
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -45,4 +49,30 @@ public abstract class AuditableEntity {
     @LastModifiedBy
     @Column(name = "updated_by", nullable = false, length = 100)
     private String updatedBy;
+
+    @PrePersist
+    protected void prePersist() {
+        Instant now = Instant.now();
+
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+        if (createdBy == null || createdBy.isBlank()) {
+            createdBy = DEFAULT_AUDITOR;
+        }
+        if (updatedBy == null || updatedBy.isBlank()) {
+            updatedBy = createdBy;
+        }
+    }
+
+    @PreUpdate
+    protected void preUpdate() {
+        updatedAt = Instant.now();
+        if (updatedBy == null || updatedBy.isBlank()) {
+            updatedBy = DEFAULT_AUDITOR;
+        }
+    }
 }

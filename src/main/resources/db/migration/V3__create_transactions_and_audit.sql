@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════
--- V3: Tablas de transacciones y auditoría (Sprint 0 — estructura)
+-- V3: Tablas de transacciones y auditoría
 -- Módulos: transactions, audit
 -- ════════════════════════════════════════════════════════════
 

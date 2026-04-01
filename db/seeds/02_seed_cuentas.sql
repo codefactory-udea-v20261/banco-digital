@@ -8,11 +8,11 @@ VALUES
     -- María González — 2 cuentas
     ('b2000000-0000-0000-0000-000000000001', '0001-0001-0001', 'a1000000-0000-0000-0000-000000000001', 1, 1500000.00, 'ACTIVA'),
     ('b2000000-0000-0000-0000-000000000002', '0001-0001-0002', 'a1000000-0000-0000-0000-000000000001', 2,  250000.00, 'ACTIVA'),
-    -- Carlos Rodríguez — 1 cuenta con saldo cero (prueba HU6 saldo cero)
+    -- Cliente con saldo cero
     ('b2000000-0000-0000-0000-000000000003', '0002-0001-0001', 'a1000000-0000-0000-0000-000000000002', 1,       0.00, 'ACTIVA'),
-    -- Valentina Martínez — 1 cuenta activa + 1 inactiva (prueba HU7 cuenta inactiva)
+    -- Cliente con 1 cuenta activa + 1 inactiva
     ('b2000000-0000-0000-0000-000000000004', '0003-0001-0001', 'a1000000-0000-0000-0000-000000000003', 1, 3000000.00, 'ACTIVA'),
     ('b2000000-0000-0000-0000-000000000005', '0003-0001-0002', 'a1000000-0000-0000-0000-000000000003', 2,  100000.00, 'INACTIVA'),
-    -- Andrés Castro — cuenta con saldo alto (prueba transferencias HU7)
+    -- Cliente con cuenta con saldo alto
     ('b2000000-0000-0000-0000-000000000006', '0004-0001-0001', 'a1000000-0000-0000-0000-000000000004', 1, 9999999.99, 'ACTIVA')
 ON CONFLICT (numero_cuenta) DO NOTHING;

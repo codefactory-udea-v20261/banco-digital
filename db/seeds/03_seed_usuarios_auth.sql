@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════
--- SEED: Datos de prueba — Usuarios y Roles (Sprint 3)
+-- SEED: Datos de prueba — Usuarios y Roles
 -- Contraseñas: BCrypt factor 12 de 'Test1234!'
 -- ════════════════════════════════════════════════════════════
 

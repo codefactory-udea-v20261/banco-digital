@@ -4,7 +4,7 @@ import com.udea.bancodigital.customers.application.dto.CrearClienteRequestDto;
 import com.udea.bancodigital.customers.application.dto.ClienteResponseDto;
 
 /**
- * Puerto de entrada (Input Port) para el caso de uso HU1.
+ * Puerto de entrada (Input Port) para el caso de uso de creación de cliente.
  * El controlador REST lo usa vía inyección — nunca llama al UseCase directamente.
  * Esto permite cambiar la implementación sin tocar el controlador.
  */

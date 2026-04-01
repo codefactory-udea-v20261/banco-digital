@@ -6,6 +6,6 @@ import lombok.Value;
 @Value
 @Builder
 public class Rol {
-    Long id;
+    Short id;
     String nombre;
 }

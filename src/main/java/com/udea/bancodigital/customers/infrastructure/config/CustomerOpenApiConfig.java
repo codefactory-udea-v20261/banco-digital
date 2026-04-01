@@ -1,7 +1,6 @@
 package com.udea.bancodigital.customers.infrastructure.config;
 
 
-import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.Components;
@@ -16,6 +15,7 @@ import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.examples.Example;
 import static java.util.Map.entry;
 
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -25,9 +25,8 @@ import java.util.Map;
 public class CustomerOpenApiConfig {
 
     @Bean
-    public OpenAPI customOpenAPI() {
+    public OpenApiCustomizer customerOpenApiCustomizer() {
 
-        // SCHEMA BASADO EN ClienteResponseDto
         Schema<?> clienteSchema = new Schema<>()
                 .type("object")
                 .addProperties("id", new StringSchema().example("550e8400-e29b-41d4-a716-446655440000"))
@@ -87,17 +86,27 @@ public class CustomerOpenApiConfig {
                                 ))
                 ));
 
-        return new OpenAPI()
-                .info(new Info()
+        return openApi -> {
+            if (openApi.getInfo() == null) {
+                openApi.setInfo(new Info()
                         .title("Banco Digital API")
                         .version("1.0.0")
-                        .description("HU-02 - Consulta de información de cliente")
+                        .description("Consulta de información de cliente")
                         .contact(new Contact()
                                 .name("Equipo Banco Digital")
-                                .email("soporte@bancodigital.com")))
-                .components(new Components()
-                        .addSchemas("ClienteResponse", clienteSchema)
-                        .addResponses("ClienteOK", okResponse)
-                        .addResponses("ClienteNotFound", notFoundResponse));
+                                .email("soporte@bancodigital.com")));
+            }
+
+            Components components = openApi.getComponents();
+            if (components == null) {
+                components = new Components();
+                openApi.setComponents(components);
+            }
+
+            components
+                    .addSchemas("ClienteResponse", clienteSchema)
+                    .addResponses("ClienteOK", okResponse)
+                    .addResponses("ClienteNotFound", notFoundResponse);
+        };
     }
 }

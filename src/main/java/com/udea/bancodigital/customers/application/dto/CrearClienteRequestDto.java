@@ -7,11 +7,9 @@ import lombok.Getter;
 import java.time.LocalDate;
 
 /**
- * HU1 — DTO de entrada para registro de cliente.
+ * DTO de entrada para registro de cliente.
  * Las validaciones (@NotBlank, @Email, etc.) actúan como primera línea de defensa.
  * El GlobalExceptionHandler convierte los errores en ApiResponse estándar.
- *
- * Responsable de implementar: Carlos (validaciones) + Santiago (endpoint)
  */
 @Getter
 @Builder
