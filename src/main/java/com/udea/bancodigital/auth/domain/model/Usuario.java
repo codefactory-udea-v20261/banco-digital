@@ -2,12 +2,14 @@ package com.udea.bancodigital.auth.domain.model;
 
 import lombok.Builder;
 import lombok.Value;
+
 import java.util.Set;
+import java.util.UUID;
 
 @Value
 @Builder
 public class Usuario {
-    Long id;
+    UUID id;
     String correo;
     String clave;
     boolean activo;
