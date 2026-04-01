@@ -40,7 +40,10 @@ public class CrearClienteRequestDto {
     @Size(max = 255)
     private String email;
 
-    @Size(max = 20, message = "El teléfono no puede exceder 20 caracteres")
+    @Pattern(
+            regexp = "^$|^[0-9]{7,20}$",
+            message = "El teléfono debe contener solo números y tener entre 7 y 20 dígitos"
+    )
     private String telefono;
 
     @NotNull(message = "La fecha de nacimiento es obligatoria")
