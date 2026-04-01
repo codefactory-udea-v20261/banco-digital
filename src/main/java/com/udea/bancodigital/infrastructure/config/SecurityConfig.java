@@ -1,8 +1,8 @@
 package com.udea.bancodigital.infrastructure.config;
 
+import com.udea.bancodigital.auth.infrastructure.config.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -10,29 +10,31 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * ╔══════════════════════════════════════════════════════════════╗
- * ║  SPRINT 0 — ESCUDO DE SEGURIDAD ABIERTO (TEMPORAL)          ║
+ * ║  SPRINT 3 — ESCUDO DE SEGURIDAD IMPLEMENTADO                 ║
  * ║                                                              ║
- * ║  PROPÓSITO: Permite que los Sprints 1 y 2 construyan y       ║
- * ║  prueben sus endpoints sin bloqueo de autenticación.         ║
- * ║                                                              ║
- * ║  ACCIÓN REQUERIDA EN SPRINT 3:                               ║
- * ║  Reemplazar permitAll() con JwtAuthenticationFilter y        ║
- * ║  las reglas RBAC por rol.                                    ║
- * ║                                                              ║
- * ║  ⚠️  NUNCA desplegar en producción con esta configuración.   ║
+ * ║  PROPÓSITO: Establecer JwtAuthenticationFilter y reglas      ║
+ * ║  estrictas para validación de tokens.                        ║
  * ╚══════════════════════════════════════════════════════════════╝
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
+            .cors(cors -> cors.configure(http)) // Permitimos políticas de CORS manejadas globalmente o localmente
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
@@ -45,10 +47,12 @@ public class SecurityConfig {
                 ).permitAll()
                 // Actuator (health checks para Docker/Render)
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                // ── TEMPORAL Sprint 0-2: todo permitido ──────────────────────
-                // TODO Sprint 3: reemplazar con .authenticated() y filtro JWT
-                .anyRequest().permitAll()
-            );
+                // Endpoints públicos
+                .requestMatchers("/api/v1/auth/login").permitAll()
+                // El resto debe estar autenticado
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
