@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import com.udea.bancodigital.auth.infrastructure.config.JwtAuthenticationFilter;
 
 import java.util.UUID;
 
@@ -24,6 +25,12 @@ class ClienteControllerTest {
 
     @MockBean
     private ActualizarClientePort actualizarClientePort;
+
+    @MockBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean
+    private com.udea.bancodigital.customers.domain.port.in.CrearClientePort crearClientePort;
 
     @Autowired
     private ObjectMapper objectMapper;
