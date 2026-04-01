@@ -21,14 +21,14 @@ import java.util.UUID;
 public class Cliente {
 
     private final UUID id;
-    private final String numeroCedula;       // inmutable — HU3
+    private final NumeroCedula numeroCedula;  // Value Object inmutable
     private String primerNombre;
     private String segundoNombre;
     private String primerApellido;
     private String segundoApellido;
-    private String email;
+    private Email email;                      // Value Object con validación de dominio
     private String telefono;
-    private final LocalDate fechaNacimiento;
+    private final LocalDate fechaNacimiento;  // inmutable
     private boolean activo;
 }
 
