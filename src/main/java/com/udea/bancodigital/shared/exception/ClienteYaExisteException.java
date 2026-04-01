@@ -1,16 +1,13 @@
 package com.udea.bancodigital.customers.shared.exception;
-
-
-
 import com.udea.bancodigital.shared.exception.BusinessException;
 import org.springframework.http.HttpStatus;
 
 public class ClienteYaExisteException extends BusinessException {
 
-    public ClienteYaExisteException() {
+    public ClienteYaExisteException(String campo, String valor) {
         super(
                 "CLIENTE_YA_EXISTE",
-                "El cliente ya se encuentra registrado",
+                "Ya existe un cliente con " + campo + ": " + valor,
                 HttpStatus.CONFLICT
         );
     }

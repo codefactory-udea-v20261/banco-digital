@@ -31,3 +31,5 @@ public class Cliente {
     private final LocalDate fechaNacimiento;
     private boolean activo;
 }
+
+
