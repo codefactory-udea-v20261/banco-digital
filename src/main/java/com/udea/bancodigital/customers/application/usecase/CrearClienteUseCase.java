@@ -4,6 +4,7 @@ import com.udea.bancodigital.customers.application.dto.CrearClienteRequestDto;
 import com.udea.bancodigital.customers.application.dto.ClienteResponseDto;
 import com.udea.bancodigital.customers.domain.exception.ClienteYaExisteException;
 import com.udea.bancodigital.customers.domain.port.out.ClienteRepositoryPort;
+import com.udea.bancodigital.customers.domain.port.in.CrearClientePort;
 import com.udea.bancodigital.shared.util.UseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,10 +23,16 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
-public class CrearClienteUseCase implements UseCase<CrearClienteRequestDto, ClienteResponseDto> {
+public class CrearClienteUseCase
+        implements CrearClientePort, UseCase<CrearClienteRequestDto, ClienteResponseDto> {
 
     // Puerto de salida — la implementación real (JPA) está en infrastructure/
     private final ClienteRepositoryPort clienteRepository;
+
+    @Override
+    public ClienteResponseDto crearCliente(CrearClienteRequestDto request) {
+        return ejecutar(request);
+    }
 
     @Override
     @Transactional
