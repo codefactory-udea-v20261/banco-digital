@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════
--- V2: Tablas cliente y cuenta (Sprint 0 — DDL inicial)
+-- V2: Tablas cliente y cuenta (DDL inicial)
 -- Módulos: customers, accounts
 -- ════════════════════════════════════════════════════════════
 
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS cliente (
 );
 
 COMMENT ON TABLE cliente IS 'Registro de clientes del banco digital';
-COMMENT ON COLUMN cliente.numero_cedula IS 'Campo inmutable — no puede actualizarse vía API (HU3)';
+COMMENT ON COLUMN cliente.numero_cedula IS 'Campo inmutable — no puede actualizarse vía API';
 
 CREATE INDEX IF NOT EXISTS idx_cliente_email       ON cliente (email);
 CREATE INDEX IF NOT EXISTS idx_cliente_cedula      ON cliente (numero_cedula);
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS cuenta (
     updated_by      VARCHAR(100)    NOT NULL DEFAULT 'SYSTEM'
 );
 
-COMMENT ON COLUMN cuenta.saldo IS 'Saldo transaccional — ADR-001: se gestiona en capa aplicación, no por SP';
+COMMENT ON COLUMN cuenta.saldo IS 'Saldo transaccional — se gestiona en la capa de aplicación';
 
 CREATE INDEX IF NOT EXISTS idx_cuenta_cliente_id   ON cuenta (cliente_id);
 CREATE INDEX IF NOT EXISTS idx_cuenta_estado       ON cuenta (estado);

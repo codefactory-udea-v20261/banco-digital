@@ -43,7 +43,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # ── Observability (Sprint 3) ─────────────────────
+  # ── Observability ─────────────────────
   prometheus:
     image: prom/prometheus:v2.51.0
     container_name: banco_prometheus

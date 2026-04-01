@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * Estructura de error estandarizada.
- * Incluye traceId para trazabilidad end-to-end (requerido Sprint 3).
+ * Incluye traceId para trazabilidad end-to-end.
  */
 @Getter
 @Builder

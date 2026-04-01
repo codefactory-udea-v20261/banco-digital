@@ -10,7 +10,7 @@ import java.time.Instant;
 /**
  * Envoltorio estándar para TODAS las respuestas de la API.
  * <p>
- * Estructura uniforme requerida por ADR-001 y criterios de evaluación.
+ * Estructura uniforme de respuesta para la API.
  * Uso: ApiResponse.ok(payload), ApiResponse.created(payload), ApiResponse.error(...)
  */
 @Getter

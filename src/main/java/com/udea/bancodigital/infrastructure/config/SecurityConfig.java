@@ -13,12 +13,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * ╔══════════════════════════════════════════════════════════════╗
- * ║  SPRINT 3 — ESCUDO DE SEGURIDAD IMPLEMENTADO                 ║
- * ║                                                              ║
- * ║  PROPÓSITO: Establecer JwtAuthenticationFilter y reglas      ║
- * ║  estrictas para validación de tokens.                        ║
- * ╚══════════════════════════════════════════════════════════════╝
+ * Configuración de seguridad.
+ *
+ * PROPÓSITO: Establecer JwtAuthenticationFilter y reglas
+ * estrictas para validación de tokens.
  */
 @Configuration
 @EnableWebSecurity

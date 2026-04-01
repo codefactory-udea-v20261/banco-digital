@@ -19,11 +19,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
- * ╔══════════════════════════════════════════════════════════════╗
- * ║  HU1 — Pruebas unitarias: Registro de nuevos clientes       ║
- * ║  Responsable: Santiago Jiménez                              ║
- * ║  Patrón: AAA (Arrange / Act / Assert)                       ║
- * ╚══════════════════════════════════════════════════════════════╝
+ * Pruebas unitarias: Registro de nuevos clientes
+ * Patrón: AAA (Arrange / Act / Assert)
  *
  * Escenarios cubiertos:
  *   TC-01: Registro exitoso con datos válidos

@@ -91,7 +91,7 @@ public class CustomerOpenApiConfig {
                 .info(new Info()
                         .title("Banco Digital API")
                         .version("1.0.0")
-                        .description("HU-02 - Consulta de información de cliente")
+                        .description("Consulta de información de cliente")
                         .contact(new Contact()
                                 .name("Equipo Banco Digital")
                                 .email("soporte@bancodigital.com")))

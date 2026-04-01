@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════
--- V4: Tablas de autenticación y seguridad (Sprint 3 — estructura lista)
+-- V4: Tablas de autenticación y seguridad
 -- Módulo: auth
 -- ════════════════════════════════════════════════════════════
 
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS usuario (
 );
 
 COMMENT ON COLUMN usuario.password_hash IS 'BCrypt hash factor 12 — nunca texto plano';
-COMMENT ON COLUMN usuario.mfa_secret IS 'TOTP secret para MFA — Sprint 3';
+COMMENT ON COLUMN usuario.mfa_secret IS 'TOTP secret para MFA';
 
 CREATE INDEX IF NOT EXISTS idx_usuario_username ON usuario (username);
 CREATE INDEX IF NOT EXISTS idx_usuario_cliente  ON usuario (cliente_id);
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS token_revocado (
     expira_at   TIMESTAMPTZ NOT NULL
 );
 
-COMMENT ON TABLE token_revocado IS 'Blacklist de JWT — Sprint 3: verificar en cada request autenticado';
+COMMENT ON TABLE token_revocado IS 'Blacklist de JWT: verificar en cada request autenticado';
 
 CREATE INDEX IF NOT EXISTS idx_token_jti     ON token_revocado (jti);
 CREATE INDEX IF NOT EXISTS idx_token_expira  ON token_revocado (expira_at);

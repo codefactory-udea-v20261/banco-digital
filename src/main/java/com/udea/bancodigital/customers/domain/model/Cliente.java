@@ -10,7 +10,7 @@ import java.util.UUID;
 /**
  * Entidad de DOMINIO — Cliente.
  *
- * REGLA ABSOLUTA (ADR-001): Esta clase NO tiene anotaciones de Spring, JPA ni Lombok
+ * Esta clase es un POJO puro y no tiene anotaciones de Spring o JPA
  * que generen dependencias de framework. Es un POJO puro.
  *
  * No confundir con ClienteEntity.java (infrastructure/entity/) que sí tiene @Entity.

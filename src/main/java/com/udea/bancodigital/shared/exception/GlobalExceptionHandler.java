@@ -16,7 +16,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Manejador global de excepciones — ADR-001.
+ * Manejador global de excepciones.
  * Garantiza que TODAS las APIs devuelvan una estructura uniforme ApiResponse<T>.
  */
 @Slf4j
