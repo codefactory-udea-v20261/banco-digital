@@ -11,6 +11,6 @@ class BancoDigitalApplicationTests {
     @Test
     void contextLoads() {
         // Verifica que el contexto de Spring carga correctamente
-        // con la configuración de seguridad abierta del Sprint 0
+        // con la configuración de seguridad abierta inicial
     }
 }

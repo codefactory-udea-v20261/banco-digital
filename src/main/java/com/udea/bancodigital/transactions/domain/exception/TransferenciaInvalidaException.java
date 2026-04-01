@@ -4,7 +4,7 @@ import com.udea.bancodigital.shared.exception.BusinessException;
 import org.springframework.http.HttpStatus;
 
 /**
- * HU7 — Cubre los casos: cuenta origen == destino, monto negativo o cero,
+ * Cubre los casos: cuenta origen == destino, monto negativo o cero,
  * o cualquier otra violación de regla de negocio en transferencias.
  */
 public class TransferenciaInvalidaException extends BusinessException {

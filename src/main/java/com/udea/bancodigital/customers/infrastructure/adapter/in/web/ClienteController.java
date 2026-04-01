@@ -7,6 +7,8 @@ import com.udea.bancodigital.customers.domain.port.in.CrearClientePort;
 import com.udea.bancodigital.customers.domain.port.in.ActualizarClientePort;
 import com.udea.bancodigital.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -14,39 +16,51 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
- * Controlador REST — Módulo Customers.
- *
- * REGLA: El controlador NO contiene lógica de negocio.
- * Solo: recibe request → llama al puerto → retorna ApiResponse.
- *
- * HU1: POST  /api/v1/clientes        (Santiago)
- * HU2: GET   /api/v1/clientes/{id}   (Santiago — con HATEOAS)
- * HU3: PATCH /api/v1/clientes/{id}   (Carlos)
- * HU5: GET   /api/v1/clientes/{id}/cuentas (Manuel)
+ * Controlador REST para la gestión de clientes.
+ * Proporciona los endpoints necesarios para el registro, consulta y actualización
+ * de los perfiles de clientes en el sistema bancario.
  */
 @RestController
 @RequestMapping("/api/v1/clientes")
 @RequiredArgsConstructor
-@Tag(name = "Clientes", description = "Gestión de clientes del banco digital")
+@Tag(name = "Clientes", description = "API para la gestión de perfiles de clientes")
 public class ClienteController {
 
     private final CrearClientePort crearClientePort;
     private final ActualizarClientePort actualizarClientePort;
-    // TODO Sprint 1: inyectar puertos de HU2, HU3, HU5
 
-    // ── HU1 — Registro de nuevo cliente ────────────────────────────────────
+    /**
+     * Registra un nuevo cliente en el sistema.
+     *
+     * @param request DTO con los datos requeridos para la creación del cliente.
+     * @return ResponseEntity con los datos del cliente recién creado.
+     */
     @PostMapping
     @Operation(
-        summary = "HU1 — Registrar nuevo cliente",
-        description = "Crea un nuevo cliente en el sistema. El email y la cédula deben ser únicos."
+        summary = "Registrar nuevo cliente",
+        description = "Crea un nuevo perfil de cliente. El correo electrónico y el número de documento de identidad deben ser únicos en el sistema."
     )
     @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Cliente creado exitosamente"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "El cliente ya existe (email o cédula duplicada)")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "201", 
+            description = "Cliente creado exitosamente",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400", 
+            description = "Datos de entrada inválidos o con formato incorrecto",
+            content = @Content(mediaType = "application/json")
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "409", 
+            description = "Conflicto: El correo electrónico o documento de identidad ya se encuentra registrado",
+            content = @Content(mediaType = "application/json")
+        )
     })
     public ResponseEntity<ApiResponse<ClienteResponseDto>> crearCliente(
             @Valid @RequestBody CrearClienteRequestDto request) {
@@ -54,53 +68,94 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
     }
 
-    // ── HU2 — Consulta cliente por ID (HATEOAS) ─────────────────────────────
+    /**
+     * Consulta la información detallada de un cliente por su identificador único.
+     *
+     * @param id Identificador único (UUID) del cliente.
+     * @return ResponseEntity con la información del cliente solicitado.
+     */
     @GetMapping("/{id}")
     @Operation(
-            summary = "HU2 — Consultar cliente por ID",
-            description = "Obtiene la información de un cliente registrado en el sistema"
+            summary = "Consultar cliente por ID",
+            description = "Obtiene el perfil detallado de un cliente específico utilizando su identificador único."
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
+                    description = "Información del cliente obtenida exitosamente",
                     ref = "#/components/responses/ClienteOK"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
+                    description = "Cliente no encontrado",
                     ref = "#/components/responses/ClienteNotFound"
             )
     })
     public ResponseEntity<ApiResponse<ClienteResponseDto>> obtenerCliente(
-            @PathVariable java.util.UUID id) {
-        throw new UnsupportedOperationException("TODO: Sprint 1 — HU2");
+            @PathVariable UUID id) {
+        throw new UnsupportedOperationException("Operación no implementada");
     }
 
-    // ── HU3 — Actualización parcial de cliente ──────────────────────────────
+    /**
+     * Actualiza de forma parcial la información de un cliente existente.
+     *
+     * @param id Identificador único (UUID) del cliente a actualizar.
+     * @param request DTO con los campos que se desean modificar.
+     * @return ResponseEntity con la información actualizada del cliente.
+     */
     @PatchMapping("/{id}")
     @Operation(
-            summary = "HU3 — Actualizar cliente (parcial) — cédula es inmutable",
-            description = "Actualiza parcialmente los datos de un cliente. La cédula no puede ser modificada."
+            summary = "Actualizar perfil de cliente",
+            description = "Actualiza de manera parcial los datos de un cliente. Ciertos campos, como el documento de identidad, son inmutables."
     )
-    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cliente actualizado correctamente"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Cliente no encontrado")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200", 
+                description = "Cliente actualizado exitosamente",
+                content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400", 
+                description = "Datos de actualización inválidos",
+                content = @Content(mediaType = "application/json")
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404", 
+                description = "Cliente no encontrado",
+                content = @Content(mediaType = "application/json")
+            )
     })
     public ResponseEntity<ApiResponse<ClienteResponseDto>> actualizarCliente(
-            @PathVariable java.util.UUID id,
+            @PathVariable UUID id,
             @Valid @RequestBody ActualizarClienteRequestDto request) {
 
         ClienteResponseDto response = actualizarClientePort.actualizarCliente(id, request);
-
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
-    // ── HU5 — Consulta cuentas por cliente ──────────────────────────────────
+    /**
+     * Obtiene el listado de las cuentas asociadas a un cliente.
+     *
+     * @param id Identificador único (UUID) del cliente.
+     * @return ResponseEntity con la lista de cuentas del cliente.
+     */
     @GetMapping("/{id}/cuentas")
-    @Operation(summary = "HU5 — Listar cuentas de un cliente")
-    public ResponseEntity<ApiResponse<java.util.List<Object>>> obtenerCuentasCliente(
-            @PathVariable java.util.UUID id) {
-        // TODO Sprint 1 — Manuel: implementar
-        throw new UnsupportedOperationException("TODO: Sprint 1 — HU5");
+    @Operation(
+        summary = "Listar cuentas de un cliente",
+        description = "Obtiene un listado de todas las cuentas bancarias asociadas al cliente especificado."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200", 
+                description = "Lista de cuentas obtenida exitosamente"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404", 
+                description = "Cliente no encontrado"
+            )
+    })
+    public ResponseEntity<ApiResponse<List<Object>>> obtenerCuentasCliente(
+            @PathVariable UUID id) {
+        throw new UnsupportedOperationException("Operación no implementada");
     }
 }

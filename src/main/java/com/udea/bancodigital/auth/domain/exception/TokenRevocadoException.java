@@ -4,7 +4,7 @@ import com.udea.bancodigital.shared.exception.BusinessException;
 import org.springframework.http.HttpStatus;
 
 /**
- * HU11 — El token enviado existe en la tabla token_revocado (blacklist).
+ * El token enviado existe en la tabla token_revocado (blacklist).
  */
 public class TokenRevocadoException extends BusinessException {
 

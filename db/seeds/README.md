@@ -15,9 +15,9 @@ psql -U app_user -d banco_digital \
 
 | Script | Contenido | Escenarios cubiertos |
 |--------|-----------|----------------------|
-| `01_seed_clientes.sql` | 5 clientes (4 activos, 1 inactivo) | HU1, HU2, HU3 |
-| `02_seed_cuentas.sql` | 6 cuentas (variados estados y saldos) | HU4, HU5, HU6, HU7, HU8 |
-| `03_seed_usuarios_auth.sql` | Admin + Cliente + Auditor | HU11 |
+| `01_seed_clientes.sql` | 5 clientes (4 activos, 1 inactivo) |
+| `02_seed_cuentas.sql` | 6 cuentas (variados estados y saldos) |
+| `03_seed_usuarios_auth.sql` | Admin + Cliente + Auditor |
 
 ## UUIDs fijos para pruebas
 
@@ -26,8 +26,8 @@ Los IDs son deterministas para que los tests de integración puedan usarlos sin 
 ```
 Cliente María González → a1000000-0000-0000-0000-000000000001
 Cuenta activa María    → b2000000-0000-0000-0000-000000000001
-Cuenta saldo cero      → b2000000-0000-0000-0000-000000000003  (Carlos)
-Cuenta inactiva        → b2000000-0000-0000-0000-000000000005  (Valentina)
+Cuenta saldo cero      → b2000000-0000-0000-0000-000000000003
+Cuenta inactiva        → b2000000-0000-0000-0000-000000000005
 ```
 
 ## Contraseña de usuarios seed

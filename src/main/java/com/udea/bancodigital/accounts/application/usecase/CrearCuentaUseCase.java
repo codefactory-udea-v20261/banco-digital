@@ -1,14 +1,16 @@
 package com.udea.bancodigital.accounts.application.usecase;
 
 import com.udea.bancodigital.accounts.application.dto.CrearCuentaRequestDto;
+import com.udea.bancodigital.accounts.domain.exception.ClienteNoEncontradoException;
+import com.udea.bancodigital.accounts.domain.exception.TipoCuentaInvalidoException;
 import com.udea.bancodigital.accounts.domain.model.Cuenta;
+import com.udea.bancodigital.accounts.domain.model.TipoCuenta;
 import com.udea.bancodigital.accounts.domain.port.in.CrearCuentaPort;
 import com.udea.bancodigital.accounts.domain.port.out.ClienteServicePort;
 import com.udea.bancodigital.accounts.domain.port.out.CuentaRepositoryPort;
 import lombok.RequiredArgsConstructor;
-import java.math.BigDecimal;
+
 import java.util.UUID;
-import com.udea.bancodigital.accounts.domain.exception.ClienteNoEncontradoException;
 
 @RequiredArgsConstructor
 public class CrearCuentaUseCase implements CrearCuentaPort {
@@ -24,20 +26,25 @@ public class CrearCuentaUseCase implements CrearCuentaPort {
             throw new ClienteNoEncontradoException("No se puede crear la cuenta: El cliente no existe.");
         }
 
-        // 2. Lógica de creación de la cuenta (Tu lógica original intacta)
-        Cuenta nuevaCuenta = Cuenta.builder()
-                .id(UUID.randomUUID())
-                .numeroCuenta(generarNumeroCuenta())
-                .clienteId(request.getClienteId())
-                .tipoCuenta(request.getTipoCuenta())
-                .saldo(BigDecimal.ZERO)
-                .activa(true)
-                .build();
+        TipoCuenta tipoCuenta = parseTipoCuenta(request.getTipoCuenta());
+        Cuenta nuevaCuenta = Cuenta.crearNueva(
+                request.getClienteId(),
+                tipoCuenta,
+                generarNumeroCuenta()
+        );
 
         return cuentaRepository.save(nuevaCuenta);
     }
 
     private String generarNumeroCuenta() {
         return "CTA-" + System.currentTimeMillis();
+    }
+
+    private TipoCuenta parseTipoCuenta(String tipoCuenta) {
+        try {
+            return TipoCuenta.fromNombre(tipoCuenta);
+        } catch (IllegalArgumentException ex) {
+            throw new TipoCuentaInvalidoException(tipoCuenta);
+        }
     }
 }

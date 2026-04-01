@@ -10,7 +10,7 @@ import java.util.UUID;
 /**
  * Entidad de DOMINIO — Cliente.
  *
- * REGLA ABSOLUTA (ADR-001): Esta clase NO tiene anotaciones de Spring, JPA ni Lombok
+ * Esta clase es un POJO puro y no tiene anotaciones de Spring o JPA
  * que generen dependencias de framework. Es un POJO puro.
  *
  * No confundir con ClienteEntity.java (infrastructure/entity/) que sí tiene @Entity.
@@ -21,14 +21,14 @@ import java.util.UUID;
 public class Cliente {
 
     private final UUID id;
-    private final String numeroCedula;       // inmutable — HU3
+    private final NumeroCedula numeroCedula;  // Value Object inmutable
     private String primerNombre;
     private String segundoNombre;
     private String primerApellido;
     private String segundoApellido;
-    private String email;
+    private Email email;                      // Value Object con validación de dominio
     private String telefono;
-    private final LocalDate fechaNacimiento;
+    private final LocalDate fechaNacimiento;  // inmutable
     private boolean activo;
 }
 

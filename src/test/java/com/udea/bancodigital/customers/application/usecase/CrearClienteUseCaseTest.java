@@ -2,7 +2,9 @@ package com.udea.bancodigital.customers.application.usecase;
 
 import com.udea.bancodigital.customers.application.dto.ClienteResponseDto;
 import com.udea.bancodigital.customers.application.dto.CrearClienteRequestDto;
+import com.udea.bancodigital.customers.application.mapper.ClienteMapper;
 import com.udea.bancodigital.customers.domain.exception.ClienteYaExisteException;
+import com.udea.bancodigital.customers.domain.model.Cliente;
 import com.udea.bancodigital.customers.domain.port.out.ClienteRepositoryPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,17 +15,16 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
- * ╔══════════════════════════════════════════════════════════════╗
- * ║  HU1 — Pruebas unitarias: Registro de nuevos clientes       ║
- * ║  Responsable: Santiago Jiménez                              ║
- * ║  Patrón: AAA (Arrange / Act / Assert)                       ║
- * ╚══════════════════════════════════════════════════════════════╝
+ * Pruebas unitarias: Registro de nuevos clientes
+ * Patrón: AAA (Arrange / Act / Assert)
  *
  * Escenarios cubiertos:
  *   TC-01: Registro exitoso con datos válidos
@@ -31,16 +32,21 @@ import static org.mockito.Mockito.*;
  *   TC-03: Rechazo por cédula duplicada
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("HU1 — CrearClienteUseCase")
+@DisplayName("CrearClienteUseCase")
 class CrearClienteUseCaseTest {
 
     @Mock
     private ClienteRepositoryPort clienteRepository;
 
+    @Mock
+    private ClienteMapper clienteMapper;
+
     @InjectMocks
     private CrearClienteUseCase useCase;
 
     private CrearClienteRequestDto requestValido;
+    private Cliente clienteDomain;
+    private ClienteResponseDto responseDto;
 
     @BeforeEach
     void setUp() {
@@ -51,6 +57,26 @@ class CrearClienteUseCaseTest {
                 .email("maria.gonzalez@test.com")
                 .fechaNacimiento(LocalDate.of(1990, 5, 15))
                 .build();
+                
+        clienteDomain = Cliente.builder()
+                .id(UUID.randomUUID())
+                .numeroCedula("1234567890")
+                .primerNombre("María")
+                .primerApellido("González")
+                .email("maria.gonzalez@test.com")
+                .fechaNacimiento(LocalDate.of(1990, 5, 15))
+                .activo(true)
+                .build();
+                
+        responseDto = ClienteResponseDto.builder()
+                .id(clienteDomain.getId())
+                .numeroCedula("1234567890")
+                .primerNombre("María")
+                .primerApellido("González")
+                .email("maria.gonzalez@test.com")
+                .fechaNacimiento(LocalDate.of(1990, 5, 15))
+                .activo(true)
+                .build();
     }
 
     @Test
@@ -59,18 +85,17 @@ class CrearClienteUseCaseTest {
         // ── Arrange ──────────────────────────────────────────────────────────
         when(clienteRepository.existsByEmail(anyString())).thenReturn(false);
         when(clienteRepository.existsByCedula(anyString())).thenReturn(false);
-        // TODO Sprint 1: when(clienteRepository.save(any())).thenReturn(clienteMock);
+        when(clienteMapper.toDomain(any(CrearClienteRequestDto.class))).thenReturn(clienteDomain);
+        when(clienteRepository.save(any(Cliente.class))).thenReturn(clienteDomain);
+        when(clienteMapper.toResponseDto(any(Cliente.class))).thenReturn(responseDto);
 
         // ── Act ───────────────────────────────────────────────────────────────
-        // TODO Sprint 1: ClienteResponseDto resultado = useCase.ejecutar(requestValido);
+        ClienteResponseDto resultado = useCase.ejecutar(requestValido);
 
         // ── Assert ────────────────────────────────────────────────────────────
-        // TODO Sprint 1:
-        // assertThat(resultado).isNotNull();
-        // assertThat(resultado.getEmail()).isEqualTo("maria.gonzalez@test.com");
-        // verify(clienteRepository, times(1)).save(any());
-
-        // Placeholder: verifica que las validaciones de unicidad se llaman
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getEmail()).isEqualTo("maria.gonzalez@test.com");
+        verify(clienteRepository, times(1)).save(any(Cliente.class));
         verify(clienteRepository, atLeastOnce()).existsByEmail("maria.gonzalez@test.com");
     }
 

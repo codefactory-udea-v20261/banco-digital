@@ -1,37 +1,43 @@
 package com.udea.bancodigital.accounts.infrastructure.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.udea.bancodigital.shared.util.AuditableEntity;
+import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "cuentas")
+@Table(name = "cuenta")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CuentaEntity {
+public class CuentaEntity extends AuditableEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "numero_cuenta", unique = true, nullable = false, length = 20)
     private String numeroCuenta;
 
-    @Column(nullable = false)
+    @Column(name = "cliente_id", nullable = false)
     private UUID clienteId;
 
-    @Column(nullable = false)
-    private String tipoCuenta;
+    @Column(name = "tipo_cuenta_id", nullable = false)
+    private Short tipoCuentaId;
 
-    @Column(nullable = false, precision = 19, scale = 4)
+    @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal saldo;
 
-    @Column(nullable = false)
-    private boolean activa;
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private String estado = "ACTIVA";
+
+    @Column(name = "fecha_apertura", nullable = false)
+    @Builder.Default
+    private LocalDate fechaApertura = LocalDate.now();
 }

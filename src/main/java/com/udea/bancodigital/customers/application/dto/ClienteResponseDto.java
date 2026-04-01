@@ -9,10 +9,10 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * HU1/HU2 — DTO de respuesta para cliente.
- * Extiende RepresentationModel para soportar HATEOAS (HU2 — GET /clientes/:id).
+ * DTO de respuesta para cliente.
+ * Extiende RepresentationModel para soportar HATEOAS.
  *
- * NUNCA retornar la entidad JPA directamente — ADR-001, CODING_STANDARDS sección 3.
+ * Nunca retornar la entidad JPA directamente.
  */
 @Getter
 @Builder
