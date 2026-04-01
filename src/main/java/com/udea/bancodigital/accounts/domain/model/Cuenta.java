@@ -3,7 +3,10 @@ package com.udea.bancodigital.accounts.domain.model;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.With;
+
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -19,9 +22,32 @@ public class Cuenta {
     private final UUID id;
     private final String numeroCuenta;
     private final UUID clienteId;
-    private final String tipoCuenta;
+    private final TipoCuenta tipoCuenta;
 
     // Campos de estado (Cambiantes mediante evolución de estado, no mutación)
-    private final BigDecimal saldo; // Cambiado a final para forzar inmutabilidad
-    private final boolean activa;   // Cambiado a final para forzar inmutabilidad
+    private final BigDecimal saldo;
+    private final EstadoCuenta estado;
+    private final LocalDate fechaApertura;
+
+    public boolean isActiva() {
+        return EstadoCuenta.ACTIVA == estado;
+    }
+
+    public static Cuenta crearNueva(UUID clienteId, TipoCuenta tipoCuenta, String numeroCuenta) {
+        Objects.requireNonNull(clienteId, "El clienteId es obligatorio");
+        Objects.requireNonNull(tipoCuenta, "El tipoCuenta es obligatorio");
+        if (numeroCuenta == null || numeroCuenta.isBlank()) {
+            throw new IllegalArgumentException("El numeroCuenta es obligatorio");
+        }
+
+        return Cuenta.builder()
+                .id(UUID.randomUUID())
+                .numeroCuenta(numeroCuenta)
+                .clienteId(clienteId)
+                .tipoCuenta(tipoCuenta)
+                .saldo(BigDecimal.ZERO)
+                .estado(EstadoCuenta.ACTIVA)
+                .fechaApertura(LocalDate.now())
+                .build();
+    }
 }
