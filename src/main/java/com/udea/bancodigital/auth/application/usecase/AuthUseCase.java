@@ -52,6 +52,7 @@ public class AuthUseCase implements AuthPort {
             
             Usuario usuarioActualizado = Usuario.builder()
                     .id(usuario.getId())
+                    .clienteId(usuario.getClienteId())
                     .correo(usuario.getCorreo())
                     .clave(usuario.getClave())
                     .activo(usuario.isActivo())
@@ -79,6 +80,7 @@ public class AuthUseCase implements AuthPort {
         if (usuario.getIntentosFallidos() != null && usuario.getIntentosFallidos() > 0) {
             Usuario usuarioActualizado = Usuario.builder()
                     .id(usuario.getId())
+                    .clienteId(usuario.getClienteId())
                     .correo(usuario.getCorreo())
                     .clave(usuario.getClave())
                     .activo(usuario.isActivo())

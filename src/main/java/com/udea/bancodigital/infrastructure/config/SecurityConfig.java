@@ -3,6 +3,7 @@ package com.udea.bancodigital.infrastructure.config;
 import com.udea.bancodigital.auth.infrastructure.config.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -47,6 +48,8 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                 // Endpoints públicos
                 .requestMatchers("/api/v1/auth/login").permitAll()
+                // Solo asesor/admin puede registrar clientes
+                .requestMatchers(HttpMethod.POST, "/api/v1/clientes").hasAnyRole("CAJERO", "ADMIN")
                 // El resto debe estar autenticado
                 .anyRequest().authenticated()
             )
