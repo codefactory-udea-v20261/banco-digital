@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public interface ClienteRepositoryPort {
     boolean existsByEmail(String email);
+    boolean existsByEmailAndIdNot(String email, UUID id);
     boolean existsByCedula(String numeroCedula);
     Cliente save(Cliente cliente);
     Optional<Cliente> findById(UUID id);

@@ -3,11 +3,13 @@ package com.udea.bancodigital.customers.application.usecase;
 import com.udea.bancodigital.customers.application.dto.ActualizarClienteRequestDto;
 import com.udea.bancodigital.customers.application.dto.ClienteResponseDto;
 import com.udea.bancodigital.customers.application.mapper.ClienteMapper;
+import com.udea.bancodigital.customers.domain.exception.ClienteYaExisteException;
 import com.udea.bancodigital.customers.domain.exception.ClienteNoEncontradoException;
 import com.udea.bancodigital.customers.domain.model.Cliente;
 import com.udea.bancodigital.customers.domain.model.Email;
 import com.udea.bancodigital.customers.domain.model.NumeroCedula;
 import com.udea.bancodigital.customers.domain.port.out.ClienteRepositoryPort;
+import com.udea.bancodigital.customers.domain.port.out.DomainEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,6 +32,9 @@ class ActualizarClienteUseCaseTest {
 
     @Mock
     private ClienteMapper mapper;
+
+    @Mock
+    private DomainEventPublisher eventPublisher;
 
     @InjectMocks
     private ActualizarClienteUseCase useCase;
@@ -58,6 +63,7 @@ class ActualizarClienteUseCaseTest {
 
         // Configuramos los mocks
         when(repository.findById(id)).thenReturn(Optional.of(clienteExistente));
+        when(repository.existsByEmailAndIdNot("carlos@new.com", id)).thenReturn(false);
         when(repository.save(any(Cliente.class))).thenAnswer(i -> i.getArguments()[0]);
         when(mapper.toResponseDto(any(Cliente.class))).thenAnswer(invocation -> {
             Cliente cliente = invocation.getArgument(0);
@@ -83,6 +89,7 @@ class ActualizarClienteUseCaseTest {
 
         verify(repository, times(1)).findById(id);
         verify(repository, times(1)).save(any(Cliente.class));
+        verify(eventPublisher, times(1)).publish(any());
     }
 
     @Test
@@ -99,5 +106,35 @@ class ActualizarClienteUseCaseTest {
         );
 
         assertEquals("No se encontró un cliente con ID: " + id, exception.getMessage());
+    }
+
+    @Test
+    void deberiaLanzarException_cuandoEmailPerteneceAOtroCliente() {
+        UUID id = UUID.randomUUID();
+
+        Cliente clienteExistente = Cliente.builder()
+                .id(id)
+                .numeroCedula(NumeroCedula.of("1234567"))
+                .primerNombre("Juan")
+                .primerApellido("Perez")
+                .email(Email.of("juan@old.com"))
+                .fechaNacimiento(LocalDate.of(1990, 1, 1))
+                .activo(true)
+                .build();
+
+        ActualizarClienteRequestDto request = ActualizarClienteRequestDto.builder()
+                .email("repetido@test.com")
+                .build();
+
+        when(repository.findById(id)).thenReturn(Optional.of(clienteExistente));
+        when(repository.existsByEmailAndIdNot("repetido@test.com", id)).thenReturn(true);
+
+        ClienteYaExisteException exception = assertThrows(ClienteYaExisteException.class, () ->
+                useCase.actualizarCliente(id, request)
+        );
+
+        assertTrue(exception.getMessage().contains("repetido@test.com"));
+        verify(repository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
     }
 }
