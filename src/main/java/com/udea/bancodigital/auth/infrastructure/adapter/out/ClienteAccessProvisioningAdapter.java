@@ -40,6 +40,7 @@ public class ClienteAccessProvisioningAdapter implements ClienteAccessProvisioni
                 .activo(true)
                 .bloqueado(false)
                 .intentosFallidos(0)
+                .mfaActivo(false)
                 .roles(Set.of(Rol.builder()
                         .id(CLIENT_ROLE_ID)
                         .nombre(CLIENT_ROLE_NAME)

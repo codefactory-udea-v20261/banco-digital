@@ -18,10 +18,10 @@ import java.util.stream.Collectors;
 @Component
 public class JwtProvider implements JwtProviderPort {
 
-    @Value("${jwt.secret:defaultSecretKeyWithAtLeast32CharactersForHmacSha256}")
+    @Value("${app.security.jwt.secret}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration:3600000}")
+    @Value("${app.security.jwt.expiration-ms}")
     private int jwtExpirationMs;
 
     private SecretKey getSigningKey() {
@@ -34,8 +34,13 @@ public class JwtProvider implements JwtProviderPort {
         claims.put("roles", usuario.getRoles().stream()
                 .map(rol -> rol.getNombre().toUpperCase())
                 .collect(Collectors.toList()));
+        claims.put("uid", usuario.getId().toString());
         claims.put("activo", usuario.isActivo());
         claims.put("bloqueado", usuario.isBloqueado());
+        claims.put("mfaActivo", usuario.isMfaActivo());
+        if (usuario.getClienteId() != null) {
+            claims.put("clienteId", usuario.getClienteId().toString());
+        }
 
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
@@ -59,6 +64,12 @@ public class JwtProvider implements JwtProviderPort {
     public String extractJti(String token) {
         Claims claims = getClaims(token);
         return claims.getId();
+    }
+
+    @Override
+    public UUID extractUserId(String token) {
+        Object userId = getClaims(token).get("uid");
+        return UUID.fromString(userId.toString());
     }
 
     public String extractUsername(String token) {

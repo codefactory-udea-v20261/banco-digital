@@ -55,6 +55,14 @@ public interface JwtProviderPort {
      * @return JTI del token
      */
     String extractJti(String token);
+
+    /**
+     * Extrae el identificador del usuario autenticado.
+     *
+     * @param token Token JWT
+     * @return UUID del usuario autenticado
+     */
+    java.util.UUID extractUserId(String token);
     
     /**
      * Obtiene el tiempo de expiración configurado en milisegundos.
