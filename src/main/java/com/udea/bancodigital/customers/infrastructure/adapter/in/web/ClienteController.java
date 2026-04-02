@@ -5,6 +5,7 @@ import com.udea.bancodigital.customers.application.dto.CrearClienteRequestDto;
 import com.udea.bancodigital.customers.application.dto.ActualizarClienteRequestDto;
 import com.udea.bancodigital.customers.domain.port.in.CrearClientePort;
 import com.udea.bancodigital.customers.domain.port.in.ActualizarClientePort;
+import com.udea.bancodigital.customers.domain.port.in.ObtenerClientePort;
 import com.udea.bancodigital.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -33,6 +34,7 @@ public class ClienteController {
 
     private final CrearClientePort crearClientePort;
     private final ActualizarClientePort actualizarClientePort;
+    private final ObtenerClientePort obtenerClientePort;
 
     /**
      * Registra un nuevo cliente en el sistema.
@@ -93,7 +95,9 @@ public class ClienteController {
     })
     public ResponseEntity<ApiResponse<ClienteResponseDto>> obtenerCliente(
             @PathVariable UUID id) {
-        throw new UnsupportedOperationException("Operación no implementada");
+        ClienteResponseDto response = obtenerClientePort.obtenerPorId(id);
+
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     /**
