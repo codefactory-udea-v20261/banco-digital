@@ -1,6 +1,8 @@
 package com.udea.bancodigital.customers.infrastructure.adapter.in.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.udea.bancodigital.customers.application.dto.ActualizarClienteRequestDto;
+import com.udea.bancodigital.customers.application.dto.ClienteResponseDto;
 import com.udea.bancodigital.auth.infrastructure.config.JwtAuthenticationFilter;
 import com.udea.bancodigital.customers.application.dto.CrearClienteRequestDto;
 import com.udea.bancodigital.customers.domain.port.in.ActualizarClientePort;
@@ -18,10 +20,15 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -74,6 +81,36 @@ class ClienteControllerSecurityTest {
                 .andExpect(status().isCreated());
     }
 
+    @Test
+    @WithMockUser(roles = "CLIENTE")
+    void deberiaRetornar403_siClienteIntentaActualizarPerfil() throws Exception {
+        mockMvc.perform(patch("/api/v1/clientes/{id}", UUID.randomUUID())
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(actualizacionValida())))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "CAJERO")
+    void deberiaPermitirActualizacion_siUsuarioEsAsesor() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(actualizarClientePort.actualizarCliente(eq(id), any(ActualizarClienteRequestDto.class)))
+                .thenReturn(ClienteResponseDto.builder()
+                        .id(id)
+                        .numeroCedula("1234567890")
+                        .primerNombre("Laura")
+                        .primerApellido("Lopez")
+                        .email("laura@test.com")
+                        .activo(true)
+                        .createdAt(Instant.now())
+                        .build());
+
+        mockMvc.perform(patch("/api/v1/clientes/{id}", id)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(actualizacionValida())))
+                .andExpect(status().isOk());
+    }
+
     private CrearClienteRequestDto requestValido() {
         return CrearClienteRequestDto.builder()
                 .numeroCedula("1234567890")
@@ -82,6 +119,13 @@ class ClienteControllerSecurityTest {
                 .email("laura@test.com")
                 .telefono("3001234567")
                 .fechaNacimiento(LocalDate.of(1995, 6, 10))
+                .build();
+    }
+
+    private ActualizarClienteRequestDto actualizacionValida() {
+        return ActualizarClienteRequestDto.builder()
+                .primerNombre("Laura")
+                .telefono("3001234567")
                 .build();
     }
 }
