@@ -2,9 +2,10 @@ package com.udea.bancodigital.auth.infrastructure.adapter.out;
 
 import com.udea.bancodigital.auth.domain.port.out.TokenBlacklistPort;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -20,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  * MEJORA FUTURA: Implementar con Redis usando Spring Data Redis
  */
-@Component
 @Slf4j
 public class InMemoryTokenBlacklistAdapter implements TokenBlacklistPort {
     
@@ -43,8 +43,8 @@ public class InMemoryTokenBlacklistAdapter implements TokenBlacklistPort {
     }
     
     @Override
-    public void revoke(String token, long expirationTimeMillis) {
-        blacklistedTokens.put(token, expirationTimeMillis);
+    public void revoke(String token, UUID usuarioId, Instant expirationTime) {
+        blacklistedTokens.put(token, expirationTime.toEpochMilli());
         log.info("Token agregado al blacklist. Total tokens revocados: {}", blacklistedTokens.size());
     }
     

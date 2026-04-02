@@ -7,6 +7,7 @@ import com.udea.bancodigital.auth.infrastructure.entity.RolEntity;
 import com.udea.bancodigital.auth.infrastructure.entity.UsuarioEntity;
 import com.udea.bancodigital.auth.infrastructure.repository.UsuarioJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
@@ -23,6 +24,9 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
+
+    @Value("${app.security.login.lockout-minutes:15}")
+    private long lockoutMinutes = 15;
     
     private final UsuarioJpaRepository jpaRepository;
     
@@ -64,6 +68,7 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
                 .bloqueado(entity.isBloqueado())
                 .intentosFallidos(entity.getIntentosFallidos() == null ? null : (int) entity.getIntentosFallidos())
                 .secretoMfa(entity.getSecretoMfa())
+                .mfaActivo(entity.isMfaActivo())
                 .roles(mapRolToDomain(entity.getRol()))
                 .build();
     }
@@ -77,7 +82,8 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
                 .activo(usuario.isActivo())
                 .intentosFallidos(usuario.getIntentosFallidos() == null ? null : usuario.getIntentosFallidos().shortValue())
                 .secretoMfa(usuario.getSecretoMfa())
-                .bloqueadoHasta(usuario.isBloqueado() ? OffsetDateTime.now() : null)
+                .mfaActivo(usuario.isMfaActivo())
+                .bloqueadoHasta(usuario.isBloqueado() ? OffsetDateTime.now().plusMinutes(lockoutMinutes) : null)
                 .rol(mapRolesToEntity(usuario.getRoles()))
                 .build();
     }

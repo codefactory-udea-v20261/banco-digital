@@ -17,5 +17,6 @@ public class Usuario {
     boolean bloqueado;
     Integer intentosFallidos;
     String secretoMfa;
+    boolean mfaActivo;
     Set<Rol> roles;
 }
