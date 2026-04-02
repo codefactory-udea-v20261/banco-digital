@@ -10,6 +10,7 @@ import java.util.UUID;
 @Builder
 public class Usuario {
     UUID id;
+    UUID clienteId;
     String correo;
     String clave;
     boolean activo;
