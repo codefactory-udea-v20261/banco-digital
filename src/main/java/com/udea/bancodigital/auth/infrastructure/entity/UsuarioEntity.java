@@ -18,6 +18,9 @@ public class UsuarioEntity {
     @Id
     private UUID id;
 
+    @Column(name = "cliente_id")
+    private UUID clienteId;
+
     @Column(name = "username", nullable = false, unique = true)
     private String correo;
 
