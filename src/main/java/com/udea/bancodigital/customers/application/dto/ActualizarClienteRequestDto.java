@@ -21,15 +21,31 @@ import java.time.LocalDate;
 public class ActualizarClienteRequestDto {
 
     @Size(max = 100, message = "El primer nombre no puede exceder 100 caracteres")
+    @Pattern(
+            regexp = "^[A-Za-zÁÉÍÓÚáéíóúñÑ ]+$",
+            message = "El primer nombre solo debe contener letras"
+    )
     private String primerNombre;
 
     @Size(max = 100, message = "El segundo nombre no puede exceder 100 caracteres")
+    @Pattern(
+            regexp = "^[A-Za-zÁÉÍÓÚáéíóúñÑ ]*$",
+            message = "El segundo nombre solo debe contener letras"
+    )
     private String segundoNombre;
 
     @Size(max = 100, message = "El primer apellido no puede exceder 100 caracteres")
+    @Pattern(
+            regexp = "^[A-Za-zÁÉÍÓÚáéíóúñÑ ]+$",
+            message = "El primer apellido solo debe contener letras"
+    )
     private String primerApellido;
 
     @Size(max = 100, message = "El segundo apellido no puede exceder 100 caracteres")
+    @Pattern(
+            regexp = "^[A-Za-zÁÉÍÓÚáéíóúñÑ ]*$",
+            message = "El segundo apellido solo debe contener letras"
+    )
     private String segundoApellido;
 
     @Email(message = "El email no tiene un formato válido")
@@ -50,4 +66,3 @@ public class ActualizarClienteRequestDto {
 
 
 }
-

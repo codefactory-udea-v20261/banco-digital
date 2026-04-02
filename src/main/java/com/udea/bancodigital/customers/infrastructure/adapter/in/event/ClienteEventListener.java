@@ -1,8 +1,8 @@
 package com.udea.bancodigital.customers.infrastructure.adapter.in.event;
 
+import com.udea.bancodigital.customers.domain.event.ClienteActualizadoEvent;
 import com.udea.bancodigital.customers.domain.event.ClienteRegistradoEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -49,5 +49,14 @@ public class ClienteEventListener {
         // - notificationService.enviarEmailBienvenida(event.email(), event.nombreCompleto());
         // - accountService.crearCuentaInicial(event.clienteId());
         // - analyticsService.registrarNuevoCliente();
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async
+    public void onClienteActualizado(ClienteActualizadoEvent event) {
+        log.info("EVENTO RECIBIDO: Cliente Actualizado");
+        log.info("Cliente ID: {}", event.clienteId());
+        log.info("Campos modificados: {}", event.camposModificados());
+        log.info("Ocurrió: {}", event.occurredOn());
     }
 }
