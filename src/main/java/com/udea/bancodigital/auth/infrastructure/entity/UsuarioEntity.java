@@ -38,6 +38,10 @@ public class UsuarioEntity {
     @Column(name = "mfa_secret")
     private String secretoMfa;
 
+    @Column(name = "mfa_activo", nullable = false)
+    @Builder.Default
+    private boolean mfaActivo = false;
+
     @Column(name = "bloqueado_hasta")
     private OffsetDateTime bloqueadoHasta;
 
@@ -46,6 +50,6 @@ public class UsuarioEntity {
     private RolEntity rol;
 
     public boolean isBloqueado() {
-        return bloqueadoHasta != null;
+        return bloqueadoHasta != null && bloqueadoHasta.isAfter(OffsetDateTime.now());
     }
 }
