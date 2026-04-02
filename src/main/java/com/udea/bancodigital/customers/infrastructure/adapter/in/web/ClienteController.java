@@ -123,6 +123,11 @@ public class ClienteController {
                 responseCode = "404", 
                 description = "Cliente no encontrado",
                 content = @Content(mediaType = "application/json")
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "409",
+                description = "Conflicto: el email ya se encuentra registrado en otro cliente",
+                content = @Content(mediaType = "application/json")
             )
     })
     public ResponseEntity<ApiResponse<ClienteResponseDto>> actualizarCliente(

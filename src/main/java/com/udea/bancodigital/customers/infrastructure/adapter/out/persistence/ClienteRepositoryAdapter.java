@@ -24,6 +24,11 @@ public class ClienteRepositoryAdapter implements ClienteRepositoryPort {
     }
 
     @Override
+    public boolean existsByEmailAndIdNot(String email, UUID id) {
+        return repository.existsByEmailAndIdNot(email, id);
+    }
+
+    @Override
     public boolean existsByCedula(String numeroCedula) {
         return repository.existsByNumeroCedula(numeroCedula);
     }

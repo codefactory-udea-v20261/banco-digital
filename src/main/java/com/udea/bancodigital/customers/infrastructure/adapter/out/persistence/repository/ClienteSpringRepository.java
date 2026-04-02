@@ -9,5 +9,6 @@ import java.util.UUID;
 @Repository
 public interface ClienteSpringRepository extends JpaRepository<ClienteEntity, UUID> {
     boolean existsByEmail(String email);
+    boolean existsByEmailAndIdNot(String email, UUID id);
     boolean existsByNumeroCedula(String numeroCedula);
 }
