@@ -2,7 +2,10 @@ package  com.udea.bancodigital.accounts.application.usecase;
 import java.util.UUID;
 
 import com.udea.bancodigital.accounts.application.dto.ConsultarSaldoResponseDto;
+import com.udea.bancodigital.accounts.domain.exception.CuentaInactivaException;
+import com.udea.bancodigital.accounts.domain.exception.CuentaNoEncontradaException;
 import com.udea.bancodigital.accounts.domain.model.Cuenta;
+import com.udea.bancodigital.accounts.domain.model.EstadoCuenta;
 import com.udea.bancodigital.accounts.domain.port.out.ClienteServicePort;
 import com.udea.bancodigital.accounts.domain.port.out.CuentaRepositoryPort;
 
@@ -15,13 +18,13 @@ public class ConsultarSaldoUseCase {
 
     /*se busca la cuenta en base a la id, en caso de no encontrarla
     arroja un RuntimeException*/
-    public ConsultarSaldoResponseDto consulta(UUID cuentaId){
-        Cuenta cuenta=cuentaRepository.findById(cuentaId).orElseThrow(() -> new RuntimeException("Cuenta no encontrada"));
+    public ConsultarSaldoResponseDto consultarSaldo(UUID cuentaId){
+        Cuenta cuenta=cuentaRepository.findById(cuentaId).orElseThrow(() -> new CuentaNoEncontradaException(cuentaId));
     
     /*verifica que la cuenta este activa, en caso de no estarlo
     arroja un RuntimeException*/
-    if (!cuenta.isActiva()){
-        throw new RuntimeException("La cuenta está inactiva");
+    if (!cuenta.getEstado().equals(EstadoCuenta.ACTIVA)) {
+        throw new CuentaInactivaException(cuentaId);
     }
     return ConsultarSaldoResponseDto.builder()
             .saldo(cuenta.getSaldo())
