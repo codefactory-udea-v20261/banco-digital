@@ -14,11 +14,14 @@ import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.examples.Example;
 import static java.util.Map.entry;
+import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @Configuration
@@ -81,7 +84,13 @@ public class CustomerOpenApiConfig {
                                         new Example()
                                                 .summary("Cliente no existe")
                                                 .value(Map.of(
-                                                        "message", "Cliente no encontrado"
+                                                        "success", false,
+                                                        "error", Map.of(
+                                                                "errorCode", "CLIENTE_NOT_FOUND",
+                                                                "message", "Cliente no encontrado con id: 550e8400-e29b-41d4-a716-446655440000",
+                                                                "httpStatus", 404
+                                                        ),
+                                                        "timestamp", "2025-04-02T20:00:00Z"
                                                 ))
                                 ))
                 ));
