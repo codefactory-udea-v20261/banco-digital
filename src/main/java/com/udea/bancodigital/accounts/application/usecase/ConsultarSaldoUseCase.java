@@ -3,6 +3,7 @@ import java.util.UUID;
 
 import com.udea.bancodigital.accounts.application.dto.ConsultarSaldoResponseDto;
 import com.udea.bancodigital.accounts.domain.model.Cuenta;
+import com.udea.bancodigital.accounts.domain.port.out.ClienteServicePort;
 import com.udea.bancodigital.accounts.domain.port.out.CuentaRepositoryPort;
 
 import lombok.RequiredArgsConstructor;
