@@ -5,6 +5,7 @@ import com.udea.bancodigital.accounts.domain.model.Cuenta;
 import com.udea.bancodigital.accounts.domain.model.EstadoCuenta;
 
 import com.udea.bancodigital.accounts.domain.exception.CuentaNoEncontradaException;
+import com.udea.bancodigital.accounts.domain.exception.CuentaNoPerteneceAlClienteException;
 import com.udea.bancodigital.accounts.domain.exception.CuentaInactivaException;
 import org.junit.jupiter.api.Test;
 
@@ -30,74 +31,105 @@ class ConsultarSaldoUseCaseTest {
     @InjectMocks
     private ConsultarSaldoUseCase useCase;
 
-/*Test 1 Cuenta existente y retorna el valor*/
-@Test
-void deberiaRetornarSaldoCuandoCuentaEstaActiva() {
+    /* Test 1: Cuenta activa y pertenece al cliente */
+    @Test
+    void deberiaRetornarSaldoCuandoCuentaEstaActiva() {
 
-    UUID cuentaId = UUID.randomUUID();
+        UUID cuentaId = UUID.randomUUID();
+        UUID clienteId = UUID.randomUUID();
 
-    Cuenta cuenta = Cuenta.builder()
-            .id(cuentaId)
-            .saldo(new BigDecimal("100000"))
-            .estado(EstadoCuenta.ACTIVA)
-            .build();
+        Cuenta cuenta = Cuenta.builder()
+                .id(cuentaId)
+                .clienteId(clienteId) // 🔥 IMPORTANTE
+                .saldo(new BigDecimal("100000"))
+                .estado(EstadoCuenta.ACTIVA)
+                .build();
 
-    when(cuentaRepository.findById(cuentaId))
-            .thenReturn(Optional.of(cuenta));
+        when(cuentaRepository.findById(cuentaId))
+                .thenReturn(Optional.of(cuenta));
 
-    ConsultarSaldoResponseDto response = useCase.consultarSaldo(cuentaId);
+        ConsultarSaldoResponseDto response =
+                useCase.consultarSaldo(cuentaId, clienteId);
 
-    assertThat(response.getSaldo()).isEqualTo(new BigDecimal("100000"));
-}
+        assertThat(response.getSaldo())
+                .isEqualTo(new BigDecimal("100000"));
+    }
 
-/*Test 2 La cuenta no existe*/
-@Test
-void deberiaLanzarExcepcionCuandoCuentaNoExiste() {
+    /* Test 2: Cuenta no existe */
+    @Test
+    void deberiaLanzarExcepcionCuandoCuentaNoExiste() {
 
-    UUID cuentaId = UUID.randomUUID();
+        UUID cuentaId = UUID.randomUUID();
+        UUID clienteId = UUID.randomUUID();
 
-    when(cuentaRepository.findById(cuentaId))
-            .thenReturn(Optional.empty());
+        when(cuentaRepository.findById(cuentaId))
+                .thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> useCase.consultarSaldo(cuentaId))
-            .isInstanceOf(CuentaNoEncontradaException.class);
-}
+        assertThatThrownBy(() -> useCase.consultarSaldo(cuentaId, clienteId))
+                .isInstanceOf(CuentaNoEncontradaException.class);
+    }
 
-/*3 test cuando la cuenta esta incativa */
-@Test
-void deberiaLanzarExcepcionCuandoCuentaEstaInactiva() {
+    /* Test 3: Cuenta inactiva */
+    @Test
+    void deberiaLanzarExcepcionCuandoCuentaEstaInactiva() {
 
-    UUID cuentaId = UUID.randomUUID();
+        UUID cuentaId = UUID.randomUUID();
+        UUID clienteId = UUID.randomUUID();
 
-    Cuenta cuenta = Cuenta.builder()
-            .id(cuentaId)
-            .saldo(new BigDecimal("100000"))
-            .estado(EstadoCuenta.INACTIVA)
-            .build();
+        Cuenta cuenta = Cuenta.builder()
+                .id(cuentaId)
+                .clienteId(clienteId)
+                .saldo(new BigDecimal("100000"))
+                .estado(EstadoCuenta.INACTIVA)
+                .build();
 
-    when(cuentaRepository.findById(cuentaId))
-            .thenReturn(Optional.of(cuenta));
+        when(cuentaRepository.findById(cuentaId))
+                .thenReturn(Optional.of(cuenta));
 
-    assertThatThrownBy(() -> useCase.consultarSaldo(cuentaId))
-            .isInstanceOf(CuentaInactivaException.class);
-}
+        assertThatThrownBy(() -> useCase.consultarSaldo(cuentaId, clienteId))
+                .isInstanceOf(CuentaInactivaException.class);
+    }
 
-/*test 4 cuando la cuenta esta bloqueada*/
-@Test
-void deberiaLanzarExcepcionCuandoCuentaEstaBloqueada() {
+    /* Test 4: Cuenta bloqueada */
+    @Test
+    void deberiaLanzarExcepcionCuandoCuentaEstaBloqueada() {
 
-    UUID cuentaId = UUID.randomUUID();
+        UUID cuentaId = UUID.randomUUID();
+        UUID clienteId = UUID.randomUUID();
 
-    Cuenta cuenta = Cuenta.builder()
-            .id(cuentaId)
-            .saldo(new BigDecimal("100000"))
-            .estado(EstadoCuenta.BLOQUEADA)
-            .build();
+        Cuenta cuenta = Cuenta.builder()
+                .id(cuentaId)
+                .clienteId(clienteId)
+                .saldo(new BigDecimal("100000"))
+                .estado(EstadoCuenta.BLOQUEADA)
+                .build();
 
-    when(cuentaRepository.findById(cuentaId))
-            .thenReturn(Optional.of(cuenta));
+        when(cuentaRepository.findById(cuentaId))
+                .thenReturn(Optional.of(cuenta));
 
-    assertThatThrownBy(() -> useCase.consultarSaldo(cuentaId))
-            .isInstanceOf(CuentaInactivaException.class);
-}
+        assertThatThrownBy(() -> useCase.consultarSaldo(cuentaId, clienteId))
+                .isInstanceOf(CuentaInactivaException.class);
+    }
+
+    /* Test 5: Cuenta NO pertenece al cliente */
+    @Test
+    void deberiaLanzarExcepcionCuandoCuentaNoPerteneceAlCliente() {
+
+        UUID cuentaId = UUID.randomUUID();
+        UUID clienteId = UUID.randomUUID();
+        UUID otroClienteId = UUID.randomUUID();
+
+        Cuenta cuenta = Cuenta.builder()
+                .id(cuentaId)
+                .clienteId(otroClienteId) 
+                .saldo(new BigDecimal("100000"))
+                .estado(EstadoCuenta.ACTIVA)
+                .build();
+
+        when(cuentaRepository.findById(cuentaId))
+                .thenReturn(Optional.of(cuenta));
+
+        assertThatThrownBy(() -> useCase.consultarSaldo(cuentaId, clienteId))
+        .isInstanceOf(CuentaNoPerteneceAlClienteException.class);
+    }
 }
