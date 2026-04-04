@@ -113,23 +113,23 @@ class ConsultarSaldoUseCaseTest {
 
     /* Test 5: Cuenta NO pertenece al cliente */
     @Test
-    void deberiaLanzarExcepcionCuandoCuentaNoPerteneceAlCliente() {
+void deberiaLanzarExcepcionCuandoCuentaNoPerteneceAlCliente() {
 
-        UUID cuentaId = UUID.randomUUID();
-        UUID clienteId = UUID.randomUUID();
-        UUID otroClienteId = UUID.randomUUID();
+    UUID cuentaId = UUID.randomUUID();
+    UUID clienteId = UUID.randomUUID();
+    UUID otroClienteId = UUID.randomUUID();
 
-        Cuenta cuenta = Cuenta.builder()
-                .id(cuentaId)
-                .clienteId(otroClienteId) 
-                .saldo(new BigDecimal("100000"))
-                .estado(EstadoCuenta.ACTIVA)
-                .build();
+    Cuenta cuenta = Cuenta.builder()
+            .id(cuentaId)
+            .clienteId(otroClienteId)
+            .saldo(new BigDecimal("100000"))
+            .estado(EstadoCuenta.ACTIVA)
+            .build();
 
-        when(cuentaRepository.findById(cuentaId))
-                .thenReturn(Optional.of(cuenta));
+    when(cuentaRepository.findById(cuentaId))
+            .thenReturn(Optional.of(cuenta));
 
-        assertThatThrownBy(() -> useCase.consultarSaldo(cuentaId, clienteId))
-        .isInstanceOf(CuentaNoPerteneceAlClienteException.class);
-    }
+    assertThatThrownBy(() -> useCase.consultarSaldo(cuentaId, clienteId))
+            .isInstanceOf(CuentaNoPerteneceAlClienteException.class);
+}
 }
