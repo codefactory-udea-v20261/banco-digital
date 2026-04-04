@@ -8,14 +8,18 @@ import java.util.UUID;
 public class CuentaNoEncontradaException extends BusinessException {
 
     public CuentaNoEncontradaException(UUID id) {
-        super("CUENTA_NOT_FOUND",
-              "No se encontró una cuenta con ID: " + id,
-              HttpStatus.NOT_FOUND);
+        super(
+                "CUENTA_NO_ENCONTRADA",
+                "No se encontró una cuenta con ID: " + id,
+                HttpStatus.NOT_FOUND
+        );
     }
 
     public CuentaNoEncontradaException(String numeroCuenta) {
-        super("CUENTA_NOT_FOUND",
-              "No se encontró la cuenta número: " + numeroCuenta,
-              HttpStatus.NOT_FOUND);
+        super(
+                "CUENTA_NO_ENCONTRADA",
+                "No se encontró la cuenta número: " + numeroCuenta,
+                HttpStatus.NOT_FOUND
+        );
     }
 }
