@@ -17,6 +17,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/*Imports para la HU 6 */
+import com.udea.bancodigital.accounts.application.dto.ConsultarSaldoResponseDto;
+import com.udea.bancodigital.accounts.application.usecase.ConsultarSaldoUseCase;
+import com.udea.bancodigital.accounts.domain.port.out.AuthServicePort;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/cuentas")
 @RequiredArgsConstructor
@@ -25,6 +31,10 @@ public class CuentaController {
 
     private final CrearCuentaPort crearCuentaPort;
     private final CuentaMapper cuentaMapper;
+
+    /*Creacion de las nuevas interfaces y clases para la HU6 */
+    private final ConsultarSaldoUseCase consultarSaldoUseCase; 
+    private final AuthServicePort authServicePort;
 
     @PostMapping
     @Operation(
@@ -57,5 +67,35 @@ public class CuentaController {
         Cuenta cuentaCreada = crearCuentaPort.crearCuenta(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(cuentaMapper.toResponseDto(cuentaCreada)));
+    }
+    /*Creacion de la url para obtener el saldo */
+    @GetMapping("/{id}/saldo")
+    @Operation(
+            summary = "Consultar saldo de cuenta",
+            description = "Permite consultar el saldo de una cuenta si pertenece al cliente autenticado."
+    )
+    @ApiResponses(value = {  // 👈 AQUÍ VA
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "Saldo consultado exitosamente"
+    ),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "403",
+            description = "La cuenta no pertenece al cliente"
+    ),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "Cuenta no encontrada"
+    )
+})
+    public ResponseEntity<ApiResponse<ConsultarSaldoResponseDto>> consultarSaldo(
+            @PathVariable UUID id) {
+            
+        UUID clienteId = authServicePort.getClienteId();
+            
+        ConsultarSaldoResponseDto response =
+                consultarSaldoUseCase.consultarSaldo(id, clienteId);
+            
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }

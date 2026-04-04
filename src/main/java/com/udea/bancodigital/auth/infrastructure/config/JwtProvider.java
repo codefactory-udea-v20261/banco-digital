@@ -96,4 +96,12 @@ public class JwtProvider implements JwtProviderPort {
                 .parseSignedClaims(token)
                 .getPayload();
     }
+    /*HU 06-Se crea un metodo para extraer la id del cliente*/
+    public UUID extractClienteId(String token) {
+    Object clienteId = getClaims(token).get("clienteId");
+    if (clienteId == null) {
+        return null;
+    }
+    return UUID.fromString(clienteId.toString());
+}
 }
