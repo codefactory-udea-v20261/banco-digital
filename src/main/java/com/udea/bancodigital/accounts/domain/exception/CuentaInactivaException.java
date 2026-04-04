@@ -8,8 +8,10 @@ import java.util.UUID;
 public class CuentaInactivaException extends BusinessException {
 
     public CuentaInactivaException(UUID cuentaId) {
-        super("CUENTA_INACTIVA",
-              "La cuenta con ID " + cuentaId + " no está activa para operar",
-              HttpStatus.UNPROCESSABLE_ENTITY);
+        super(
+                "La cuenta no está activa",
+                "CUENTA_INACTIVA",
+                HttpStatus.UNPROCESSABLE_ENTITY
+        );
     }
 }

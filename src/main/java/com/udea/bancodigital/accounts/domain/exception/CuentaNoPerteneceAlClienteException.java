@@ -1,10 +1,17 @@
 package com.udea.bancodigital.accounts.domain.exception;
 
+import com.udea.bancodigital.shared.exception.BusinessException;
+import org.springframework.http.HttpStatus;
+
 import java.util.UUID;
 
-public class CuentaNoPerteneceAlClienteException extends RuntimeException {
+public class CuentaNoPerteneceAlClienteException extends BusinessException {
 
     public CuentaNoPerteneceAlClienteException(UUID cuentaId) {
-        super("La cuenta con id " + cuentaId + " no pertenece al cliente autenticado");
+        super(
+                "La cuenta no pertenece al cliente",
+                "CUENTA_NO_AUTORIZADA",
+                HttpStatus.FORBIDDEN
+        );
     }
 }
