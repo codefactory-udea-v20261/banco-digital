@@ -4,6 +4,7 @@ import com.udea.bancodigital.accounts.application.dto.CrearCuentaRequestDto;
 import com.udea.bancodigital.accounts.application.dto.CuentaResponseDto;
 import com.udea.bancodigital.accounts.application.mapper.CuentaMapper;
 import com.udea.bancodigital.accounts.domain.model.Cuenta;
+import com.udea.bancodigital.accounts.domain.port.in.ConsultarSaldoPort;
 import com.udea.bancodigital.accounts.domain.port.in.CrearCuentaPort;
 import com.udea.bancodigital.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +34,7 @@ public class CuentaController {
     private final CuentaMapper cuentaMapper;
 
     /*Creacion de las nuevas interfaces y clases para la HU6 */
-    private final ConsultarSaldoUseCase consultarSaldoUseCase; 
+    private final ConsultarSaldoPort consultarSaldoPort; 
     private final AuthServicePort authServicePort;
 
     @PostMapping
@@ -94,7 +95,7 @@ public class CuentaController {
         UUID clienteId = authServicePort.getClienteId();
             
         ConsultarSaldoResponseDto response =
-                consultarSaldoUseCase.consultarSaldo(id, clienteId);
+                consultarSaldoPort.consultarSaldo(id, clienteId);
             
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
