@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -45,9 +47,14 @@ public class UsuarioEntity {
     @Column(name = "bloqueado_hasta")
     private OffsetDateTime bloqueadoHasta;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "rol_id", nullable = false)
-    private RolEntity rol;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "usuario_rol",
+            joinColumns = @JoinColumn(name = "usuario_id"),
+            inverseJoinColumns = @JoinColumn(name = "rol_id")
+    )
+    @Builder.Default
+    private Set<RolEntity> roles = new HashSet<>();
 
     public boolean isBloqueado() {
         return bloqueadoHasta != null && bloqueadoHasta.isAfter(OffsetDateTime.now());
