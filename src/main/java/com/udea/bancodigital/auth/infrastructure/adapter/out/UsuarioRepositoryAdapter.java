@@ -5,12 +5,14 @@ import com.udea.bancodigital.auth.domain.model.Usuario;
 import com.udea.bancodigital.auth.domain.port.out.UsuarioRepositoryPort;
 import com.udea.bancodigital.auth.infrastructure.entity.RolEntity;
 import com.udea.bancodigital.auth.infrastructure.entity.UsuarioEntity;
+import com.udea.bancodigital.auth.infrastructure.repository.RolJpaRepository;
 import com.udea.bancodigital.auth.infrastructure.repository.UsuarioJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,6 +31,7 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
     private long lockoutMinutes = 15;
     
     private final UsuarioJpaRepository jpaRepository;
+    private final RolJpaRepository rolJpaRepository;
     
     @Override
     public Optional<Usuario> findByUsername(String username) {
@@ -69,7 +72,7 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
                 .intentosFallidos(entity.getIntentosFallidos() == null ? null : (int) entity.getIntentosFallidos())
                 .secretoMfa(entity.getSecretoMfa())
                 .mfaActivo(entity.isMfaActivo())
-                .roles(mapRolToDomain(entity.getRol()))
+                .roles(mapRolesToDomain(entity.getRoles()))
                 .build();
     }
     
@@ -84,28 +87,34 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
                 .secretoMfa(usuario.getSecretoMfa())
                 .mfaActivo(usuario.isMfaActivo())
                 .bloqueadoHasta(usuario.isBloqueado() ? OffsetDateTime.now().plusMinutes(lockoutMinutes) : null)
-                .rol(mapRolesToEntity(usuario.getRoles()))
+                .roles(mapRolesToEntity(usuario.getRoles()))
                 .build();
     }
     
-    private Set<Rol> mapRolToDomain(RolEntity entity) {
-        if (entity == null) {
+    private Set<Rol> mapRolesToDomain(Set<RolEntity> entities) {
+        if (entities == null || entities.isEmpty()) {
             return Set.of();
         }
-        return Set.of(Rol.builder()
-                .id(entity.getId())
-                .nombre(entity.getNombre())
-                .build());
+        return entities.stream()
+                .map(entity -> Rol.builder()
+                        .id(entity.getId())
+                        .nombre(entity.getNombre())
+                        .build())
+                .collect(Collectors.toSet());
     }
     
-    private RolEntity mapRolesToEntity(Set<Rol> roles) {
+    private Set<RolEntity> mapRolesToEntity(Set<Rol> roles) {
         if (roles == null || roles.isEmpty()) {
-            return null;
+            return Set.of();
         }
-        Rol rol = roles.stream().findFirst().orElseThrow();
-        return RolEntity.builder()
-                .id(rol.getId())
-                .nombre(rol.getNombre())
-                .build();
+        List<Short> roleIds = roles.stream()
+                .map(Rol::getId)
+                .toList();
+        Set<RolEntity> entities = rolJpaRepository.findAllById(roleIds).stream()
+                .collect(Collectors.toSet());
+        if (entities.size() != roleIds.size()) {
+            throw new IllegalArgumentException("Uno o mas roles no existen en base de datos");
+        }
+        return entities;
     }
 }
