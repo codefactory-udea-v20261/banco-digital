@@ -7,18 +7,19 @@ import com.udea.bancodigital.accounts.domain.exception.CuentaNoEncontradaExcepti
 import com.udea.bancodigital.accounts.domain.exception.CuentaNoPerteneceAlClienteException;
 import com.udea.bancodigital.accounts.domain.model.Cuenta;
 import com.udea.bancodigital.accounts.domain.model.EstadoCuenta;
+import com.udea.bancodigital.accounts.domain.port.in.ConsultarSaldoPort;
 import com.udea.bancodigital.accounts.domain.port.out.ClienteServicePort;
 import com.udea.bancodigital.accounts.domain.port.out.CuentaRepositoryPort;
 
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class ConsultarSaldoUseCase {
+public class ConsultarSaldoUseCase implements ConsultarSaldoPort {
     /*se trae el repositorio  de cuenta para buscar la id de la cuenta*/
     private final CuentaRepositoryPort cuentaRepository;
 
    
-
+    @Override
     /*se busca la cuenta en base a la id, en caso de no encontrarla
     arroja un RuntimeException*/
     public ConsultarSaldoResponseDto consultarSaldo(UUID cuentaId, UUID clienteId){
