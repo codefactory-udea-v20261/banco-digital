@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.udea.bancodigital.accounts.application.dto.CrearCuentaRequestDto;
 import com.udea.bancodigital.accounts.application.mapper.CuentaMapper;
 import com.udea.bancodigital.accounts.domain.port.in.CrearCuentaPort;
+import com.udea.bancodigital.accounts.domain.port.in.ConsultarSaldoPort;
+import com.udea.bancodigital.accounts.domain.port.out.AuthServicePort;
 import com.udea.bancodigital.auth.infrastructure.config.JwtAuthenticationFilter;
 import com.udea.bancodigital.infrastructure.config.SecurityConfig;
 import jakarta.servlet.FilterChain;
@@ -41,6 +43,12 @@ class CuentaControllerSecurityTest {
 
     @MockBean
     private CrearCuentaPort crearCuentaPort;
+
+    @MockBean
+    private ConsultarSaldoPort consultarSaldoPort;
+
+    @MockBean
+    private AuthServicePort authServicePort;
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;

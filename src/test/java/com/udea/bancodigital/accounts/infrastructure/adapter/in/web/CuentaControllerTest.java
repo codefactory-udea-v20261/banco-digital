@@ -7,6 +7,8 @@ import com.udea.bancodigital.accounts.domain.model.Cuenta;
 import com.udea.bancodigital.accounts.domain.model.EstadoCuenta;
 import com.udea.bancodigital.accounts.domain.model.TipoCuenta;
 import com.udea.bancodigital.accounts.domain.port.in.CrearCuentaPort;
+import com.udea.bancodigital.accounts.domain.port.in.ConsultarSaldoPort;
+import com.udea.bancodigital.accounts.domain.port.out.AuthServicePort;
 import com.udea.bancodigital.auth.infrastructure.config.JwtAuthenticationFilter;
 import com.udea.bancodigital.infrastructure.config.SecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,6 +47,12 @@ class CuentaControllerTest {
 
     @MockBean
     private CrearCuentaPort crearCuentaPort;
+
+    @MockBean
+    private ConsultarSaldoPort consultarSaldoPort;
+
+    @MockBean
+    private AuthServicePort authServicePort;
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
