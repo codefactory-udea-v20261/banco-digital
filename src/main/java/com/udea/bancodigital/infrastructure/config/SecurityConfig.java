@@ -50,6 +50,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/login").permitAll()
                 // Solo asesor/admin puede registrar clientes
                 .requestMatchers(HttpMethod.POST, "/api/v1/clientes").hasAnyRole("CAJERO", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/clientes/*").hasAnyRole("CLIENTE", "CAJERO", "ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/clientes/*").hasAnyRole("CAJERO", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/cuentas").hasAnyRole("CAJERO", "ADMIN")
                 // El resto debe estar autenticado

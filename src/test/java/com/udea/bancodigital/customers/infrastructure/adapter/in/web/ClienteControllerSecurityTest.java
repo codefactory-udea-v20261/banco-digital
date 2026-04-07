@@ -7,6 +7,8 @@ import com.udea.bancodigital.auth.infrastructure.config.JwtAuthenticationFilter;
 import com.udea.bancodigital.customers.application.dto.CrearClienteRequestDto;
 import com.udea.bancodigital.customers.domain.port.in.ActualizarClientePort;
 import com.udea.bancodigital.customers.domain.port.in.CrearClientePort;
+import com.udea.bancodigital.customers.domain.port.in.ObtenerClientePort;
+import com.udea.bancodigital.customers.domain.port.out.ClienteAccessControlPort;
 import com.udea.bancodigital.infrastructure.config.SecurityConfig;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
@@ -27,7 +29,9 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -47,6 +51,12 @@ class ClienteControllerSecurityTest {
 
     @MockBean
     private ActualizarClientePort actualizarClientePort;
+
+    @MockBean
+    private ObtenerClientePort obtenerClientePort;
+
+    @MockBean
+    private ClienteAccessControlPort clienteAccessControlPort;
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -109,6 +119,33 @@ class ClienteControllerSecurityTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(actualizacionValida())))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "CAJERO")
+    void deberiaPermitirConsultaSiUsuarioEsAsesor() throws Exception {
+        UUID id = UUID.randomUUID();
+        doNothing().when(clienteAccessControlPort).validateCanView(id);
+        when(clienteAccessControlPort.canManageClientes()).thenReturn(true);
+        when(obtenerClientePort.obtenerPorId(id)).thenReturn(ClienteResponseDto.builder()
+                .id(id)
+                .numeroCedula("1234567890")
+                .primerNombre("Laura")
+                .primerApellido("Lopez")
+                .email("laura@test.com")
+                .activo(true)
+                .createdAt(Instant.now())
+                .build());
+
+        mockMvc.perform(get("/api/v1/clientes/{id}", id))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "AUDITOR")
+    void deberiaRetornar403SiAuditorIntentaConsultarCliente() throws Exception {
+        mockMvc.perform(get("/api/v1/clientes/{id}", UUID.randomUUID()))
+                .andExpect(status().isForbidden());
     }
 
     private CrearClienteRequestDto requestValido() {
