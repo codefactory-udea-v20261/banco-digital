@@ -75,7 +75,7 @@ public class CuentaController {
             summary = "Consultar saldo de cuenta",
             description = "Permite consultar el saldo de una cuenta si pertenece al cliente autenticado."
     )
-    @ApiResponses(value = {  // 👈 AQUÍ VA
+    @ApiResponses(value = {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "200",
             description = "Saldo consultado exitosamente"
@@ -87,6 +87,10 @@ public class CuentaController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "404",
             description = "Cuenta no encontrada"
+    ),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "422",
+            description = "Cuenta inactiva o bloqueada"
     )
 })
     public ResponseEntity<ApiResponse<ConsultarSaldoResponseDto>> consultarSaldo(

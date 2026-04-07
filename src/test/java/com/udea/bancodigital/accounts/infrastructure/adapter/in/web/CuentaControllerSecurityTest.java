@@ -24,12 +24,17 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import com.udea.bancodigital.accounts.application.dto.ConsultarSaldoResponseDto;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @WebMvcTest(CuentaController.class)
 @Import({SecurityConfig.class, CuentaMapper.class})
@@ -95,6 +100,58 @@ class CuentaControllerSecurityTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(requestValido())))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    @WithMockUser(roles = "CLIENTE")
+    void deberiaPermitirConsultarSaldoPropio() throws Exception {
+        UUID cuentaId = UUID.randomUUID();
+        UUID clienteId = UUID.randomUUID();
+        
+        when(authServicePort.getClienteId()).thenReturn(clienteId);
+        when(consultarSaldoPort.consultarSaldo(eq(cuentaId), eq(clienteId)))
+                .thenReturn(ConsultarSaldoResponseDto.builder()
+                        .saldo(new BigDecimal("50000.00"))
+                        .build());
+
+        mockMvc.perform(get("/api/v1/cuentas/{id}/saldo", cuentaId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.saldo").value(50000.00));
+    }
+
+    @Test
+    @WithMockUser(roles = "CAJERO")
+    void cajeroDebePoderConsultarCualquierSaldo() throws Exception {
+        UUID cuentaId = UUID.randomUUID();
+        UUID clienteId = UUID.randomUUID();
+        
+        when(authServicePort.getClienteId()).thenReturn(clienteId);
+        when(consultarSaldoPort.consultarSaldo(eq(cuentaId), eq(clienteId)))
+                .thenReturn(ConsultarSaldoResponseDto.builder()
+                        .saldo(new BigDecimal("100000.00"))
+                        .build());
+
+        mockMvc.perform(get("/api/v1/cuentas/{id}/saldo", cuentaId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void adminDebePoderConsultarCualquierSaldo() throws Exception {
+        UUID cuentaId = UUID.randomUUID();
+        UUID clienteId = UUID.randomUUID();
+        
+        when(authServicePort.getClienteId()).thenReturn(clienteId);
+        when(consultarSaldoPort.consultarSaldo(eq(cuentaId), eq(clienteId)))
+                .thenReturn(ConsultarSaldoResponseDto.builder()
+                        .saldo(new BigDecimal("200000.00"))
+                        .build());
+
+        mockMvc.perform(get("/api/v1/cuentas/{id}/saldo", cuentaId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
     }
 
     private CrearCuentaRequestDto requestValido() {
