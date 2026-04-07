@@ -5,7 +5,7 @@ Scripts de datos de prueba para entornos **LOCAL** y **TEST** únicamente.
 ## Orden de ejecución
 
 ```bash
-psql -U app_user -d banco_digital \
+psql -U postgres -d banco_digital \
   -f 01_seed_clientes.sql \
   -f 02_seed_cuentas.sql  \
   -f 03_seed_usuarios_auth.sql

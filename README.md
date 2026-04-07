@@ -60,7 +60,7 @@ Copy-Item .env.example -Destination .env
 Copy-Item docker-compose.override.yml.example -Destination docker-compose.override.yml
 ```
 
-> **Nota:** Puedes dejar los valores por defecto que se copian en el archivo `.env`, ya están configurados para que todo funcione localmente (se creará la base de datos `banco_digital` con usuario `app_user` y contraseña `change_me`).
+> **Nota:** Puedes dejar los valores por defecto que se copian en el archivo `.env`, ya están configurados para que todo funcione localmente (se creará la base de datos `banco_digital` con usuario `postgres` y contraseña `admin`).
 
 ### 3. Levantar la Base de Datos Local
 En la misma terminal, ejecuta Docker Compose para levantar el motor de base de datos (asegúrate de que Docker Desktop esté abierto):
@@ -108,16 +108,16 @@ Si deseas contar con datos iniciales (clientes, cuentas, usuarios de autenticaci
 
 **En Linux / macOS:**
 ```bash
-docker exec -i banco_digital_db psql -U app_user -d banco_digital < db/seeds/01_seed_clientes.sql
-docker exec -i banco_digital_db psql -U app_user -d banco_digital < db/seeds/02_seed_cuentas.sql
-docker exec -i banco_digital_db psql -U app_user -d banco_digital < db/seeds/03_seed_usuarios_auth.sql
+docker exec -i banco_digital_db psql -U postgres -d banco_digital < db/seeds/01_seed_clientes.sql
+docker exec -i banco_digital_db psql -U postgres -d banco_digital < db/seeds/02_seed_cuentas.sql
+docker exec -i banco_digital_db psql -U postgres -d banco_digital < db/seeds/03_seed_usuarios_auth.sql
 ```
 
 **En Windows (PowerShell):**
 ```powershell
-Get-Content db\seeds\01_seed_clientes.sql | docker exec -i banco_digital_db psql -U app_user -d banco_digital
-Get-Content db\seeds\02_seed_cuentas.sql | docker exec -i banco_digital_db psql -U app_user -d banco_digital
-Get-Content db\seeds\03_seed_usuarios_auth.sql | docker exec -i banco_digital_db psql -U app_user -d banco_digital
+Get-Content db\seeds\01_seed_clientes.sql | docker exec -i banco_digital_db psql -U postgres -d banco_digital
+Get-Content db\seeds\02_seed_cuentas.sql | docker exec -i banco_digital_db psql -U postgres -d banco_digital
+Get-Content db\seeds\03_seed_usuarios_auth.sql | docker exec -i banco_digital_db psql -U postgres -d banco_digital
 ```
 
 *(Para ver más detalles de los datos insertados, IDs estáticos y las contraseñas de prueba de los usuarios creados, puedes revisar `db/seeds/README.md`)*.
