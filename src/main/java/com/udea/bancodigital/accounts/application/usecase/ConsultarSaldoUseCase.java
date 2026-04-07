@@ -8,35 +8,40 @@ import com.udea.bancodigital.accounts.domain.exception.CuentaNoPerteneceAlClient
 import com.udea.bancodigital.accounts.domain.model.Cuenta;
 import com.udea.bancodigital.accounts.domain.model.EstadoCuenta;
 import com.udea.bancodigital.accounts.domain.port.in.ConsultarSaldoPort;
-import com.udea.bancodigital.accounts.domain.port.out.ClienteServicePort;
 import com.udea.bancodigital.accounts.domain.port.out.CuentaRepositoryPort;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RequiredArgsConstructor
 public class ConsultarSaldoUseCase implements ConsultarSaldoPort {
-    /*se trae el repositorio  de cuenta para buscar la id de la cuenta*/
+    
     private final CuentaRepositoryPort cuentaRepository;
 
    
     @Override
-    /*se busca la cuenta en base a la id, en caso de no encontrarla
-    arroja un RuntimeException*/
     public ConsultarSaldoResponseDto consultarSaldo(UUID cuentaId, UUID clienteId){
-        Cuenta cuenta=cuentaRepository.findById(cuentaId).orElseThrow(() -> new CuentaNoEncontradaException(cuentaId));
+        Cuenta cuenta = cuentaRepository.findById(cuentaId)
+            .orElseThrow(() -> new CuentaNoEncontradaException(cuentaId));
     
-    /*verifica que la cuenta si pertenezca al cliente */
-    if (!cuenta.getClienteId().equals(clienteId)) {
-       throw new CuentaNoPerteneceAlClienteException(cuentaId);
-    }
+        if (!cuenta.getClienteId().equals(clienteId)) {
+            log.warn("Intento de acceso no autorizado: Cliente {} intentó consultar saldo de cuenta {} que no le pertenece", 
+                     clienteId, cuentaId);
+            throw new CuentaNoPerteneceAlClienteException(cuentaId);
+        }
 
-    /*verifica que la cuenta este activa, en caso de no estarlo
-    arroja un RuntimeException*/
-    if (!cuenta.getEstado().equals(EstadoCuenta.ACTIVA)) {
-        throw new CuentaInactivaException(cuentaId);
-    }
-    return ConsultarSaldoResponseDto.builder()
-            .saldo(cuenta.getSaldo())
-            .build();    }
+        if (!cuenta.getEstado().equals(EstadoCuenta.ACTIVA)) {
+            log.warn("Intento de consulta en cuenta inactiva: Cliente {} intentó consultar cuenta {} con estado {}", 
+                     clienteId, cuentaId, cuenta.getEstado());
+            throw new CuentaInactivaException(cuentaId);
+        }
 
+        log.info("Consulta de saldo exitosa: Cliente {} consultó saldo de cuenta {} - Saldo: {}", 
+                 clienteId, cuentaId, cuenta.getSaldo());
+        
+        return ConsultarSaldoResponseDto.builder()
+                .saldo(cuenta.getSaldo())
+                .build();
+    }
 }
