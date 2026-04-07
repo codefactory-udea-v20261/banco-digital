@@ -1,7 +1,7 @@
 -- ════════════════════════════════════════════════════════════
 -- SEED: Datos de prueba — Clientes
 -- Uso: Solo para entornos LOCAL y TEST. NUNCA en producción.
--- Ejecutar: psql -U app_user -d banco_digital -f 01_seed_clientes.sql
+-- Ejecutar: psql -U postgres -d banco_digital -f 01_seed_clientes.sql
 -- ════════════════════════════════════════════════════════════
 
 INSERT INTO cliente (id, numero_cedula, primer_nombre, segundo_nombre, primer_apellido,
