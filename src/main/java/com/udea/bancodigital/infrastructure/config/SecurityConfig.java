@@ -54,6 +54,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/clientes/*").hasAnyRole("CAJERO", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/cuentas").hasAnyRole("CAJERO", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/v1/cuentas/*/saldo").hasAnyRole("CLIENTE", "CAJERO", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/cuentas/saldo-total").hasAnyRole("CLIENTE", "CAJERO", "ADMIN")
                 // El resto debe estar autenticado
                 .anyRequest().authenticated()
             )
