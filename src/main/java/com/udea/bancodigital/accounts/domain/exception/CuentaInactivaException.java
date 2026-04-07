@@ -9,8 +9,8 @@ public class CuentaInactivaException extends BusinessException {
 
     public CuentaInactivaException(UUID cuentaId) {
         super(
-                "La cuenta no está activa",
                 "CUENTA_INACTIVA",
+                "La cuenta " + cuentaId + " no está activa",
                 HttpStatus.UNPROCESSABLE_ENTITY
         );
     }
