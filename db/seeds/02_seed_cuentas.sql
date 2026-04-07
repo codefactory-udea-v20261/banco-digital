@@ -5,14 +5,15 @@
 
 INSERT INTO cuenta (id, numero_cuenta, cliente_id, tipo_cuenta_id, saldo, estado)
 VALUES
-    -- María González — 2 cuentas
+    -- María González — 3 cuentas (1 activa + 1 ahorro + 1 bloqueada para HU-06)
     ('b2000000-0000-0000-0000-000000000001', '0001-0001-0001', 'a1000000-0000-0000-0000-000000000001', 1, 1500000.00, 'ACTIVA'),
     ('b2000000-0000-0000-0000-000000000002', '0001-0001-0002', 'a1000000-0000-0000-0000-000000000001', 2,  250000.00, 'ACTIVA'),
-    -- Cliente con saldo cero
+    ('b2000000-0000-0000-0000-000000000009', '0001-0001-0009', 'a1000000-0000-0000-0000-000000000001', 1,   50000.00, 'BLOQUEADA'),
+    -- Carlos Rodríguez — cuenta con saldo cero (para HU-06 prueba cuenta_otra)
     ('b2000000-0000-0000-0000-000000000003', '0002-0001-0001', 'a1000000-0000-0000-0000-000000000002', 1,       0.00, 'ACTIVA'),
-    -- Cliente con 1 cuenta activa + 1 inactiva
+    -- Valentina Martínez — 1 cuenta activa + 1 inactiva (para HU-06)
     ('b2000000-0000-0000-0000-000000000004', '0003-0001-0001', 'a1000000-0000-0000-0000-000000000003', 1, 3000000.00, 'ACTIVA'),
     ('b2000000-0000-0000-0000-000000000005', '0003-0001-0002', 'a1000000-0000-0000-0000-000000000003', 2,  100000.00, 'INACTIVA'),
-    -- Cliente con cuenta con saldo alto
+    -- Andrés Castro — cuenta con saldo alto
     ('b2000000-0000-0000-0000-000000000006', '0004-0001-0001', 'a1000000-0000-0000-0000-000000000004', 1, 9999999.99, 'ACTIVA')
 ON CONFLICT (numero_cuenta) DO NOTHING;
