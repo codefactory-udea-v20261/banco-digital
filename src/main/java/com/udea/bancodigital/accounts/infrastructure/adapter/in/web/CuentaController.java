@@ -18,9 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/*Imports para la HU 6 */
 import com.udea.bancodigital.accounts.application.dto.ConsultarSaldoResponseDto;
-import com.udea.bancodigital.accounts.application.usecase.ConsultarSaldoUseCase;
 import com.udea.bancodigital.accounts.domain.port.out.AuthServicePort;
 import java.util.UUID;
 
@@ -32,8 +30,6 @@ public class CuentaController {
 
     private final CrearCuentaPort crearCuentaPort;
     private final CuentaMapper cuentaMapper;
-
-    /*Creacion de las nuevas interfaces y clases para la HU6 */
     private final ConsultarSaldoPort consultarSaldoPort; 
     private final AuthServicePort authServicePort;
 
@@ -69,7 +65,7 @@ public class CuentaController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(cuentaMapper.toResponseDto(cuentaCreada)));
     }
-    /*Creacion de la url para obtener el saldo */
+    
     @GetMapping("/{id}/saldo")
     @Operation(
             summary = "Consultar saldo de cuenta",
