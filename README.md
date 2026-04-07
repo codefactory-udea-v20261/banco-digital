@@ -36,93 +36,86 @@ src/main/java/com/udea/bancodigital/
 
 ---
 
-## Arranque Local (Paso a Paso)
+## Configuración del Entorno Local
 
-Sigue estos pasos para configurar y correr el proyecto desde cero, incluso si no tienes la base de datos creada en tu máquina. El proyecto utiliza Flyway, por lo que las tablas e inserts iniciales se crearán automáticamente al iniciar la aplicación.
+Esta sección detalla el procedimiento para configurar y ejecutar el entorno de desarrollo local. El proyecto utiliza Docker para la virtualización de la base de datos y Flyway para el control de versiones del esquema de datos.
 
-### 1. Pre-requisitos
-*   **Java 21** instalado en tu sistema.
-*   **Docker Desktop** (o Docker Engine + Docker Compose) instalado y ejecutándose. Esto es **obligatorio** para levantar la base de datos local fácilmente sin tener que instalar PostgreSQL manualmente en tu equipo.
-*   Tu IDE favorito (**IntelliJ IDEA**, **VSCode**, etc.).
+### 💡 Arquitectura de Datos Local
+El flujo de inicialización de la base de datos es **completamente automatizado** mediante la interacción de tres componentes clave:
+1. **Docker:** Descarga y ejecuta el motor de PostgreSQL aislado, creando la base de datos `banco_digital` en su interior.
+2. **Flyway (Spring Boot):** Durante el arranque de la aplicación, intercepta la conexión a la base de datos y ejecuta los scripts de migración (`src/main/resources/db/migration`), materializando el esquema relacional (tablas, restricciones y roles).
+3. **Seed Scripts:** Proveen un estado base predecible con datos de prueba (clientes, cuentas, etc.) para facilitar la validación inmediata de la API.
 
-### 2. Configuración de Variables de Entorno
-Abre una terminal en la raíz del proyecto y ejecuta estos comandos para crear tus archivos de configuración local a partir de los ejemplos:
+---
 
-**En Linux / macOS:**
+### Paso 1: Requisitos del Sistema
+*   **Java Development Kit (JDK) 21**
+*   **Docker Desktop** (o Docker Engine + Compose). *Es indispensable para garantizar la paridad del entorno de base de datos entre el equipo de desarrollo.*
+*   Entorno de Desarrollo Integrado (IDE) compatible (IntelliJ IDEA, VSCode, Eclipse).
+
+### Paso 2: Resolución de Conflictos de Puertos (Importante)
+Para evitar colisiones de red (Error: `FATAL: no existe la base de datos "banco_digital"` o "Port already in use"), es imperativo garantizar que el puerto **5432** se encuentre disponible para Docker.
+
+Si cuenta con una instalación nativa de PostgreSQL en su sistema operativo:
+*   **Windows:** Presione `Win + R`, escriba `services.msc`, localice el servicio de PostgreSQL (ej. `postgresql-x64-15`), haga clic derecho y seleccione **Detener**.
+*   **Linux (Systemd):** Ejecute `sudo systemctl stop postgresql`.
+*   **macOS (Homebrew):** Ejecute `brew services stop postgresql`.
+
+### Paso 3: Variables de Entorno
+Abra una terminal en la raíz del repositorio y genere los archivos de configuración local ejecutando:
+
+**Linux / macOS:**
 ```bash
 cp .env.example .env
 cp docker-compose.override.yml.example docker-compose.override.yml
 ```
 
-**En Windows (PowerShell):**
+**Windows (PowerShell):**
 ```powershell
 Copy-Item .env.example -Destination .env
 Copy-Item docker-compose.override.yml.example -Destination docker-compose.override.yml
 ```
+*(Los valores por defecto establecerán las credenciales `postgres` / `admin`).*
 
-> **Nota:** Puedes dejar los valores por defecto que se copian en el archivo `.env`, ya están configurados para que todo funcione localmente (se creará la base de datos `banco_digital` con usuario `postgres` y contraseña `admin`).
-
-### 3. Levantar la Base de Datos Local
-En la misma terminal, ejecuta Docker Compose para levantar el motor de base de datos (asegúrate de que Docker Desktop esté abierto):
+### Paso 4: Inicialización del Motor de Base de Datos
+Construya y levante el contenedor de PostgreSQL ejecutando:
 
 ```bash
+docker compose down -v  # Garantiza la eliminación de volúmenes residuales con configuraciones previas
 docker compose up -d db
 ```
-*Este comando descargará la imagen de PostgreSQL y creará un contenedor llamado `banco_digital_db`. La base de datos vacía quedará lista y expuesta en el puerto `5432`.*
+*El sistema confirmará el inicio del contenedor `banco_digital_db`.*
 
-### 4. Ejecutar la Aplicación
+### Paso 5: Ejecución de la Aplicación y Migraciones
+Inicie el ciclo de vida de la aplicación Spring Boot. Durante este proceso, **Flyway creará automáticamente todas las tablas requeridas**.
 
-Puedes iniciar el proyecto de cualquiera de las siguientes 3 formas:
+*   **Vía Terminal (Recomendado):**
+    *   Linux / macOS: `./mvnw spring-boot:run`
+    *   Windows: `mvnw.cmd spring-boot:run`
+*   **Vía IDE (IntelliJ / VSCode):**
+    *   Ejecute la clase principal `src/main/java/com/udea/bancodigital/BancoDigitalApplication.java`.
 
-#### Opción A: Desde la Consola (Recomendado)
-Ejecuta el siguiente comando en la raíz del proyecto:
+### Paso 6: Población de Datos de Prueba (Seeds)
+**Requisito previo:** La aplicación (Paso 5) debe haberse inicializado al menos una vez para que Flyway haya construido el esquema.
+
+Abra una nueva terminal y ejecute los siguientes comandos para inyectar los datos en el contenedor:
+
 **Linux / macOS:**
-```bash
-./mvnw spring-boot:run
-```
-**Windows:**
-```cmd
-mvnw.cmd spring-boot:run
-```
-
-#### Opción B: Desde IntelliJ IDEA
-1. Abre el proyecto en IntelliJ (`File > Open...` y selecciona la carpeta `banco-digital`).
-2. Espera a que IntelliJ indexe y descargue todas las dependencias de Maven.
-3. En el panel del proyecto, ve a `src/main/java/com/udea/bancodigital/BancoDigitalApplication.java`.
-4. Haz clic en el botón verde de "Play" (▶) que aparece a la izquierda de `public class BancoDigitalApplication` o `public static void main`.
-
-#### Opción C: Desde Visual Studio Code (VSCode)
-1. Abre la carpeta del proyecto en VSCode.
-2. Asegúrate de tener instalada la extensión **"Extension Pack for Java"** de Microsoft.
-3. Ve a la pestaña de "Spring Boot Dashboard" o "Java Projects" en el panel lateral, o simplemente abre el archivo `src/main/java/com/udea/bancodigital/BancoDigitalApplication.java`.
-4. Haz clic en **"Run"** sobre el método `main`.
-
----
-*Una vez que la aplicación arranque, verás en la consola que **Flyway** detecta la base de datos vacía, ejecuta automáticamente los scripts de migración (`V1__...`, `V2__...`, etc.) creando todas las tablas y finalmente el servidor quedará corriendo.*
-
-### 5. Cargar Datos de Prueba (Seeds)
-
-**Importante:** Este paso debes hacerlo **después** de haber ejecutado la aplicación por primera vez (Paso 4), ya que la aplicación es la encargada de crear las tablas en la base de datos a través de Flyway.
-
-Si deseas contar con datos iniciales (clientes, cuentas, usuarios de autenticación) para poder probar la API o la colección de Postman, abre una nueva terminal en la raíz del proyecto (mientras la base de datos y la aplicación están corriendo) y ejecuta:
-
-**En Linux / macOS:**
 ```bash
 docker exec -i banco_digital_db psql -U postgres -d banco_digital < db/seeds/01_seed_clientes.sql
 docker exec -i banco_digital_db psql -U postgres -d banco_digital < db/seeds/02_seed_cuentas.sql
 docker exec -i banco_digital_db psql -U postgres -d banco_digital < db/seeds/03_seed_usuarios_auth.sql
 ```
 
-**En Windows (PowerShell):**
+**Windows (PowerShell):**
 ```powershell
 Get-Content db\seeds\01_seed_clientes.sql | docker exec -i banco_digital_db psql -U postgres -d banco_digital
 Get-Content db\seeds\02_seed_cuentas.sql | docker exec -i banco_digital_db psql -U postgres -d banco_digital
 Get-Content db\seeds\03_seed_usuarios_auth.sql | docker exec -i banco_digital_db psql -U postgres -d banco_digital
 ```
+*(Consulte `db/seeds/README.md` para conocer los UUIDs y contraseñas de los usuarios generados).*
 
-*(Para ver más detalles de los datos insertados, IDs estáticos y las contraseñas de prueba de los usuarios creados, puedes revisar `db/seeds/README.md`)*.
-
-### URLs importantes (Una vez corriendo)
+### Enlaces de Interés (Post-Arranque)
 | Recurso       | URL                                         |
 |---------------|---------------------------------------------|
 | API Base      | http://localhost:8080/api/v1                |
@@ -171,6 +164,20 @@ main ← develop ← feature/hu-XX-descripcion
 ```
 
 Ver [`docs/CODING_STANDARDS.md`](docs/CODING_STANDARDS.md) para convenciones completas.
+
+---
+
+## Posibles Errores (Troubleshooting)
+
+### 1. `FATAL: password authentication failed for user`
+*   **Causa:** Tienes un volumen residual de Docker con credenciales antiguas.
+*   **Solución:** Borra el contenedor y el volumen con `docker compose down -v` y vuelve a levantarlo con `docker compose up -d db`.
+
+### 2. `FATAL: no existe la base de datos "banco_digital"` o "Port already in use"
+*   **Causa:** Tienes una instalación de PostgreSQL local en tu computadora corriendo en segundo plano que está "secuestrando" el puerto `5432`. Spring Boot se está conectando a tu PostgreSQL local (donde no existe la BD) en lugar de conectarse al contenedor de Docker.
+*   **Solución (Opción A - Recomendada):** Apaga el servicio de PostgreSQL de tu máquina (En Windows: `Servicios` > `postgresql` > Detener). Luego ejecuta `docker compose down -v` y `docker compose up -d db`.
+*   **Solución (Opción B - Usar puerto alternativo):** Cambia el puerto en tu archivo `.env` a `DB_PORT=5433` y asegúrate de actualizarlo en el `docker-compose.override.yml` si lo estás usando.
+*   **Solución (Opción C - Usar tu BD local sin Docker):** Abre pgAdmin o psql en tu máquina y ejecuta manualmente: `CREATE DATABASE banco_digital;`. Luego corre la aplicación normalmente.
 
 ---
 
