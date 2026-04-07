@@ -1,7 +1,9 @@
 package  com.udea.bancodigital.accounts.application.usecase;
 import java.util.UUID;
+import java.math.BigDecimal;
 
 import com.udea.bancodigital.accounts.application.dto.ConsultarSaldoResponseDto;
+import com.udea.bancodigital.accounts.application.dto.ConsultarSaldoTotalResponseDto;
 import com.udea.bancodigital.accounts.domain.exception.CuentaInactivaException;
 import com.udea.bancodigital.accounts.domain.exception.CuentaNoEncontradaException;
 import com.udea.bancodigital.accounts.domain.exception.CuentaNoPerteneceAlClienteException;
@@ -42,6 +44,16 @@ public class ConsultarSaldoUseCase implements ConsultarSaldoPort {
         
         return ConsultarSaldoResponseDto.builder()
                 .saldo(cuenta.getSaldo())
+                .build();
+    }
+
+    @Override
+    public ConsultarSaldoTotalResponseDto consultarSaldoTotal(UUID clienteId) {
+        log.info("Calculando saldo total de cuentas activas para el cliente {}", clienteId);
+        BigDecimal saldoTotal = cuentaRepository.obtenerSaldoTotalCliente(clienteId);
+        
+        return ConsultarSaldoTotalResponseDto.builder()
+                .saldoTotal(saldoTotal)
                 .build();
     }
 }
