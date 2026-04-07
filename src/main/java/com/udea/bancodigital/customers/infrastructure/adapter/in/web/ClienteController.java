@@ -6,6 +6,7 @@ import com.udea.bancodigital.customers.application.dto.ActualizarClienteRequestD
 import com.udea.bancodigital.customers.domain.port.in.CrearClientePort;
 import com.udea.bancodigital.customers.domain.port.in.ActualizarClientePort;
 import com.udea.bancodigital.customers.domain.port.in.ObtenerClientePort;
+import com.udea.bancodigital.customers.domain.port.out.ClienteAccessControlPort;
 import com.udea.bancodigital.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,12 +15,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * Controlador REST para la gestión de clientes.
@@ -35,6 +40,7 @@ public class ClienteController {
     private final CrearClientePort crearClientePort;
     private final ActualizarClientePort actualizarClientePort;
     private final ObtenerClientePort obtenerClientePort;
+    private final ClienteAccessControlPort clienteAccessControlPort;
 
     /**
      * Registra un nuevo cliente en el sistema.
@@ -95,8 +101,9 @@ public class ClienteController {
     })
     public ResponseEntity<ApiResponse<ClienteResponseDto>> obtenerCliente(
             @PathVariable UUID id) {
+        clienteAccessControlPort.validateCanView(id);
         ClienteResponseDto response = obtenerClientePort.obtenerPorId(id);
-
+        addLinks(response);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
@@ -166,5 +173,16 @@ public class ClienteController {
     public ResponseEntity<ApiResponse<List<Object>>> obtenerCuentasCliente(
             @PathVariable UUID id) {
         throw new UnsupportedOperationException("Operación no implementada");
+    }
+
+    private void addLinks(ClienteResponseDto response) {
+        Link self = linkTo(methodOn(ClienteController.class).obtenerCliente(response.getId())).withSelfRel();
+        response.add(self);
+
+        if (clienteAccessControlPort.canManageClientes()) {
+            Link actualizar = linkTo(methodOn(ClienteController.class).actualizarCliente(response.getId(), null))
+                    .withRel("actualizar");
+            response.add(actualizar);
+        }
     }
 }
