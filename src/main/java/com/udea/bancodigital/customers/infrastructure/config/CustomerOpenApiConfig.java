@@ -1,6 +1,4 @@
 package com.udea.bancodigital.customers.infrastructure.config;
-
-
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.Components;
@@ -14,14 +12,11 @@ import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.examples.Example;
 import static java.util.Map.entry;
-import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @Configuration
@@ -42,7 +37,8 @@ public class CustomerOpenApiConfig {
                 .addProperties("telefono", new StringSchema().example("3001234567"))
                 .addProperties("fechaNacimiento", new DateSchema().example("1990-05-20"))
                 .addProperties("activo", new BooleanSchema().example(true))
-                .addProperties("createdAt", new DateTimeSchema().example("2026-01-01T10:00:00Z"));
+                .addProperties("createdAt", new DateTimeSchema().example("2026-01-01T10:00:00Z"))
+                .addProperties("links", new Schema<>().type("array"));
 
         // RESPONSE 200
         ApiResponse okResponse = new ApiResponse()
