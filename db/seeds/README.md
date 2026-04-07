@@ -23,11 +23,20 @@ psql -U postgres -d banco_digital \
 
 Los IDs son deterministas para que los tests de integración puedan usarlos sin consultar la BD:
 
+### Clientes
 ```
-Cliente María González → a1000000-0000-0000-0000-000000000001
-Cuenta activa María    → b2000000-0000-0000-0000-000000000001
-Cuenta saldo cero      → b2000000-0000-0000-0000-000000000003
-Cuenta inactiva        → b2000000-0000-0000-0000-000000000005
+María González (activa)    → a1000000-0000-0000-0000-000000000001
+Carlos Rodríguez (activo)  → a1000000-0000-0000-0000-000000000002
+Valentina Martínez (activa)→ a1000000-0000-0000-0000-000000000003
+```
+
+### Cuentas para HU-06 (Consultar Saldo)
+```
+María - Cuenta activa      → b2000000-0000-0000-0000-000000000001 (saldo: 1,500,000)
+María - Cuenta bloqueada   → b2000000-0000-0000-0000-000000000009 (saldo: 50,000)
+Carlos - Cuenta activa     → b2000000-0000-0000-0000-000000000003 (saldo: 0) - cuenta_otra
+Valentina - Cuenta inactiva→ b2000000-0000-0000-0000-000000000005 (saldo: 100,000)
+UUID inexistente           → 00000000-0000-0000-0000-000000000001
 ```
 
 ## Contraseña de usuarios seed
