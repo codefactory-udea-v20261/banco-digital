@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.udea.bancodigital.accounts.application.dto.ConsultarSaldoResponseDto;
+import com.udea.bancodigital.accounts.application.dto.ConsultarSaldoTotalResponseDto;
 import com.udea.bancodigital.accounts.domain.port.out.AuthServicePort;
 import java.util.UUID;
 
@@ -97,6 +98,23 @@ public class CuentaController {
         ConsultarSaldoResponseDto response =
                 consultarSaldoPort.consultarSaldo(id, clienteId);
             
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @GetMapping("/saldo-total")
+    @Operation(
+            summary = "Consultar saldo total consolidado",
+            description = "Ejecuta un procedimiento almacenado en BD para calcular el saldo total de todas las cuentas activas del cliente autenticado."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Saldo total consultado exitosamente"
+            )
+    })
+    public ResponseEntity<ApiResponse<ConsultarSaldoTotalResponseDto>> consultarSaldoTotal() {
+        UUID clienteId = authServicePort.getClienteId();
+        ConsultarSaldoTotalResponseDto response = consultarSaldoPort.consultarSaldoTotal(clienteId);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }
