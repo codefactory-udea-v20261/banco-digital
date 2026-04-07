@@ -1,6 +1,5 @@
 # Copia este archivo a docker-compose.override.yml (está en .gitignore)
 # y ajusta los valores locales.
-version: "3.9"
 services:
   app:
     environment:
