@@ -34,6 +34,29 @@ src/main/java/com/udea/bancodigital/
 
 **Módulos:** `customers` | `accounts` | `transactions` | `auth` | `audit`
 
+### APIs REST actuales
+
+El sistema expone APIs REST por dominio dentro del monolito modular. Esta separacion nos sirve para documentar mejor el backend, ordenar responsabilidades y preparar una migracion gradual sin romper el flujo actual del proyecto.
+
+| API | Base path | OpenAPI |
+|-----|-----------|---------|
+| Autenticación | `/api/v1/auth` | `/api-docs/auth` |
+| Clientes | `/api/v1/clientes` | `/api-docs/clientes` |
+| Cuentas | `/api/v1/cuentas` | `/api-docs/cuentas` |
+| Reportes | `/api/v1/reportes` | `/api-docs/reportes` |
+
+### Arquitectura objetivo de migración
+
+La recomendacion en este punto no es crear un microservicio por cada modulo. El corte que mejor se ajusta a lo que ya existe es este:
+
+| Microservicio | Responsabilidad |
+|---------------|-----------------|
+| `core-banking-service` | Clientes, cuentas y transacciones |
+| `identity-service` | Autenticación, autorización, JWT, MFA |
+| `reporting-service` | Consultas analíticas, saldos consolidados, reportes |
+
+Ver también [`docs/api/API_PORTFOLIO.md`](docs/api/API_PORTFOLIO.md), [`docs/adr/ADR-002`](docs/adr/ADR-002-api-portfolio-and-microservices-roadmap.md) y [`docs/adr/ADR-003`](docs/adr/ADR-003-target-microservices-architecture.md).
+
 ---
 
 ## Configuración del Entorno Local
@@ -121,6 +144,10 @@ Get-Content db\seeds\03_seed_usuarios_auth.sql | docker exec -i banco_digital_db
 | API Base      | http://localhost:8080/api/v1                |
 | Swagger UI    | http://localhost:8080/swagger-ui.html       |
 | OpenAPI JSON  | http://localhost:8080/api-docs              |
+| OpenAPI Auth  | http://localhost:8080/api-docs/auth         |
+| OpenAPI Clientes | http://localhost:8080/api-docs/clientes  |
+| OpenAPI Cuentas | http://localhost:8080/api-docs/cuentas    |
+| OpenAPI Reportes | http://localhost:8080/api-docs/reportes  |
 | Health Check  | http://localhost:8080/actuator/health       |
 | Métricas      | http://localhost:8080/actuator/prometheus   |
 
@@ -149,6 +176,11 @@ mvnw.cmd verify sonar:sonar
 | Documento                                            | Descripción                          |
 |------------------------------------------------------|--------------------------------------|
 | [ADR-001](docs/adr/ADR-001-clean-architecture-and-data-strategy.md) | Decisión arquitectónica principal |
+| [ADR-002](docs/adr/ADR-002-api-portfolio-and-microservices-roadmap.md) | Ruta para formalizar APIs y migrar gradualmente |
+| [ADR-003](docs/adr/ADR-003-target-microservices-architecture.md) | Arquitectura objetivo de 3 microservicios |
+| [Portafolio de APIs](docs/api/API_PORTFOLIO.md)     | Catálogo de APIs y su mapeo al target distribuido |
+| [Plan de 1 semana](docs/migration/WEEK-PLAN-3-MICROSERVICES.md) | Plan de trabajo para la migración inicial |
+| [Contratos entre servicios](docs/migration/SERVICE-CONTRACTS-DRAFT.md) | Borrador de contratos para core, identity y reporting |
 | [Coding Standards](docs/CODING_STANDARDS.md)        | Convenciones del equipo              |
 | [Definition of Done](docs/DEFINITION_OF_DONE.md)   | Criterios de completitud             |
 | [Definition of Ready](docs/DEFINITION_OF_READY.md) | Criterios de entrada al sprint       |
