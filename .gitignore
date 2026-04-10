@@ -49,3 +49,5 @@ jacoco.exec
 
 # ── Spring Boot devtools ───────────────────────
 .reloadtrigger
+/banco-digital-identity/
+/banco-digital-reporting/
