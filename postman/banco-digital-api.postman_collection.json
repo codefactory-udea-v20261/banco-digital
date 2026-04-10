@@ -1,0 +1,3108 @@
+{
+  "info": {
+    "_postman_id": "13ddd313-a4b2-46c6-bd9c-02d50036c1b3",
+    "name": "banco-digital-api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "13545978"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Request 1: Login asesor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login asesor responde 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna token\", function () {",
+                  "  pm.expect(json.token).to.be.a(\"string\").and.not.empty;",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"asesorToken\", json.token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"correo\": \"{{asesorCorreo}}\",\n    \"clave\": \"{{asesorClave}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": {
+        "type": "noauth"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-01 Registro de clientes",
+      "item": [
+        {
+          "name": "Request 2: Registrar cliente exitosamente",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const runId = Date.now().toString();",
+                  "const suffix = runId.slice(-9);",
+                  "",
+                  "pm.environment.set(\"runId\", runId);",
+                  "pm.environment.set(\"clienteEmail\", `hu01.${runId}@test.com`);",
+                  "pm.environment.set(\"clienteCedula\", `1${suffix}`);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let json;",
+                  "",
+                  "pm.test(\"La respuesta trae body JSON\", function () {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text, \"Respuesta vacía (no hay body para parsear)\").to.not.be.empty;",
+                  "",
+                  "  try {",
+                  "    json = JSON.parse(text);",
+                  "  } catch (e) {",
+                  "    pm.expect.fail(`El body no es JSON válido. Error: ${e.message}. Body: ${text}`);",
+                  "  }",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201 && json) {",
+                  "  const expectedEmail = pm.environment.get(\"clienteEmail\");",
+                  "  const expectedCedula = pm.environment.get(\"clienteCedula\");",
+                  "",
+                  "  pm.test(\"Registro responde 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "  });",
+                  "",
+                  "  pm.test(\"La respuesta indica éxito\", function () {",
+                  "    pm.expect(json).to.have.property(\"success\", true);",
+                  "    pm.expect(json).to.have.property(\"data\").that.is.an(\"object\");",
+                  "    pm.expect(json.data).to.have.property(\"id\").that.is.a(\"string\");",
+                  "    pm.expect(json.data.email).to.eql(expectedEmail);",
+                  "    pm.expect(json.data.numeroCedula).to.eql(expectedCedula);",
+                  "    pm.expect(json.data.activo).to.eql(true);",
+                  "  });",
+                  "",
+                  "  pm.collectionVariables.set(\"clienteId\", json.data.id);",
+                  "} else if (json) {",
+                  "  pm.test(\"Cuando no es 201, responde con error\", function () {",
+                  "    pm.expect(json).to.have.property(\"success\", false);",
+                  "    pm.expect(json).to.have.property(\"error\").that.is.an(\"object\");",
+                  "    pm.expect(json.error).to.have.property(\"message\");",
+                  "    pm.expect(json.error).to.have.property(\"httpStatus\");",
+                  "  });",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{asesorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroCedula\": \"{{clienteCedula}}\",\n  \"primerNombre\": \"Camila\",\n  \"segundoNombre\": \"\",\n  \"primerApellido\": \"Lopez\",\n  \"segundoApellido\": \"Perez\",\n  \"email\": \"{{clienteEmail}}\",\n  \"telefono\": \"3001234567\",\n  \"fechaNacimiento\": \"1995-06-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 3: Registro con información incompleta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Valida request inválido con 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna estructura estándar de error\", function () {",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.error.errorCode).to.eql(\"VALIDATION_ERROR\");",
+                  "  pm.expect(json.error.details).to.be.an(\"array\").that.is.not.empty;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroCedula\": \"\",\n  \"primerNombre\": \"Laura\",\n  \"primerApellido\": \"Lopez\",\n  \"email\": \"correo-invalido\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 4: Registro duplicado por email/cédula",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Rechaza cliente duplicado\", function () {",
+                  "  pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna error de negocio\", function () {",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.error.httpStatus).to.eql(409);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroCedula\": \"{{clienteCedula}}\",\n  \"primerNombre\": \"Laura\",\n  \"segundoNombre\": \"Maria\",\n  \"primerApellido\": \"Lopez\",\n  \"segundoApellido\": \"Diaz\",\n  \"email\": \"{{clienteEmail}}\",\n  \"telefono\": \"3001234567\",\n  \"fechaNacimiento\": \"1995-06-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{asesorToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "// ═══════════════════════════════════════════════════════════════",
+              "// AUTOMATIZACIÓN HU-01 Registro de clientes",
+              "// Login automático como asesor",
+              "// ═══════════════════════════════════════════════════════════════",
+              "",
+              "// Verificar si ya tenemos token válido",
+              "const hasToken = pm.collectionVariables.get('asesorToken_logged_in');",
+              "",
+              "if (!hasToken) {",
+              "    console.log('🔐 Login automático para asesor...');",
+              "    ",
+              "    const loginRequest = {",
+              "        url: pm.collectionVariables.get('baseUrl') + '/api/v1/auth/login',",
+              "        method: 'POST',",
+              "        header: {",
+              "            'Content-Type': 'application/json'",
+              "        },",
+              "        body: {",
+              "            mode: 'raw',",
+              "            raw: JSON.stringify({",
+              "                correo: 'asesor@banco.com',",
+              "                clave: 'Test1234!'",
+              "            })",
+              "        }",
+              "    };",
+              "    ",
+              "    pm.sendRequest(loginRequest, function (err, response) {",
+              "        if (err) {",
+              "            console.error('❌ Error en login automático:', err);",
+              "        } else if (response.code === 200) {",
+              "            const token = response.json().token;",
+              "            pm.collectionVariables.set('asesorToken', token);",
+              "            pm.collectionVariables.set('asesorToken_logged_in', 'true');",
+              "            console.log('✓ Login exitoso, token guardado');",
+              "        } else {",
+              "            console.error('❌ Login falló con código:', response.code);",
+              "        }",
+              "    });",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-01 Seguridad",
+      "item": [
+        {
+          "name": "Request 5: Login del cliente recién provisionado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cliente provisionado puede autenticarse\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna token del cliente\", function () {",
+                  "  pm.expect(json.token).to.be.a(\"string\").and.not.empty;",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"clienteToken\", json.token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{clienteEmail}}\",\n  \"clave\": \"{{defaultClientPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 6: Cliente intenta registrar otro cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cliente no puede registrar clientes\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroCedula\": \"81234567890\",\n  \"primerNombre\": \"Pedro\",\n  \"segundoNombre\": \"Luis\",\n  \"primerApellido\": \"Ramirez\",\n  \"segundoApellido\": \"Toro\",\n  \"email\": \"pedro.hu01@test.com\",\n  \"telefono\": \"3015556677\",\n  \"fechaNacimiento\": \"1992-04-21\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 7: Sin token no registra",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Sin autenticación no permite registro\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroCedula\": \"{{clienteCedula}}\",\n  \"primerNombre\": \"Laura\",\n  \"segundoNombre\": \"Maria\",\n  \"primerApellido\": \"Lopez\",\n  \"segundoApellido\": \"Diaz\",\n  \"email\": \"{{clienteEmail}}\",\n  \"telefono\": \"3001234567\",\n  \"fechaNacimiento\": \"1995-06-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "// ═══════════════════════════════════════════════════════════════",
+              "// AUTOMATIZACIÓN HU-01 Seguridad",
+              "// Login automático como cliente",
+              "// ═══════════════════════════════════════════════════════════════",
+              "",
+              "// Verificar si ya tenemos token válido",
+              "const hasToken = pm.collectionVariables.get('clienteToken_logged_in');",
+              "",
+              "if (!hasToken) {",
+              "    console.log('🔐 Login automático para cliente...');",
+              "    ",
+              "    const loginRequest = {",
+              "        url: pm.collectionVariables.get('baseUrl') + '/api/v1/auth/login',",
+              "        method: 'POST',",
+              "        header: {",
+              "            'Content-Type': 'application/json'",
+              "        },",
+              "        body: {",
+              "            mode: 'raw',",
+              "            raw: JSON.stringify({",
+              "                correo: 'maria.gonzalez@test.com',",
+              "                clave: 'Test1234!'",
+              "            })",
+              "        }",
+              "    };",
+              "    ",
+              "    pm.sendRequest(loginRequest, function (err, response) {",
+              "        if (err) {",
+              "            console.error('❌ Error en login automático:', err);",
+              "        } else if (response.code === 200) {",
+              "            const token = response.json().token;",
+              "            pm.collectionVariables.set('clienteToken', token);",
+              "            pm.collectionVariables.set('clienteToken_logged_in', 'true');",
+              "            console.log('✓ Login exitoso, token guardado');",
+              "        } else {",
+              "            console.error('❌ Login falló con código:', response.code);",
+              "        }",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-02 Consulta info de clientes",
+      "item": [
+        {
+          "name": "Request 1: Login asesor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"login asesor 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.token).to.be.a(\"string\").and.not.empty;",
+                  "pm.environment.set(\"asesorToken\", body.token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"asesor@banco.com\",\n  \"clave\": \"Test1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 2: Login cliente María",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"login cliente 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.token).to.be.a(\"string\").and.not.empty;",
+                  "pm.environment.set(\"mariaToken\", body.token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"maria.gonzalez@test.com\",\n  \"clave\": \"Test1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 3: Ok como asesor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HU02 asesor consulta cliente 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.expect(body.success).to.eql(true);",
+                  "pm.expect(body.data.id).to.eql(pm.environment.get(\"clienteMariaId\"));",
+                  "pm.expect(body.data.email).to.eql(\"maria.gonzalez@test.com\");",
+                  "pm.expect(body.data.primerNombre).to.eql(\"Laura\");",
+                  "pm.expect(body.data.segundoNombre).to.eql(\"Maria\");",
+                  "",
+                  "pm.test(\"incluye link self\", () => {",
+                  "  pm.expect(body.data.links).to.be.an(\"array\").that.is.not.empty;",
+                  "  const selfLink = body.data.links.find(l => l.rel === \"self\");",
+                  "  pm.expect(selfLink).to.exist;",
+                  "  pm.expect(selfLink.href).to.include(\"/api/v1/clientes/\" + pm.environment.get(\"clienteMariaId\"));",
+                  "});",
+                  "",
+                  "pm.test(\"incluye link actualizar para asesor\", () => {",
+                  "  const updateLink = body.data.links.find(l => l.rel === \"actualizar\");",
+                  "  pm.expect(updateLink).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{asesorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteMariaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteMariaId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 4: Ok como cliente dueño",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HU02 cliente consulta su propio perfil 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.expect(body.success).to.eql(true);",
+                  "pm.expect(body.data.id).to.eql(pm.environment.get(\"clienteMariaId\"));",
+                  "",
+                  "pm.test(\"no incluye link actualizar para cliente\", () => {",
+                  "  const links = body.data.links || [];",
+                  "  const updateLink = links.find(l => l.rel === \"actualizar\");",
+                  "  pm.expect(updateLink).to.not.exist;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{mariaToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteMariaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteMariaId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 5: Cliente intentando ver otro perfil",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HU02 cliente consulta otro perfil 403\", () => pm.response.to.have.status(403));",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.expect(body.success).to.eql(false);",
+                  "pm.expect(body.error.errorCode).to.eql(\"CLIENTE_NO_AUTORIZADO\");",
+                  "pm.expect(body.error.message).to.include(\"No tiene permisos\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{mariaToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteCarlosId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteCarlosId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 6: Cliente inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HU02 cliente inexistente 404\", () => pm.response.to.have.status(404));",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.expect(body.success).to.eql(false);",
+                  "pm.expect(body.error.errorCode).to.eql(\"CLIENTE_NOT_FOUND\");",
+                  "pm.expect(body.error.message).to.include(\"No se encontró un cliente\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{asesorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteInexistenteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteInexistenteId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 7: Auditor no autorizado por seguridad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"login auditor 200\", () => pm.response.to.have.status(200));",
+                  "pm.environment.set(\"auditorToken\", pm.response.json().token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"auditor@banco.com\",\n  \"clave\": \"Test1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 7.1: Auditor no autorizado por seguridad cliente Maria",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HU02 auditor consulta cliente 403\", () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auditorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteMariaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteMariaId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "// ═══════════════════════════════════════════════════════════════",
+              "// AUTOMATIZACIÓN HU-02 Consulta info de clientes",
+              "// Login automático como cliente",
+              "// ═══════════════════════════════════════════════════════════════",
+              "",
+              "// Verificar si ya tenemos token válido",
+              "const hasToken = pm.collectionVariables.get('clienteToken_logged_in');",
+              "",
+              "if (!hasToken) {",
+              "    console.log('🔐 Login automático para cliente...');",
+              "    ",
+              "    const loginRequest = {",
+              "        url: pm.collectionVariables.get('baseUrl') + '/api/v1/auth/login',",
+              "        method: 'POST',",
+              "        header: {",
+              "            'Content-Type': 'application/json'",
+              "        },",
+              "        body: {",
+              "            mode: 'raw',",
+              "            raw: JSON.stringify({",
+              "                correo: 'maria.gonzalez@test.com',",
+              "                clave: 'Test1234!'",
+              "            })",
+              "        }",
+              "    };",
+              "    ",
+              "    pm.sendRequest(loginRequest, function (err, response) {",
+              "        if (err) {",
+              "            console.error('❌ Error en login automático:', err);",
+              "        } else if (response.code === 200) {",
+              "            const token = response.json().token;",
+              "            pm.collectionVariables.set('clienteToken', token);",
+              "            pm.collectionVariables.set('clienteToken_logged_in', 'true');",
+              "            console.log('✓ Login exitoso, token guardado');",
+              "        } else {",
+              "            console.error('❌ Login falló con código:', response.code);",
+              "        }",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-03 Actualizar cliente",
+      "item": [
+        {
+          "name": "Request 3: Actualización exitosa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Actualización responde 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna ApiResponse exitosa\", function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.data.id).to.eql(pm.environment.get(\"clienteActualizarId\"));",
+                  "  pm.expect(json.data.primerNombre).to.eql(\"Laura\");",
+                  "  pm.expect(json.data.segundoNombre).to.eql(\"Maria\");",
+                  "  pm.expect(json.data.telefono).to.eql(\"3209998888\");",
+                  "  pm.expect(json.data.email).to.eql(\"laura.actualizada@test.com\");",
+                  "  pm.expect(json.data.activo).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"primerNombre\": \"Laura\",\n  \"segundoNombre\": \"Maria\",\n  \"telefono\": \"3209998888\",\n  \"email\": \"laura.actualizada@test.com\",\n  \"activo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteActualizarId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteActualizarId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 4: Actualización parcial simple",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"PATCH parcial responde 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Actualiza solo el teléfono\", function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.data.telefono).to.eql(\"3001112233\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telefono\": \"3001112233\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteActualizarId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteActualizarId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 5: Email inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Email inválido responde 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna VALIDATION_ERROR\", function () {",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.error.errorCode).to.eql(\"VALIDATION_ERROR\");",
+                  "  pm.expect(json.error.details).to.be.an(\"array\").that.is.not.empty;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"correo-invalido\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteActualizarId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteActualizarId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 6: Nombre inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Nombre inválido responde 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna VALIDATION_ERROR\", function () {",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.error.errorCode).to.eql(\"VALIDATION_ERROR\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"primerNombre\": \"Laura123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteActualizarId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteActualizarId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 7: Cliente inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cliente inexistente responde 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna error de cliente no encontrado\", function () {",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.error.httpStatus).to.eql(404);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telefono\": \"3015556677\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteInexistenteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteInexistenteId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 8: Email duplicado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Email duplicado responde 409\", function () {",
+                  "  pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna conflicto de negocio\", function () {",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.error.errorCode).to.eql(\"CLIENTE_ALREADY_EXISTS\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{emailDuplicado}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteActualizarId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteActualizarId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{asesorToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "// ═══════════════════════════════════════════════════════════════",
+              "// AUTOMATIZACIÓN HU-03 Actualizar cliente",
+              "// Login automático como cliente",
+              "// ═══════════════════════════════════════════════════════════════",
+              "",
+              "// Verificar si ya tenemos token válido",
+              "const hasToken = pm.collectionVariables.get('clienteToken_logged_in');",
+              "",
+              "if (!hasToken) {",
+              "    console.log('🔐 Login automático para cliente...');",
+              "    ",
+              "    const loginRequest = {",
+              "        url: pm.collectionVariables.get('baseUrl') + '/api/v1/auth/login',",
+              "        method: 'POST',",
+              "        header: {",
+              "            'Content-Type': 'application/json'",
+              "        },",
+              "        body: {",
+              "            mode: 'raw',",
+              "            raw: JSON.stringify({",
+              "                correo: 'maria.gonzalez@test.com',",
+              "                clave: 'Test1234!'",
+              "            })",
+              "        }",
+              "    };",
+              "    ",
+              "    pm.sendRequest(loginRequest, function (err, response) {",
+              "        if (err) {",
+              "            console.error('❌ Error en login automático:', err);",
+              "        } else if (response.code === 200) {",
+              "            const token = response.json().token;",
+              "            pm.collectionVariables.set('clienteToken', token);",
+              "            pm.collectionVariables.set('clienteToken_logged_in', 'true');",
+              "            console.log('✓ Login exitoso, token guardado');",
+              "        } else {",
+              "            console.error('❌ Login falló con código:', response.code);",
+              "        }",
+              "    });",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-03 Seguridad",
+      "item": [
+        {
+          "name": "Request 9: Sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Sin autenticación no permite actualizar\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telefono\": \"3007778899\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteActualizarId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteActualizarId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 10: Cliente intenta actualizar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cliente no autorizado responde 403\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telefono\": \"3007778899\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteActualizarId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteActualizarId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "// ═══════════════════════════════════════════════════════════════",
+              "// AUTOMATIZACIÓN HU-03 Seguridad",
+              "// Login automático como cliente",
+              "// ═══════════════════════════════════════════════════════════════",
+              "",
+              "// Verificar si ya tenemos token válido",
+              "const hasToken = pm.collectionVariables.get('clienteToken_logged_in');",
+              "",
+              "if (!hasToken) {",
+              "    console.log('🔐 Login automático para cliente...');",
+              "    ",
+              "    const loginRequest = {",
+              "        url: pm.collectionVariables.get('baseUrl') + '/api/v1/auth/login',",
+              "        method: 'POST',",
+              "        header: {",
+              "            'Content-Type': 'application/json'",
+              "        },",
+              "        body: {",
+              "            mode: 'raw',",
+              "            raw: JSON.stringify({",
+              "                correo: 'maria.gonzalez@test.com',",
+              "                clave: 'Test1234!'",
+              "            })",
+              "        }",
+              "    };",
+              "    ",
+              "    pm.sendRequest(loginRequest, function (err, response) {",
+              "        if (err) {",
+              "            console.error('❌ Error en login automático:', err);",
+              "        } else if (response.code === 200) {",
+              "            const token = response.json().token;",
+              "            pm.collectionVariables.set('clienteToken', token);",
+              "            pm.collectionVariables.set('clienteToken_logged_in', 'true');",
+              "            console.log('✓ Login exitoso, token guardado');",
+              "        } else {",
+              "            console.error('❌ Login falló con código:', response.code);",
+              "        }",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-04 Crear cuenta",
+      "item": [
+        {
+          "name": "Request 3: Crear cuenta exitosa AHORRO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Creación de cuenta responde 201\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Respuesta no vacía\", function () {",
+                  "  pm.expect(pm.response.text(), \"El body vino vacío\").to.not.be.empty;",
+                  "});",
+                  "",
+                  "// Parseo seguro de JSON",
+                  "let json;",
+                  "try {",
+                  "  json = pm.response.json();",
+                  "} catch (e) {",
+                  "  pm.test(\"Respuesta debe ser JSON válido\", function () {",
+                  "    pm.expect.fail(`No se pudo parsear JSON. Status=${pm.response.code}. Body=\"${pm.response.text()}\"`);",
+                  "  });",
+                  "}",
+                  "",
+                  "if (json) {",
+                  "  pm.test(\"Retorna ApiResponse exitosa\", function () {",
+                  "    pm.expect(json.success).to.eql(true);",
+                  "    pm.expect(json.data.id).to.be.a(\"string\");",
+                  "    pm.expect(json.data.numeroCuenta).to.match(/^CTA-/);",
+                  "    pm.expect(json.data.clienteId).to.eql(pm.environment.get(\"clienteActivoId\"));",
+                  "    pm.expect(json.data.tipoCuenta).to.eql(\"AHORRO\");",
+                  "    pm.expect(json.data.estado).to.eql(\"ACTIVA\");",
+                  "    pm.expect(json.data.saldo).to.eql(0);",
+                  "  });",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteActivoId}}\",\n  \"tipoCuenta\": \"AHORRO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 4: Crear cuenta exitosa CORRIENTE",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Creación de cuenta corriente responde 201\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna tipo CORRIENTE\", function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.data.tipoCuenta).to.eql(\"CORRIENTE\");",
+                  "  pm.expect(json.data.estado).to.eql(\"ACTIVA\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteActivoId}}\",\n  \"tipoCuenta\": \"CORRIENTE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 5: Cliente inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cliente inexistente responde 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna error de cliente no encontrado\", function () {",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.error.errorCode).to.eql(\"CLIENTE_NOT_FOUND\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteInexistenteId}}\",\n  \"tipoCuenta\": \"AHORRO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 6: Cliente inactivo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cliente inactivo responde 422\", function () {",
+                  "  pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna error de cliente inactivo\", function () {",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.error.errorCode).to.eql(\"CLIENTE_INACTIVO\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteInactivoId}}\",\n  \"tipoCuenta\": \"AHORRO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 7: Tipo de cuenta inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Tipo de cuenta inválido responde 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna error de validación o negocio\", function () {",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect([\"VALIDATION_ERROR\", \"TIPO_CUENTA_INVALIDO\"]).to.include(json.error.errorCode);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteActivoId}}\",\n  \"tipoCuenta\": \"FIDUCUENTA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 8: Request incompleto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Request incompleto responde 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna VALIDATION_ERROR\", function () {",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.error.errorCode).to.eql(\"VALIDATION_ERROR\");",
+                  "  pm.expect(json.error.details).to.be.an(\"array\").that.is.not.empty;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipoCuenta\": \"AHORRO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{asesorToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "// ═══════════════════════════════════════════════════════════════",
+              "// AUTOMATIZACIÓN HU-04 Crear cuenta",
+              "// Login automático como asesor",
+              "// ═══════════════════════════════════════════════════════════════",
+              "",
+              "// Verificar si ya tenemos token válido",
+              "const hasToken = pm.collectionVariables.get('asesorToken_logged_in');",
+              "",
+              "if (!hasToken) {",
+              "    console.log('🔐 Login automático para asesor...');",
+              "    ",
+              "    const loginRequest = {",
+              "        url: pm.collectionVariables.get('baseUrl') + '/api/v1/auth/login',",
+              "        method: 'POST',",
+              "        header: {",
+              "            'Content-Type': 'application/json'",
+              "        },",
+              "        body: {",
+              "            mode: 'raw',",
+              "            raw: JSON.stringify({",
+              "                correo: 'asesor@banco.com',",
+              "                clave: 'Test1234!'",
+              "            })",
+              "        }",
+              "    };",
+              "    ",
+              "    pm.sendRequest(loginRequest, function (err, response) {",
+              "        if (err) {",
+              "            console.error('❌ Error en login automático:', err);",
+              "        } else if (response.code === 200) {",
+              "            const token = response.json().token;",
+              "            pm.collectionVariables.set('asesorToken', token);",
+              "            pm.collectionVariables.set('asesorToken_logged_in', 'true');",
+              "            console.log('✓ Login exitoso, token guardado');",
+              "        } else {",
+              "            console.error('❌ Login falló con código:', response.code);",
+              "        }",
+              "    });",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-04 Seguridad",
+      "item": [
+        {
+          "name": "Request 9: Sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Sin autenticación no permite crear cuenta\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteActivoId}}\",\n  \"tipoCuenta\": \"AHORRO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 10: Token de cliente intenta crear cuenta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cliente no autorizado responde 403\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteActivoId}}\",\n  \"tipoCuenta\": \"AHORRO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "// ═══════════════════════════════════════════════════════════════",
+              "// AUTOMATIZACIÓN HU-04 Seguridad",
+              "// Login automático como cliente",
+              "// ═══════════════════════════════════════════════════════════════",
+              "",
+              "// Verificar si ya tenemos token válido",
+              "const hasToken = pm.collectionVariables.get('clienteToken_logged_in');",
+              "",
+              "if (!hasToken) {",
+              "    console.log('🔐 Login automático para cliente...');",
+              "    ",
+              "    const loginRequest = {",
+              "        url: pm.collectionVariables.get('baseUrl') + '/api/v1/auth/login',",
+              "        method: 'POST',",
+              "        header: {",
+              "            'Content-Type': 'application/json'",
+              "        },",
+              "        body: {",
+              "            mode: 'raw',",
+              "            raw: JSON.stringify({",
+              "                correo: 'maria.gonzalez@test.com',",
+              "                clave: 'Test1234!'",
+              "            })",
+              "        }",
+              "    };",
+              "    ",
+              "    pm.sendRequest(loginRequest, function (err, response) {",
+              "        if (err) {",
+              "            console.error('❌ Error en login automático:', err);",
+              "        } else if (response.code === 200) {",
+              "            const token = response.json().token;",
+              "            pm.collectionVariables.set('clienteToken', token);",
+              "            pm.collectionVariables.set('clienteToken_logged_in', 'true');",
+              "            console.log('✓ Login exitoso, token guardado');",
+              "        } else {",
+              "            console.error('❌ Login falló con código:', response.code);",
+              "        }",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-06 Consultar saldo",
+      "item": [
+        {
+          "name": "00 - Login María (ejecutar primero)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login exitoso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('clienteToken', json.token);",
+                  "console.log('✓ Token de María guardado en clienteToken');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"maria.gonzalez@test.com\",\n  \"clave\": \"Test1234!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Request 02: Consulta exitosa del saldo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta tiene estructura correcta', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('object');",
+                  "    pm.expect(json).to.have.property('success', true);",
+                  "    pm.expect(json).to.have.property('data');",
+                  "});",
+                  "",
+                  "pm.test('Saldo es numérico', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.data.saldo).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.test('Saldo es mayor o igual a cero', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.data.saldo).to.be.at.least(0);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Manejado automáticamente por el script de la carpeta HU-06"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas/{{cuentaId}}/saldo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas",
+                "{{cuentaId}}",
+                "saldo"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 03: Cuenta no encontrada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Error es CUENTA_NO_ENCONTRADA', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.error).to.exist;",
+                  "    pm.expect(json.error.errorCode).to.equal('CUENTA_NO_ENCONTRADA');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas/{{cuentaInexistenteId}}/saldo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas",
+                "{{cuentaInexistenteId}}",
+                "saldo"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 04: Cuenta no pertenece al cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 403', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('Error es CUENTA_NO_AUTORIZADA', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.error).to.exist;",
+                  "    pm.expect(json.error.errorCode).to.equal('CUENTA_NO_AUTORIZADA');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas/{{cuenta_otra}}/saldo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas",
+                "{{cuenta_otra}}",
+                "saldo"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 05: Cuenta inactiva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 422', function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test('Error es CUENTA_INACTIVA', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.error).to.exist;",
+                  "    pm.expect(json.error.errorCode).to.equal('CUENTA_INACTIVA');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas/{{cuentaInactiva}}/saldo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas",
+                "{{cuentaInactiva}}",
+                "saldo"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 06: Cuenta bloqueada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 422', function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test('Error es CUENTA_BLOQUEADA o CUENTA_INACTIVA', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.false;",
+                  "    pm.expect(json.error).to.exist;",
+                  "    const validCodes = ['CUENTA_BLOQUEADA', 'CUENTA_INACTIVA'];",
+                  "    pm.expect(validCodes).to.include(json.error.errorCode);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas/{{cuenta_bloqueada}}/saldo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas",
+                "{{cuenta_bloqueada}}",
+                "saldo"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 07: Sin autenticación",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 401 o 403', function () {",
+                  "    pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cuentas/{{cuentaId}}/saldo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cuentas",
+                "{{cuentaId}}",
+                "saldo"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": {
+        "type": "bearer"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "// ═══════════════════════════════════════════════════════════════",
+              "// HU-06: Configuración de variables (UUIDs de cuentas)",
+              "// Login manual requerido antes de ejecutar",
+              "// ═══════════════════════════════════════════════════════════════",
+              "",
+              "// Configurar UUIDs de cuentas de María González",
+              "pm.collectionVariables.set('cuentaId', 'b2000000-0000-0000-0000-000000000001');",
+              "pm.collectionVariables.set('cuenta_bloqueada', 'b2000000-0000-0000-0000-000000000009');",
+              "pm.collectionVariables.set('cuentaInactiva', 'b2000000-0000-0000-0000-000000000010');",
+              "pm.collectionVariables.set('cuenta_otra', 'b2000000-0000-0000-0000-000000000003');",
+              "pm.collectionVariables.set('cuentaInexistenteId', '00000000-0000-0000-0000-000000000001');",
+              "",
+              "console.log('✓ Variables de HU-06 configuradas');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-11 Auth",
+      "item": [
+        {
+          "name": "Request 1: Login cliente exitoso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login cliente responde 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna token JWT\", function () {",
+                  "  pm.expect(json.token).to.be.a(\"string\").and.not.empty;",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"clienteToken\", json.token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{clienteCorreo}}\",\n  \"clave\": \"{{clienteClave}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 2: Login asesor exitoso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login asesor responde 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna token JWT\", function () {",
+                  "  pm.expect(json.token).to.be.a(\"string\").and.not.empty;",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"asesorToken\", json.token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{asesorCorreo}}\",\n  \"clave\": \"{{asesorClave}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 3: Login con credenciales inválidas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Credenciales inválidas responde 401\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna error AUTH_001\", function () {",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.error.errorCode).to.eql(\"AUTH_001\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{clienteCorreo}}\",\n  \"clave\": \"ClaveIncorrecta123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "HU-11 Logout",
+      "item": [
+        {
+          "name": "Request 7: Logout exitoso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Logout responde 204\", function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "// ═══════════════════════════════════════════════════════════════",
+              "// AUTOMATIZACIÓN HU-11 Logout",
+              "// Login automático como cliente",
+              "// ═══════════════════════════════════════════════════════════════",
+              "",
+              "// Verificar si ya tenemos token válido",
+              "const hasToken = pm.collectionVariables.get('clienteToken_logged_in');",
+              "",
+              "if (!hasToken) {",
+              "    console.log('🔐 Login automático para cliente...');",
+              "    ",
+              "    const loginRequest = {",
+              "        url: pm.collectionVariables.get('baseUrl') + '/api/v1/auth/login',",
+              "        method: 'POST',",
+              "        header: {",
+              "            'Content-Type': 'application/json'",
+              "        },",
+              "        body: {",
+              "            mode: 'raw',",
+              "            raw: JSON.stringify({",
+              "                correo: 'maria.gonzalez@test.com',",
+              "                clave: 'Test1234!'",
+              "            })",
+              "        }",
+              "    };",
+              "    ",
+              "    pm.sendRequest(loginRequest, function (err, response) {",
+              "        if (err) {",
+              "            console.error('❌ Error en login automático:', err);",
+              "        } else if (response.code === 200) {",
+              "            const token = response.json().token;",
+              "            pm.collectionVariables.set('clienteToken', token);",
+              "            pm.collectionVariables.set('clienteToken_logged_in', 'true');",
+              "            console.log('✓ Login exitoso, token guardado');",
+              "        } else {",
+              "            console.error('❌ Login falló con código:', response.code);",
+              "        }",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "HU-11 Seguridad",
+      "item": [
+        {
+          "name": "Riesgos",
+          "item": [
+            {
+              "name": "Request 4: Bloqueo por múltiples intentos fallidos",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Al tercer intento bloquea la cuenta\", function () {",
+                      "  pm.response.to.have.status(403);",
+                      "});",
+                      "",
+                      "const json = pm.response.json();",
+                      "",
+                      "pm.test(\"Retorna error AUTH_002\", function () {",
+                      "  pm.expect(json.success).to.eql(false);",
+                      "  pm.expect(json.error.errorCode).to.eql(\"AUTH_002\");",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"correo\": \"{{clienteCorreo}}\",\n  \"clave\": \"ClaveIncorrecta123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es exitoso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta tiene estructura correcta', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Request 5: MFA requerido para admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Admin con MFA activo sin código responde 401\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna error AUTH_003\", function () {",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.error.errorCode).to.eql(\"AUTH_003\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{adminCorreo}}\",\n  \"clave\": \"{{adminClave}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 6: Login admin con MFA correcto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Admin con MFA correcto responde 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna token\", function () {",
+                  "  pm.expect(json.token).to.be.a(\"string\").and.not.empty;",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"adminToken\", json.token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{adminCorreo}}\",\n  \"clave\": \"{{adminClave}}\",\n  \"mfaCode\": \"{{adminMfaCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request 8: Reusar token después de logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Token revocado ya no se puede usar\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clienteToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "// ═══════════════════════════════════════════════════════════════",
+              "// AUTOMATIZACIÓN HU-11 Seguridad",
+              "// Login automático como cliente",
+              "// ═══════════════════════════════════════════════════════════════",
+              "",
+              "// Verificar si ya tenemos token válido",
+              "const hasToken = pm.collectionVariables.get('clienteToken_logged_in');",
+              "",
+              "if (!hasToken) {",
+              "    console.log('🔐 Login automático para cliente...');",
+              "    ",
+              "    const loginRequest = {",
+              "        url: pm.collectionVariables.get('baseUrl') + '/api/v1/auth/login',",
+              "        method: 'POST',",
+              "        header: {",
+              "            'Content-Type': 'application/json'",
+              "        },",
+              "        body: {",
+              "            mode: 'raw',",
+              "            raw: JSON.stringify({",
+              "                correo: 'maria.gonzalez@test.com',",
+              "                clave: 'Test1234!'",
+              "            })",
+              "        }",
+              "    };",
+              "    ",
+              "    pm.sendRequest(loginRequest, function (err, response) {",
+              "        if (err) {",
+              "            console.error('❌ Error en login automático:', err);",
+              "        } else if (response.code === 200) {",
+              "            const token = response.json().token;",
+              "            pm.collectionVariables.set('clienteToken', token);",
+              "            pm.collectionVariables.set('clienteToken_logged_in', 'true');",
+              "            console.log('✓ Login exitoso, token guardado');",
+              "        } else {",
+              "            console.error('❌ Login falló con código:', response.code);",
+              "        }",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "asesorToken",
+      "value": ""
+    },
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "clienteEmail",
+      "value": ""
+    },
+    {
+      "key": "clienteCedula",
+      "value": ""
+    },
+    {
+      "key": "clienteId",
+      "value": ""
+    },
+    {
+      "key": "clienteToken",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    }
+  ]
+}
