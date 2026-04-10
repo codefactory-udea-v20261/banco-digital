@@ -48,13 +48,15 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                 // Endpoints públicos
                 .requestMatchers("/api/v1/auth/login").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/auth/me").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/internal/users/provision-client-access").hasAnyRole("CAJERO", "ADMIN")
                 // Solo asesor/admin puede registrar clientes
                 .requestMatchers(HttpMethod.POST, "/api/v1/clientes").hasAnyRole("CAJERO", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/v1/clientes/*").hasAnyRole("CLIENTE", "CAJERO", "ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/clientes/*").hasAnyRole("CAJERO", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/cuentas").hasAnyRole("CAJERO", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/v1/cuentas/*/saldo").hasAnyRole("CLIENTE", "CAJERO", "ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/v1/cuentas/saldo-total").hasAnyRole("CLIENTE", "CAJERO", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/reportes/saldo-total").hasAnyRole("CLIENTE", "CAJERO", "ADMIN")
                 // El resto debe estar autenticado
                 .anyRequest().authenticated()
             )

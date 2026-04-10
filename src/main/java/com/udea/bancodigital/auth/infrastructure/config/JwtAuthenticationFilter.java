@@ -1,6 +1,7 @@
 package com.udea.bancodigital.auth.infrastructure.config;
 
 import com.udea.bancodigital.auth.domain.port.out.TokenBlacklistPort;
+import com.udea.bancodigital.shared.security.AuthenticatedUser;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -46,13 +48,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String username = jwtProvider.extractUsername(jwt);
                 Claims claims = jwtProvider.getClaims(jwt);
                 List<String> roles = claims.get("roles", List.class);
+                UUID userId = jwtProvider.extractUserId(jwt);
+                UUID clienteId = jwtProvider.extractClienteId(jwt);
 
                 List<GrantedAuthority> authorities = roles.stream()
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
                         .collect(Collectors.toList());
 
+                AuthenticatedUser principal = new AuthenticatedUser(userId, username, clienteId);
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(username, null, authorities);
+                        new UsernamePasswordAuthenticationToken(principal, null, authorities);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
