@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JwtProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">banco-digital-identity</a> &gt; <a href="index.source.html" class="el_package">com.udea.bancodigital.auth.infrastructure.config</a> &gt; <span class="el_source">JwtProvider.java</span></div><h1>JwtProvider.java</h1><pre class="source lang-java linenums">package com.udea.bancodigital.auth.infrastructure.config;
+
+import com.udea.bancodigital.auth.domain.model.Usuario;
+import com.udea.bancodigital.auth.domain.port.out.JwtProviderPort;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Component
+<span class="nc" id="L19">public class JwtProvider implements JwtProviderPort {</span>
+
+    @Value(&quot;${app.security.jwt.secret}&quot;)
+    private String jwtSecret;
+
+    @Value(&quot;${app.security.jwt.expiration-ms}&quot;)
+    private int jwtExpirationMs;
+
+    private SecretKey getSigningKey() {
+<span class="nc" id="L28">        return Keys.hmacShaKeyFor(jwtSecret.getBytes());</span>
+    }
+
+    @Override
+    public String generateToken(Usuario usuario) {
+<span class="nc" id="L33">        Map&lt;String, Object&gt; claims = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L34">        claims.put(&quot;roles&quot;, usuario.getRoles().stream()</span>
+<span class="nc" id="L35">                .map(rol -&gt; rol.getNombre().toUpperCase())</span>
+<span class="nc" id="L36">                .collect(Collectors.toList()));</span>
+<span class="nc" id="L37">        claims.put(&quot;uid&quot;, usuario.getId().toString());</span>
+<span class="nc" id="L38">        claims.put(&quot;activo&quot;, usuario.isActivo());</span>
+<span class="nc" id="L39">        claims.put(&quot;bloqueado&quot;, usuario.isBloqueado());</span>
+<span class="nc" id="L40">        claims.put(&quot;mfaActivo&quot;, usuario.isMfaActivo());</span>
+<span class="nc bnc" id="L41" title="All 2 branches missed.">        if (usuario.getClienteId() != null) {</span>
+<span class="nc" id="L42">            claims.put(&quot;clienteId&quot;, usuario.getClienteId().toString());</span>
+        }
+
+<span class="nc" id="L45">        Date now = new Date();</span>
+<span class="nc" id="L46">        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);</span>
+
+<span class="nc" id="L48">        return Jwts.builder()</span>
+<span class="nc" id="L49">                .claims(claims)</span>
+<span class="nc" id="L50">                .subject(usuario.getCorreo())</span>
+<span class="nc" id="L51">                .id(UUID.randomUUID().toString()) // jti</span>
+<span class="nc" id="L52">                .issuedAt(now)</span>
+<span class="nc" id="L53">                .expiration(expiryDate)</span>
+<span class="nc" id="L54">                .signWith(getSigningKey())</span>
+<span class="nc" id="L55">                .compact();</span>
+    }
+
+    @Override
+    public long getExpirationTime() {
+<span class="nc" id="L60">        return jwtExpirationMs;</span>
+    }
+
+    @Override
+    public String extractJti(String token) {
+<span class="nc" id="L65">        Claims claims = getClaims(token);</span>
+<span class="nc" id="L66">        return claims.getId();</span>
+    }
+
+    @Override
+    public UUID extractUserId(String token) {
+<span class="nc" id="L71">        Object userId = getClaims(token).get(&quot;uid&quot;);</span>
+<span class="nc" id="L72">        return UUID.fromString(userId.toString());</span>
+    }
+
+    public String extractUsername(String token) {
+<span class="nc" id="L76">        return getClaims(token).getSubject();</span>
+    }
+
+    public Date extractExpiration(String token) {
+<span class="nc" id="L80">        return getClaims(token).getExpiration();</span>
+    }
+
+    public boolean isTokenValid(String token) {
+        try {
+<span class="nc" id="L85">            Claims claims = getClaims(token);</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">            return !claims.getExpiration().before(new Date());</span>
+<span class="nc" id="L87">        } catch (Exception e) {</span>
+<span class="nc" id="L88">            return false;</span>
+        }
+    }
+
+    public Claims getClaims(String token) {
+<span class="nc" id="L93">        return Jwts.parser()</span>
+<span class="nc" id="L94">                .verifyWith(getSigningKey())</span>
+<span class="nc" id="L95">                .build()</span>
+<span class="nc" id="L96">                .parseSignedClaims(token)</span>
+<span class="nc" id="L97">                .getPayload();</span>
+    }
+    /*HU 06-Se crea un metodo para extraer la id del cliente*/
+    public UUID extractClienteId(String token) {
+<span class="nc" id="L101">    Object clienteId = getClaims(token).get(&quot;clienteId&quot;);</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">    if (clienteId == null) {</span>
+<span class="nc" id="L103">        return null;</span>
+    }
+<span class="nc" id="L105">    return UUID.fromString(clienteId.toString());</span>
+}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

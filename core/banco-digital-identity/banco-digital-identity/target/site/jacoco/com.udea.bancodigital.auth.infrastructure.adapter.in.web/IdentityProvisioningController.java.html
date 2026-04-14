@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>IdentityProvisioningController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">banco-digital-identity</a> &gt; <a href="index.source.html" class="el_package">com.udea.bancodigital.auth.infrastructure.adapter.in.web</a> &gt; <span class="el_source">IdentityProvisioningController.java</span></div><h1>IdentityProvisioningController.java</h1><pre class="source lang-java linenums">package com.udea.bancodigital.auth.infrastructure.adapter.in.web;
+
+import com.udea.bancodigital.auth.application.dto.ProvisionClientAccessRequestDto;
+import com.udea.bancodigital.auth.application.dto.ProvisionClientAccessResponseDto;
+import com.udea.bancodigital.auth.domain.port.in.ProvisionClientAccessPort;
+import com.udea.bancodigital.shared.web.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping(&quot;/api/v1/internal/users&quot;)
+<span class="fc" id="L21">@RequiredArgsConstructor</span>
+@Tag(name = &quot;Identidad Interna&quot;, description = &quot;API interna para operaciones de identidad que seran consumidas por otros servicios&quot;)
+public class IdentityProvisioningController {
+
+    private final ProvisionClientAccessPort provisionClientAccessPort;
+
+    @PostMapping(&quot;/provision-client-access&quot;)
+    @Operation(
+            summary = &quot;Provisionar acceso digital para un cliente&quot;,
+            description = &quot;Prepara el contrato interno que usara el core bancario para solicitar la creacion del usuario digital de un cliente.&quot;
+    )
+    @SecurityRequirement(name = &quot;Bearer Authentication&quot;)
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = &quot;200&quot;,
+                    description = &quot;Acceso provisionado o ya existente&quot;
+            )
+    })
+    public ResponseEntity&lt;ApiResponse&lt;ProvisionClientAccessResponseDto&gt;&gt; provisionClientAccess(
+            @Valid @RequestBody ProvisionClientAccessRequestDto request) {
+<span class="fc" id="L41">        ProvisionClientAccessResponseDto response = provisionClientAccessPort.provisionClientAccess(request);</span>
+<span class="fc" id="L42">        return ResponseEntity.ok(ApiResponse.ok(response));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,67 +1,116 @@
+version: '3.8'
+
 services:
-  db:
+  # PostgreSQL Database (shared)
+  postgres:
     image: postgres:16-alpine
-    container_name: banco_digital_db
-    restart: unless-stopped
+    container_name: banco-digital-db
     environment:
-      POSTGRES_DB: ${DB_NAME:-banco_digital}
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_MULTIPLE_DATABASES: banco_digital_core,banco_digital_identity,banco_digital_audit
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-banco_digital}"]
-      interval: 10s
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - banco-digital-network
 
-  app:
-    build: .
-    container_name: banco_digital_app
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
+  # Core Banking Service
+  core-banking:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: core-banking
+        JAR_FILE: target/banco-digital-core-banking-0.0.1-SNAPSHOT.jar
+    container_name: banco-digital-core-banking
+    ports:
+      - "8080:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: prod
-      DB_HOST: db
+      DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-banco_digital}
-      DB_USERNAME: ${DB_USERNAME:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-3600000}
-    ports:
-      - "${APP_PORT:-8080}:8080"
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # ── Observability ─────────────────────
-  prometheus:
-    image: prom/prometheus:v2.51.0
-    container_name: banco_prometheus
-    profiles: ["observability"]
-    volumes:
-      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-
-  grafana:
-    image: grafana/grafana:10.4.0
-    container_name: banco_grafana
-    profiles: ["observability"]
+      DB_NAME: banco_digital_core
+      DB_USERNAME: postgres
+      DB_PASSWORD: admin
+      IDENTITY_SERVICE_URL: http://identity:8081
+      AUDIT_SERVICE_URL: http://audit:8082
+      JWT_SECRET: dev_secret_replace_in_prod_must_be_256bits
+      JWT_EXPIRATION_MS: 3600000
+      APP_PROFILE: local
     depends_on:
-      - prometheus
-    volumes:
-      - grafana_data:/var/lib/grafana
+      postgres:
+        condition: service_healthy
+    networks:
+      - banco-digital-network
+    restart: unless-stopped
+
+  # Identity Service
+  identity:
+    build:
+      context: ./core/banco-digital-identity
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: identity
+        JAR_FILE: target/banco-digital-identity-0.0.1-SNAPSHOT.jar
+    container_name: banco-digital-identity
     ports:
-      - "3000:3000"
+      - "8081:8081"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: banco_digital_identity
+      DB_USERNAME: postgres
+      DB_PASSWORD: admin
+      JWT_SECRET: dev_secret_replace_in_prod_must_be_256bits
+      JWT_EXPIRATION_MS: 3600000
+      APP_PORT: 8081
+      APP_PROFILE: local
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - banco-digital-network
+    restart: unless-stopped
+
+  # Audit Service
+  audit:
+    build:
+      context: ./core/banco-digital-audit
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: audit
+        JAR_FILE: target/banco-digital-audit-0.0.1-SNAPSHOT.jar
+    container_name: banco-digital-audit
+    ports:
+      - "8082:8082"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: banco_digital_audit
+      DB_USERNAME: postgres
+      DB_PASSWORD: admin
+      JWT_SECRET: dev_secret_replace_in_prod_must_be_256bits
+      JWT_EXPIRATION_MS: 3600000
+      APP_PORT: 8082
+      APP_PROFILE: local
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - banco-digital-network
+    restart: unless-stopped
 
 volumes:
-  pgdata:
-  grafana_data:
+  postgres_data:
+    driver: local
+
+networks:
+  banco-digital-network:
+    driver: bridge

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">banco-digital-identity</a> &gt; <a href="index.source.html" class="el_package">com.udea.bancodigital.infrastructure.config</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">package com.udea.bancodigital.infrastructure.config;
+
+import com.udea.bancodigital.auth.infrastructure.config.JwtAuthenticationFilter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+/**
+ * Configuración de seguridad.
+ *
+ * PROPÓSITO: Establecer JwtAuthenticationFilter y reglas
+ * estrictas para validación de tokens.
+ */
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+<span class="fc" id="L28">    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {</span>
+<span class="fc" id="L29">        this.jwtAuthenticationFilter = jwtAuthenticationFilter;</span>
+<span class="fc" id="L30">    }</span>
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+<span class="fc" id="L34">        http</span>
+<span class="fc" id="L35">            .csrf(AbstractHttpConfigurer::disable)</span>
+<span class="fc" id="L36">            .cors(cors -&gt; cors.configure(http)) // Permitimos políticas de CORS manejadas globalmente o localmente</span>
+<span class="fc" id="L37">            .sessionManagement(session -&gt;</span>
+<span class="fc" id="L38">                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))</span>
+<span class="fc" id="L39">            .authorizeHttpRequests(auth -&gt; auth</span>
+                // Swagger / OpenAPI
+<span class="fc" id="L41">                .requestMatchers(</span>
+                    &quot;/swagger-ui/**&quot;,
+                    &quot;/swagger-ui.html&quot;,
+                    &quot;/api-docs/**&quot;,
+                    &quot;/api-docs.yaml&quot;
+<span class="fc" id="L46">                ).permitAll()</span>
+                // Actuator (health checks para Docker/Render)
+<span class="fc" id="L48">                .requestMatchers(&quot;/actuator/health&quot;, &quot;/actuator/info&quot;).permitAll()</span>
+                // Endpoints públicos
+<span class="fc" id="L50">                .requestMatchers(&quot;/api/v1/auth/login&quot;).permitAll()</span>
+<span class="fc" id="L51">                .requestMatchers(HttpMethod.GET, &quot;/api/v1/auth/me&quot;).authenticated()</span>
+<span class="fc" id="L52">                .requestMatchers(HttpMethod.POST, &quot;/api/v1/internal/users/provision-client-access&quot;).hasAnyRole(&quot;CAJERO&quot;, &quot;ADMIN&quot;)</span>
+                // Solo asesor/admin puede registrar clientes
+<span class="fc" id="L54">                .requestMatchers(HttpMethod.POST, &quot;/api/v1/clientes&quot;).hasAnyRole(&quot;CAJERO&quot;, &quot;ADMIN&quot;)</span>
+<span class="fc" id="L55">                .requestMatchers(HttpMethod.GET, &quot;/api/v1/clientes/*&quot;).hasAnyRole(&quot;CLIENTE&quot;, &quot;CAJERO&quot;, &quot;ADMIN&quot;)</span>
+<span class="fc" id="L56">                .requestMatchers(HttpMethod.PATCH, &quot;/api/v1/clientes/*&quot;).hasAnyRole(&quot;CAJERO&quot;, &quot;ADMIN&quot;)</span>
+<span class="fc" id="L57">                .requestMatchers(HttpMethod.POST, &quot;/api/v1/cuentas&quot;).hasAnyRole(&quot;CAJERO&quot;, &quot;ADMIN&quot;)</span>
+<span class="fc" id="L58">                .requestMatchers(HttpMethod.GET, &quot;/api/v1/cuentas/*/saldo&quot;).hasAnyRole(&quot;CLIENTE&quot;, &quot;CAJERO&quot;, &quot;ADMIN&quot;)</span>
+<span class="fc" id="L59">                .requestMatchers(HttpMethod.GET, &quot;/api/v1/reportes/saldo-total&quot;).hasAnyRole(&quot;CLIENTE&quot;, &quot;CAJERO&quot;, &quot;ADMIN&quot;)</span>
+                // El resto debe estar autenticado
+<span class="fc" id="L61">                .anyRequest().authenticated()</span>
+            )
+<span class="fc" id="L63">            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);</span>
+<span class="fc" id="L64">        return http.build();</span>
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+<span class="fc" id="L69">        return new BCryptPasswordEncoder(12);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

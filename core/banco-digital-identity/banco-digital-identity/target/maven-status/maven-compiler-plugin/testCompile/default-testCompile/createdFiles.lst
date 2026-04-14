@@ -1,0 +1,5 @@
+com/udea/bancodigital/auth/application/usecase/ProvisionClientAccessUseCaseTest.class
+com/udea/bancodigital/auth/infrastructure/adapter/out/UsuarioRepositoryAdapterTest.class
+com/udea/bancodigital/auth/infrastructure/adapter/out/JpaTokenBlacklistAdapterTest.class
+com/udea/bancodigital/auth/infrastructure/adapter/in/web/IdentityControllerTest.class
+com/udea/bancodigital/auth/application/usecase/AuthUseCaseTest.class

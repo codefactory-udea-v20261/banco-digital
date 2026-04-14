@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthUseCase.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">banco-digital-identity</a> &gt; <a href="index.source.html" class="el_package">com.udea.bancodigital.auth.application.usecase</a> &gt; <span class="el_source">AuthUseCase.java</span></div><h1>AuthUseCase.java</h1><pre class="source lang-java linenums">package com.udea.bancodigital.auth.application.usecase;
+
+import com.udea.bancodigital.auth.application.dto.LoginRequestDto;
+import com.udea.bancodigital.auth.application.dto.LoginResponseDto;
+import com.udea.bancodigital.auth.application.dto.LogoutRequestDto;
+import com.udea.bancodigital.auth.domain.model.Rol;
+import com.udea.bancodigital.auth.domain.model.Usuario;
+import com.udea.bancodigital.auth.domain.port.in.AuthPort;
+import com.udea.bancodigital.auth.domain.port.out.JwtProviderPort;
+import com.udea.bancodigital.auth.domain.port.out.PasswordEncoderPort;
+import com.udea.bancodigital.auth.domain.port.out.TokenBlacklistPort;
+import com.udea.bancodigital.auth.domain.port.out.UsuarioRepositoryPort;
+import com.udea.bancodigital.shared.exception.CredencialesInvalidasException;
+import com.udea.bancodigital.shared.exception.CuentaBloqueadaException;
+import com.udea.bancodigital.shared.exception.MfaRequeridoException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.util.Set;
+
+@Service
+public class AuthUseCase implements AuthPort {
+
+    private final UsuarioRepositoryPort usuarioRepositoryPort;
+    private final PasswordEncoderPort passwordEncoderPort;
+    private final JwtProviderPort jwtProviderPort;
+    private final TokenBlacklistPort tokenBlacklistPort;
+
+<span class="fc" id="L30">    @Value(&quot;${app.security.login.max-failed-attempts:3}&quot;)</span>
+    private int maxFailedAttempts = 3;
+
+    public AuthUseCase(UsuarioRepositoryPort usuarioRepositoryPort,
+                        PasswordEncoderPort passwordEncoderPort,
+                        JwtProviderPort jwtProviderPort,
+<span class="fc" id="L36">                        TokenBlacklistPort tokenBlacklistPort) {</span>
+<span class="fc" id="L37">        this.usuarioRepositoryPort = usuarioRepositoryPort;</span>
+<span class="fc" id="L38">        this.passwordEncoderPort = passwordEncoderPort;</span>
+<span class="fc" id="L39">        this.jwtProviderPort = jwtProviderPort;</span>
+<span class="fc" id="L40">        this.tokenBlacklistPort = tokenBlacklistPort;</span>
+<span class="fc" id="L41">    }</span>
+
+    @Override
+    public LoginResponseDto login(LoginRequestDto request) {
+<span class="fc" id="L45">        Usuario usuario = usuarioRepositoryPort.findByEmail(request.getCorreo())</span>
+<span class="fc" id="L46">                .orElseThrow(CredencialesInvalidasException::new);</span>
+
+<span class="pc bpc" id="L48" title="2 of 4 branches missed.">        if (!usuario.isBloqueado() &amp;&amp; usuario.getIntentosFallidos() != null</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">                &amp;&amp; usuario.getIntentosFallidos() &gt;= maxFailedAttempts) {</span>
+<span class="fc" id="L50">            usuario = resetFailedAttempts(usuario);</span>
+<span class="fc" id="L51">            usuarioRepositoryPort.save(usuario);</span>
+        }
+
+<span class="pc bpc" id="L54" title="2 of 4 branches missed.">        if (!usuario.isActivo() || usuario.isBloqueado()) {</span>
+<span class="nc" id="L55">            throw new CuentaBloqueadaException();</span>
+        }
+
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (!passwordEncoderPort.matches(request.getClave(), usuario.getClave())) {</span>
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">            int intentos = usuario.getIntentosFallidos() == null ? 0 : usuario.getIntentosFallidos();</span>
+<span class="fc" id="L60">            intentos++;</span>
+            
+<span class="fc" id="L62">            Usuario usuarioActualizado = Usuario.builder()</span>
+<span class="fc" id="L63">                    .id(usuario.getId())</span>
+<span class="fc" id="L64">                    .clienteId(usuario.getClienteId())</span>
+<span class="fc" id="L65">                    .correo(usuario.getCorreo())</span>
+<span class="fc" id="L66">                    .clave(usuario.getClave())</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">                    .activo(usuario.isActivo())</span>
+<span class="fc" id="L68">                    .bloqueado(intentos &gt;= maxFailedAttempts)</span>
+<span class="fc" id="L69">                    .intentosFallidos(intentos)</span>
+<span class="fc" id="L70">                    .secretoMfa(usuario.getSecretoMfa())</span>
+<span class="fc" id="L71">                    .mfaActivo(usuario.isMfaActivo())</span>
+<span class="fc" id="L72">                    .roles(usuario.getRoles())</span>
+<span class="fc" id="L73">                    .build();</span>
+            
+<span class="fc" id="L75">            usuarioRepositoryPort.save(usuarioActualizado);</span>
+            
+<span class="fc bfc" id="L77" title="All 2 branches covered.">            if (usuarioActualizado.isBloqueado()) {</span>
+<span class="fc" id="L78">                throw new CuentaBloqueadaException();</span>
+            }
+<span class="fc" id="L80">            throw new CredencialesInvalidasException();</span>
+        }
+
+<span class="fc" id="L83">        boolean requiresMfa = requiresMfa(usuario);</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        if (requiresMfa) {</span>
+<span class="pc bpc" id="L85" title="5 of 6 branches missed.">            if (request.getMfaCode() == null || request.getMfaCode().isBlank() || !request.getMfaCode().equals(usuario.getSecretoMfa())) {</span>
+<span class="fc" id="L86">                throw new MfaRequeridoException();</span>
+            }
+        }
+
+<span class="pc bpc" id="L90" title="2 of 4 branches missed.">        if (usuario.getIntentosFallidos() != null &amp;&amp; usuario.getIntentosFallidos() &gt; 0) {</span>
+<span class="nc" id="L91">            Usuario usuarioActualizado = resetFailedAttempts(usuario);</span>
+<span class="nc" id="L92">            usuarioRepositoryPort.save(usuarioActualizado);</span>
+        }
+
+<span class="fc" id="L95">        String token = jwtProviderPort.generateToken(usuario);</span>
+<span class="fc" id="L96">        return new LoginResponseDto(token);</span>
+    }
+
+    @Override
+    public void logout(LogoutRequestDto request) {
+<span class="fc" id="L101">        String token = request.getToken();</span>
+<span class="pc bpc" id="L102" title="2 of 4 branches missed.">        if (token != null &amp;&amp; token.startsWith(&quot;Bearer &quot;)) {</span>
+<span class="fc" id="L103">            token = token.substring(7);</span>
+        }
+<span class="fc" id="L105">        String jti = jwtProviderPort.extractJti(token);</span>
+<span class="fc" id="L106">        Instant expiration = jwtProviderPort.extractExpiration(token).toInstant();</span>
+<span class="fc" id="L107">        tokenBlacklistPort.revoke(jti, jwtProviderPort.extractUserId(token), expiration);</span>
+<span class="fc" id="L108">    }</span>
+
+    private boolean requiresMfa(Usuario usuario) {
+<span class="fc" id="L111">        Set&lt;Rol&gt; roles = usuario.getRoles();</span>
+<span class="pc bpc" id="L112" title="1 of 4 branches missed.">        if (!usuario.isMfaActivo() || roles == null) {</span>
+<span class="fc" id="L113">            return false;</span>
+        }
+<span class="fc" id="L115">        return roles.stream().anyMatch(rol -&gt; </span>
+<span class="pc bpc" id="L116" title="3 of 4 branches missed.">            &quot;ADMIN&quot;.equalsIgnoreCase(rol.getNombre()) || &quot;AUDITOR&quot;.equalsIgnoreCase(rol.getNombre())</span>
+        );
+    }
+
+    private Usuario resetFailedAttempts(Usuario usuario) {
+<span class="fc" id="L121">        return Usuario.builder()</span>
+<span class="fc" id="L122">                .id(usuario.getId())</span>
+<span class="fc" id="L123">                .clienteId(usuario.getClienteId())</span>
+<span class="fc" id="L124">                .correo(usuario.getCorreo())</span>
+<span class="fc" id="L125">                .clave(usuario.getClave())</span>
+<span class="fc" id="L126">                .activo(usuario.isActivo())</span>
+<span class="fc" id="L127">                .bloqueado(false)</span>
+<span class="fc" id="L128">                .intentosFallidos(0)</span>
+<span class="fc" id="L129">                .secretoMfa(usuario.getSecretoMfa())</span>
+<span class="fc" id="L130">                .mfaActivo(usuario.isMfaActivo())</span>
+<span class="fc" id="L131">                .roles(usuario.getRoles())</span>
+<span class="fc" id="L132">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

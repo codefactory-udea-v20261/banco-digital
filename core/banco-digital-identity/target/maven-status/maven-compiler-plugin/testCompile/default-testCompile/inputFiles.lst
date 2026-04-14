@@ -1,0 +1,5 @@
+/home/nia/projects/udea/arquisoft/banco-digital/core/banco-digital-identity/src/test/java/com/udea/bancodigital/auth/application/usecase/ProvisionClientAccessUseCaseTest.java
+/home/nia/projects/udea/arquisoft/banco-digital/core/banco-digital-identity/src/test/java/com/udea/bancodigital/auth/infrastructure/adapter/out/UsuarioRepositoryAdapterTest.java
+/home/nia/projects/udea/arquisoft/banco-digital/core/banco-digital-identity/src/test/java/com/udea/bancodigital/auth/infrastructure/adapter/out/JpaTokenBlacklistAdapterTest.java
+/home/nia/projects/udea/arquisoft/banco-digital/core/banco-digital-identity/src/test/java/com/udea/bancodigital/auth/application/usecase/AuthUseCaseTest.java
+/home/nia/projects/udea/arquisoft/banco-digital/core/banco-digital-identity/src/test/java/com/udea/bancodigital/auth/infrastructure/adapter/in/web/IdentityControllerTest.java

@@ -1,0 +1,8 @@
+com/udea/bancodigital/accounts/application/usecase/CrearCuentaUseCaseTest.class
+com/udea/bancodigital/accounts/application/usecase/ConsultarSaldoUseCaseTest.class
+com/udea/bancodigital/customers/application/usecase/ActualizarClienteUseCaseTest.class
+com/udea/bancodigital/customers/infrastructure/adapter/out/auth/ClienteAccessControlAdapterTest.class
+com/udea/bancodigital/customers/application/usecase/ObtenerClienteUseCaseTest.class
+com/udea/bancodigital/customers/application/usecase/CrearClienteUseCaseTest.class
+com/udea/bancodigital/customers/application/dto/ActualizarClienteRequestDtoTest.class
+com/udea/bancodigital/BancoDigitalApplicationTests.class

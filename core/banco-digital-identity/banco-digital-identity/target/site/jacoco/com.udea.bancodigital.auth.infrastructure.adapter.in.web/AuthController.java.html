@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">banco-digital-identity</a> &gt; <a href="index.source.html" class="el_package">com.udea.bancodigital.auth.infrastructure.adapter.in.web</a> &gt; <span class="el_source">AuthController.java</span></div><h1>AuthController.java</h1><pre class="source lang-java linenums">package com.udea.bancodigital.auth.infrastructure.adapter.in.web;
+
+import com.udea.bancodigital.auth.application.dto.LoginRequestDto;
+import com.udea.bancodigital.auth.application.dto.LoginResponseDto;
+import com.udea.bancodigital.auth.application.dto.LogoutRequestDto;
+import com.udea.bancodigital.auth.domain.port.in.AuthPort;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping(&quot;/api/v1/auth&quot;)
+@Tag(name = &quot;Autenticacion&quot;, description = &quot;API para autenticacion, emision y revocacion de tokens JWT&quot;)
+public class AuthController {
+
+    private final AuthPort authPort;
+
+<span class="nc" id="L24">    public AuthController(AuthPort authPort) {</span>
+<span class="nc" id="L25">        this.authPort = authPort;</span>
+<span class="nc" id="L26">    }</span>
+
+    @PostMapping(&quot;/login&quot;)
+    @Operation(
+            summary = &quot;Autenticar usuario&quot;,
+            description = &quot;Valida credenciales y retorna un token JWT para consumir las APIs protegidas.&quot;
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = &quot;200&quot;,
+                    description = &quot;Autenticacion exitosa&quot;,
+                    content = @Content(mediaType = &quot;application/json&quot;, schema = @Schema(implementation = LoginResponseDto.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = &quot;400&quot;,
+                    description = &quot;Credenciales con formato invalido&quot;,
+                    content = @Content(mediaType = &quot;application/json&quot;)
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = &quot;401&quot;,
+                    description = &quot;Credenciales invalidas&quot;,
+                    content = @Content(mediaType = &quot;application/json&quot;)
+            )
+    })
+    public ResponseEntity&lt;LoginResponseDto&gt; login(@Valid @RequestBody LoginRequestDto request) {
+<span class="nc" id="L51">        LoginResponseDto response = authPort.login(request);</span>
+<span class="nc" id="L52">        return ResponseEntity.ok(response);</span>
+    }
+
+    @PostMapping(&quot;/logout&quot;)
+    @Operation(
+            summary = &quot;Cerrar sesion&quot;,
+            description = &quot;Revoca el token JWT enviado en el encabezado Authorization para impedir su reutilizacion.&quot;
+    )
+    @SecurityRequirement(name = &quot;Bearer Authentication&quot;)
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = &quot;204&quot;,
+                    description = &quot;Sesion cerrada exitosamente&quot;
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = &quot;400&quot;,
+                    description = &quot;Encabezado Authorization ausente o invalido&quot;,
+                    content = @Content(mediaType = &quot;application/json&quot;)
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = &quot;401&quot;,
+                    description = &quot;Token invalido o expirado&quot;,
+                    content = @Content(mediaType = &quot;application/json&quot;)
+            )
+    })
+    public ResponseEntity&lt;Void&gt; logout(@RequestHeader(&quot;Authorization&quot;) String authorizationHeader) {
+<span class="nc" id="L78">        LogoutRequestDto request = new LogoutRequestDto();</span>
+<span class="nc" id="L79">        request.setToken(authorizationHeader);</span>
+<span class="nc" id="L80">        authPort.logout(request);</span>
+<span class="nc" id="L81">        return ResponseEntity.noContent().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

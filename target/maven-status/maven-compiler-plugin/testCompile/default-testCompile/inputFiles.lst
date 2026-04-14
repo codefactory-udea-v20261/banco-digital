@@ -1,0 +1,8 @@
+/home/nia/projects/udea/arquisoft/banco-digital/src/test/java/com/udea/bancodigital/accounts/application/usecase/ConsultarSaldoUseCaseTest.java
+/home/nia/projects/udea/arquisoft/banco-digital/src/test/java/com/udea/bancodigital/customers/application/usecase/ObtenerClienteUseCaseTest.java
+/home/nia/projects/udea/arquisoft/banco-digital/src/test/java/com/udea/bancodigital/BancoDigitalApplicationTests.java
+/home/nia/projects/udea/arquisoft/banco-digital/src/test/java/com/udea/bancodigital/customers/application/usecase/ActualizarClienteUseCaseTest.java
+/home/nia/projects/udea/arquisoft/banco-digital/src/test/java/com/udea/bancodigital/accounts/application/usecase/CrearCuentaUseCaseTest.java
+/home/nia/projects/udea/arquisoft/banco-digital/src/test/java/com/udea/bancodigital/customers/infrastructure/adapter/out/auth/ClienteAccessControlAdapterTest.java
+/home/nia/projects/udea/arquisoft/banco-digital/src/test/java/com/udea/bancodigital/customers/application/usecase/CrearClienteUseCaseTest.java
+/home/nia/projects/udea/arquisoft/banco-digital/src/test/java/com/udea/bancodigital/customers/application/dto/ActualizarClienteRequestDtoTest.java

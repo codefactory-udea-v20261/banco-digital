@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProvisionClientAccessUseCase.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">banco-digital-identity</a> &gt; <a href="index.source.html" class="el_package">com.udea.bancodigital.auth.application.usecase</a> &gt; <span class="el_source">ProvisionClientAccessUseCase.java</span></div><h1>ProvisionClientAccessUseCase.java</h1><pre class="source lang-java linenums">package com.udea.bancodigital.auth.application.usecase;
+
+import com.udea.bancodigital.auth.application.dto.ProvisionClientAccessRequestDto;
+import com.udea.bancodigital.auth.application.dto.ProvisionClientAccessResponseDto;
+import com.udea.bancodigital.auth.domain.model.Rol;
+import com.udea.bancodigital.auth.domain.model.Usuario;
+import com.udea.bancodigital.auth.domain.port.in.ProvisionClientAccessPort;
+import com.udea.bancodigital.auth.domain.port.out.PasswordEncoderPort;
+import com.udea.bancodigital.auth.domain.port.out.UsuarioRepositoryPort;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.util.Set;
+import java.util.UUID;
+
+@Service
+<span class="fc" id="L18">@RequiredArgsConstructor</span>
+public class ProvisionClientAccessUseCase implements ProvisionClientAccessPort {
+
+    private static final short CLIENT_ROLE_ID = 3;
+    private static final String CLIENT_ROLE_NAME = &quot;CLIENTE&quot;;
+    private static final String STATUS_PROVISIONED = &quot;PROVISIONED&quot;;
+    private static final String STATUS_ALREADY_EXISTS = &quot;ALREADY_EXISTS&quot;;
+
+    private final UsuarioRepositoryPort usuarioRepositoryPort;
+    private final PasswordEncoderPort passwordEncoderPort;
+
+    @Value(&quot;${app.security.default-client-password:Temp1234!}&quot;)
+    private String defaultClientPassword;
+
+    @Override
+    public boolean existsByEmail(String email) {
+<span class="fc" id="L34">        return usuarioRepositoryPort.existsByUsername(email);</span>
+    }
+
+    @Override
+    public ProvisionClientAccessResponseDto provisionClientAccess(ProvisionClientAccessRequestDto request) {
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        if (existsByEmail(request.getEmail())) {</span>
+<span class="fc" id="L40">            Usuario usuarioExistente = usuarioRepositoryPort.findByEmail(request.getEmail()).orElse(null);</span>
+<span class="fc" id="L41">            return ProvisionClientAccessResponseDto.builder()</span>
+<span class="pc bpc" id="L42" title="1 of 2 branches missed.">                    .userId(usuarioExistente != null ? usuarioExistente.getId() : null)</span>
+<span class="fc" id="L43">                    .clienteId(request.getClienteId())</span>
+<span class="fc" id="L44">                    .email(request.getEmail())</span>
+<span class="fc" id="L45">                    .status(STATUS_ALREADY_EXISTS)</span>
+<span class="fc" id="L46">                    .build();</span>
+        }
+
+<span class="fc" id="L49">        Usuario usuarioCliente = Usuario.builder()</span>
+<span class="fc" id="L50">                .id(UUID.randomUUID())</span>
+<span class="fc" id="L51">                .clienteId(request.getClienteId())</span>
+<span class="fc" id="L52">                .correo(request.getEmail())</span>
+<span class="fc" id="L53">                .clave(passwordEncoderPort.encode(defaultClientPassword))</span>
+<span class="fc" id="L54">                .activo(true)</span>
+<span class="fc" id="L55">                .bloqueado(false)</span>
+<span class="fc" id="L56">                .intentosFallidos(0)</span>
+<span class="fc" id="L57">                .mfaActivo(false)</span>
+<span class="fc" id="L58">                .roles(Set.of(Rol.builder()</span>
+<span class="fc" id="L59">                        .id(CLIENT_ROLE_ID)</span>
+<span class="fc" id="L60">                        .nombre(CLIENT_ROLE_NAME)</span>
+<span class="fc" id="L61">                        .build()))</span>
+<span class="fc" id="L62">                .build();</span>
+
+<span class="fc" id="L64">        Usuario usuarioGuardado = usuarioRepositoryPort.save(usuarioCliente);</span>
+
+<span class="fc" id="L66">        return ProvisionClientAccessResponseDto.builder()</span>
+<span class="fc" id="L67">                .userId(usuarioGuardado.getId())</span>
+<span class="fc" id="L68">                .clienteId(usuarioGuardado.getClienteId())</span>
+<span class="fc" id="L69">                .email(usuarioGuardado.getCorreo())</span>
+<span class="fc" id="L70">                .status(STATUS_PROVISIONED)</span>
+<span class="fc" id="L71">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,5 @@
+/tmp/microservices-extraction/banco-digital-identity/src/test/java/com/udea/bancodigital/auth/application/usecase/ProvisionClientAccessUseCaseTest.java
+/tmp/microservices-extraction/banco-digital-identity/src/test/java/com/udea/bancodigital/auth/infrastructure/adapter/in/web/IdentityControllerTest.java
+/tmp/microservices-extraction/banco-digital-identity/src/test/java/com/udea/bancodigital/auth/infrastructure/adapter/out/UsuarioRepositoryAdapterTest.java
+/tmp/microservices-extraction/banco-digital-identity/src/test/java/com/udea/bancodigital/auth/infrastructure/adapter/out/JpaTokenBlacklistAdapterTest.java
+/tmp/microservices-extraction/banco-digital-identity/src/test/java/com/udea/bancodigital/auth/application/usecase/AuthUseCaseTest.java

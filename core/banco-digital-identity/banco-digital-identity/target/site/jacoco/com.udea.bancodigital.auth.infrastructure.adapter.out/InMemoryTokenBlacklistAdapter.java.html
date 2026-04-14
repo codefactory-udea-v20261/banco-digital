@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InMemoryTokenBlacklistAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">banco-digital-identity</a> &gt; <a href="index.source.html" class="el_package">com.udea.bancodigital.auth.infrastructure.adapter.out</a> &gt; <span class="el_source">InMemoryTokenBlacklistAdapter.java</span></div><h1>InMemoryTokenBlacklistAdapter.java</h1><pre class="source lang-java linenums">package com.udea.bancodigital.auth.infrastructure.adapter.out;
+
+import com.udea.bancodigital.auth.domain.port.out.TokenBlacklistPort;
+import lombok.extern.slf4j.Slf4j;
+
+import java.time.Instant;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Implementación en memoria del blacklist de tokens.
+ * 
+ * NOTA: Esta es una implementación básica para desarrollo.
+ * En producción se debe usar Redis para persistencia distribuida.
+ * 
+ * LIMITACIONES:
+ * - Los tokens se almacenan en memoria (se pierden al reiniciar)
+ * - No funciona en ambientes multi-instancia
+ * - No hay limpieza automática de tokens expirados
+ * 
+ * MEJORA FUTURA: Implementar con Redis usando Spring Data Redis
+ */
+<span class="nc" id="L24">@Slf4j</span>
+<span class="nc" id="L25">public class InMemoryTokenBlacklistAdapter implements TokenBlacklistPort {</span>
+    
+<span class="nc" id="L27">    private final Map&lt;String, Long&gt; blacklistedTokens = new ConcurrentHashMap&lt;&gt;();</span>
+    
+    @Override
+    public boolean isRevoked(String token) {
+<span class="nc" id="L31">        boolean revoked = blacklistedTokens.containsKey(token);</span>
+        
+<span class="nc bnc" id="L33" title="All 2 branches missed.">        if (revoked) {</span>
+            // Verificar si ya expiró y limpiar
+<span class="nc" id="L35">            Long expirationTime = blacklistedTokens.get(token);</span>
+<span class="nc bnc" id="L36" title="All 2 branches missed.">            if (System.currentTimeMillis() &gt; expirationTime) {</span>
+<span class="nc" id="L37">                blacklistedTokens.remove(token);</span>
+<span class="nc" id="L38">                return false;</span>
+            }
+        }
+        
+<span class="nc" id="L42">        return revoked;</span>
+    }
+    
+    @Override
+    public void revoke(String token, UUID usuarioId, Instant expirationTime) {
+<span class="nc" id="L47">        blacklistedTokens.put(token, expirationTime.toEpochMilli());</span>
+<span class="nc" id="L48">        log.info(&quot;Token agregado al blacklist. Total tokens revocados: {}&quot;, blacklistedTokens.size());</span>
+<span class="nc" id="L49">    }</span>
+    
+    /**
+     * Método de utilidad para limpiar tokens expirados.
+     * En producción, esto se haría con un scheduled task.
+     */
+    public void cleanExpiredTokens() {
+<span class="nc" id="L56">        long now = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        blacklistedTokens.entrySet().removeIf(entry -&gt; entry.getValue() &lt; now);</span>
+<span class="nc" id="L58">        log.debug(&quot;Tokens expirados limpiados. Tokens activos en blacklist: {}&quot;, blacklistedTokens.size());</span>
+<span class="nc" id="L59">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
