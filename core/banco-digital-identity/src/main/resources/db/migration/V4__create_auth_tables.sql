@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS usuario (
     id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     username            VARCHAR(100) NOT NULL UNIQUE,
     password_hash       VARCHAR(255) NOT NULL,
-    cliente_id          UUID        REFERENCES cliente(id),
+    cliente_id          UUID,
     rol_id              SMALLINT    NOT NULL REFERENCES rol(id),
     activo              BOOLEAN     NOT NULL DEFAULT TRUE,
     intentos_fallidos   SMALLINT    NOT NULL DEFAULT 0,

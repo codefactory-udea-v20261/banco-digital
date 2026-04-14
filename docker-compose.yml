@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: admin
       POSTGRES_MULTIPLE_DATABASES: banco_digital_core,banco_digital_identity,banco_digital_audit
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d

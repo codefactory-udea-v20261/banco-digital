@@ -8,7 +8,7 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @ActiveProfiles("test")
 @Disabled("Disabled in CI because Testcontainers requires a Docker daemon, which is not available in the current environment.")
-class BancoDigitalApplicationTests {
+class CoreBankingApplicationTests {
 
     @Test
     void contextLoads() {

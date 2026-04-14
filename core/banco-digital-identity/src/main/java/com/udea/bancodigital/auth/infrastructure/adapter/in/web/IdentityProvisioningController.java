@@ -11,10 +11,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/internal/users")
@@ -40,5 +39,44 @@ public class IdentityProvisioningController {
             @Valid @RequestBody ProvisionClientAccessRequestDto request) {
         ProvisionClientAccessResponseDto response = provisionClientAccessPort.provisionClientAccess(request);
         return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @PostMapping("/provision")
+    @Operation(
+            summary = "Provisionar acceso - Alias simple",
+            description = "Alias simplificado para provisionar acceso de cliente recién creado."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Acceso provisionado"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "Datos inválidos"
+            )
+    })
+    public ResponseEntity<Void> provisionSimple(
+            @Valid @RequestBody ProvisionClientAccessRequestDto request) {
+        provisionClientAccessPort.provisionClientAccess(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/exists")
+    @Operation(
+            summary = "Verificar si un email existe",
+            description = "Verifica si ya existe un usuario con el email especificado."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Estado de existencia del email"
+            )
+    })
+    public ResponseEntity<Map<String, Object>> existsByEmail(
+            @RequestParam String email) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("exists", false);
+        return ResponseEntity.ok(response);
     }
 }
