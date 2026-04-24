@@ -1,32 +1,27 @@
 package com.udea.bancodigital.accounts.infrastructure.adapter.out;
 
-import java.util.UUID;
-
+import com.udea.bancodigital.shared.security.AuthenticatedUser;
+import com.udea.bancodigital.shared.security.AuthenticatedClientProvider;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import com.udea.bancodigital.accounts.domain.port.out.AuthServicePort;
-import com.udea.bancodigital.auth.infrastructure.config.JwtProvider;
-
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
+import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
-public class AuthServiceAdapter implements AuthServicePort {
-    private final JwtProvider jwtProvider;
-    private final HttpServletRequest request;
+public class AuthServiceAdapter implements AuthenticatedClientProvider {
 
     @Override
     public UUID getClienteId() {
-
-        String bearer = request.getHeader("Authorization");
-
-        if (bearer == null || !bearer.startsWith("Bearer ")) {
-            throw new RuntimeException("Token no válido o ausente");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof AuthenticatedUser principal)) {
+            throw new IllegalStateException("No hay un usuario autenticado en el contexto de seguridad");
         }
 
-        String token = bearer.substring(7);
+        if (principal.clienteId() == null) {
+            throw new IllegalStateException("El usuario autenticado no tiene un cliente asociado");
+        }
 
-        return jwtProvider.extractClienteId(token);
+        return principal.clienteId();
     }
 }

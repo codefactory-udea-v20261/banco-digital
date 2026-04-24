@@ -2,7 +2,6 @@ package com.udea.bancodigital.accounts.domain.port.out;
 
 import com.udea.bancodigital.accounts.domain.model.Cuenta;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,13 +46,4 @@ public interface CuentaRepositoryPort {
      * @return true si existe, false en caso contrario
      */
     boolean existsByNumeroCuenta(String numeroCuenta);
-
-    /**
-     * Obtiene el saldo total agrupado de todas las cuentas de un cliente ejecutando
-     * el procedimiento almacenado nativo.
-     *
-     * @param clienteId ID del cliente
-     * @return BigDecimal con el saldo total (0 si no tiene cuentas o saldo)
-     */
-    BigDecimal obtenerSaldoTotalCliente(UUID clienteId);
 }

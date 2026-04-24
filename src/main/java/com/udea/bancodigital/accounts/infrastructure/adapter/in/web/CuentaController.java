@@ -6,6 +6,7 @@ import com.udea.bancodigital.accounts.application.mapper.CuentaMapper;
 import com.udea.bancodigital.accounts.domain.model.Cuenta;
 import com.udea.bancodigital.accounts.domain.port.in.ConsultarSaldoPort;
 import com.udea.bancodigital.accounts.domain.port.in.CrearCuentaPort;
+import com.udea.bancodigital.shared.security.AuthenticatedClientProvider;
 import com.udea.bancodigital.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -19,8 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.udea.bancodigital.accounts.application.dto.ConsultarSaldoResponseDto;
-import com.udea.bancodigital.accounts.application.dto.ConsultarSaldoTotalResponseDto;
-import com.udea.bancodigital.accounts.domain.port.out.AuthServicePort;
 import java.util.UUID;
 
 @RestController
@@ -32,7 +31,7 @@ public class CuentaController {
     private final CrearCuentaPort crearCuentaPort;
     private final CuentaMapper cuentaMapper;
     private final ConsultarSaldoPort consultarSaldoPort; 
-    private final AuthServicePort authServicePort;
+    private final AuthenticatedClientProvider authenticatedClientProvider;
 
     @PostMapping
     @Operation(
@@ -93,28 +92,11 @@ public class CuentaController {
     public ResponseEntity<ApiResponse<ConsultarSaldoResponseDto>> consultarSaldo(
             @PathVariable UUID id) {
             
-        UUID clienteId = authServicePort.getClienteId();
+        UUID clienteId = authenticatedClientProvider.getClienteId();
             
         ConsultarSaldoResponseDto response =
                 consultarSaldoPort.consultarSaldo(id, clienteId);
             
-        return ResponseEntity.ok(ApiResponse.ok(response));
-    }
-
-    @GetMapping("/saldo-total")
-    @Operation(
-            summary = "Consultar saldo total consolidado",
-            description = "Ejecuta un procedimiento almacenado en BD para calcular el saldo total de todas las cuentas activas del cliente autenticado."
-    )
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
-                    description = "Saldo total consultado exitosamente"
-            )
-    })
-    public ResponseEntity<ApiResponse<ConsultarSaldoTotalResponseDto>> consultarSaldoTotal() {
-        UUID clienteId = authServicePort.getClienteId();
-        ConsultarSaldoTotalResponseDto response = consultarSaldoPort.consultarSaldoTotal(clienteId);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }

@@ -1,8 +1,7 @@
 package com.udea.bancodigital.customers.infrastructure.adapter.out.auth;
 
-import com.udea.bancodigital.auth.infrastructure.config.JwtProvider;
 import com.udea.bancodigital.customers.domain.exception.ClienteNoAutorizadoException;
-import jakarta.servlet.http.HttpServletRequest;
+import com.udea.bancodigital.shared.security.AuthenticatedUser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,14 +13,10 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class ClienteAccessControlAdapterTest {
 
-    private final JwtProvider jwtProvider = mock(JwtProvider.class);
-    private final HttpServletRequest request = mock(HttpServletRequest.class);
-    private final ClienteAccessControlAdapter adapter = new ClienteAccessControlAdapter(jwtProvider, request);
+    private final ClienteAccessControlAdapter adapter = new ClienteAccessControlAdapter();
 
     @AfterEach
     void tearDown() {
@@ -38,9 +33,7 @@ class ClienteAccessControlAdapterTest {
     @Test
     void deberiaPermitirConsultaCuandoClienteConsultaSuPropioPerfil() {
         UUID clienteId = UUID.randomUUID();
-        setAuthentication("ROLE_CLIENTE");
-        when(request.getHeader("Authorization")).thenReturn("Bearer token-valido");
-        when(jwtProvider.extractClienteId("token-valido")).thenReturn(clienteId);
+        setAuthentication("ROLE_CLIENTE", clienteId);
 
         assertDoesNotThrow(() -> adapter.validateCanView(clienteId));
     }
@@ -49,16 +42,19 @@ class ClienteAccessControlAdapterTest {
     void deberiaLanzarExcepcionCuandoClienteConsultaOtroPerfil() {
         UUID clienteId = UUID.randomUUID();
         UUID otroClienteId = UUID.randomUUID();
-        setAuthentication("ROLE_CLIENTE");
-        when(request.getHeader("Authorization")).thenReturn("Bearer token-valido");
-        when(jwtProvider.extractClienteId("token-valido")).thenReturn(clienteId);
+        setAuthentication("ROLE_CLIENTE", clienteId);
 
         assertThrows(ClienteNoAutorizadoException.class, () -> adapter.validateCanView(otroClienteId));
     }
 
     private void setAuthentication(String role) {
+        setAuthentication(role, null);
+    }
+
+    private void setAuthentication(String role, UUID clienteId) {
+        AuthenticatedUser principal = new AuthenticatedUser(UUID.randomUUID(), "user@test.com", clienteId);
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                "user",
+                principal,
                 null,
                 List.of(new SimpleGrantedAuthority(role))
         );
