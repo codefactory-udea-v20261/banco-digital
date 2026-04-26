@@ -1,0 +1,697 @@
+{
+  "info": {
+    "_postman_id": "banco-digital-microservices-v2",
+    "name": "Banco Digital - Microservicios v2.0",
+    "description": "Colección de API para arquitectura de 3 microservicios. Incluye Core Banking, Identity Service, y Audit Service.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "13545978"
+  },
+  "item": [
+    {
+      "name": "1. SETUP - Variables y Health Checks",
+      "item": [
+        {
+          "name": "Health Check - Core Banking",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/actuator/health",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Verifica que Core Banking está corriendo"
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check - Identity Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/actuator/health",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Verifica que Identity Service está corriendo"
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check - Audit Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8082/actuator/health",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8082",
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Verifica que Audit Service está corriendo"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. IDENTITY SERVICE (8081) - Autenticación",
+      "item": [
+        {
+          "name": "Auth - Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login responde 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna token JWT\", function () {",
+                  "  pm.expect(json.data || json.token).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "pm.environment.set(\"jwtToken\", json.data || json.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"cliente@banco.com\",\n  \"clave\": \"Temp1234!\",\n  \"mfaCode\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/v1/auth/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth - Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8081/api/v1/auth/logout",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth - Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8081/api/v1/auth/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Internal - Provision Client Access",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"email\": \"newclient@banco.com\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/v1/internal/users/provision",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "v1",
+                "internal",
+                "users",
+                "provision"
+              ]
+            },
+            "description": "Provisiona acceso digital para cliente recién creado en Core Banking"
+          },
+          "response": []
+        },
+        {
+          "name": "Internal - Check Email Exists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/v1/internal/users/exists?email=test@banco.com",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "v1",
+                "internal",
+                "users",
+                "exists"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "test@banco.com"
+                }
+              ]
+            },
+            "description": "Verifica si un email ya tiene usuario registrado"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. CORE BANKING (8080) - Gestión Financiera",
+      "item": [
+        {
+          "name": "Clientes - Crear Cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Crear cliente responde 201\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Retorna ID de cliente\", function () {",
+                  "  pm.expect(json.data.id).to.exist;",
+                  "});",
+                  "",
+                  "pm.environment.set(\"clienteId\", json.data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombres\": \"Juan\",\n  \"apellidos\": \"Pérez García\",\n  \"tipoIdentificacion\": \"CC\",\n  \"numeroIdentificacion\": \"1234567890\",\n  \"correo\": \"juan.perez@banco.com\",\n  \"telefono\": \"+573001234567\",\n  \"direccion\": \"Calle 123 #45-67\",\n  \"ciudad\": \"Medellín\",\n  \"departamento\": \"Antioquia\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/clientes",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "clientes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clientes - Obtener Cliente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/clientes/{{clienteId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clientes - Actualizar Cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telefono\": \"+573007654321\",\n  \"ciudad\": \"Bogotá\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/clientes/{{clienteId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "clientes",
+                "{{clienteId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cuentas - Crear Cuenta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.environment.set(\"cuentaId\", json.data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteId}}\",\n  \"tipoCuenta\": \"CORRIENTE\",\n  \"moneda\": \"COP\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/cuentas",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "cuentas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cuentas - Consultar Saldo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/cuentas/{{cuentaId}}/saldo",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "cuentas",
+                "{{cuentaId}}",
+                "saldo"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Transacciones - Crear Transacción",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cuentaOrigenId\": \"{{cuentaId}}\",\n  \"cuentaDestinoId\": \"dest-account-id\",\n  \"monto\": 50000,\n  \"concepto\": \"Transferencia de prueba\",\n  \"referencia\": \"REF-001\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/transacciones",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "transacciones"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. AUDIT SERVICE (8082) - Auditoría",
+      "item": [
+        {
+          "name": "Audit - Get Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8082/api/v1/audit/logs?limit=10",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8082",
+              "path": [
+                "api",
+                "v1",
+                "audit",
+                "logs"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Audit - Record Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipoEvento\": \"TRANSFERENCIA_EXITOSA\",\n  \"descripcion\": \"Transferencia de COP 50000 completada\",\n  \"usuarioId\": \"{{clienteId}}\",\n  \"metadatos\": {\n    \"monto\": 50000,\n    \"moneda\": \"COP\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8082/api/v1/audit/events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8082",
+              "path": [
+                "api",
+                "v1",
+                "audit",
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Audit - Get Event by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8082/api/v1/audit/events/event-id",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8082",
+              "path": [
+                "api",
+                "v1",
+                "audit",
+                "events",
+                "event-id"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. TESTING - Flujo Completo",
+      "item": [
+        {
+          "name": "Flujo 1: Login → Crear Cliente → Crear Cuenta",
+          "item": [
+            {
+              "name": "Step 1: Login",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"correo\": \"cliente@banco.com\",\n  \"clave\": \"Temp1234!\",\n  \"mfaCode\": \"123456\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8081/api/v1/auth/login",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8081",
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Step 2: Crear Cliente",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwtToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombres\": \"Test\",\n  \"apellidos\": \"Usuario\",\n  \"tipoIdentificacion\": \"CC\",\n  \"numeroIdentificacion\": \"9999999999\",\n  \"correo\": \"test.usuario@banco.com\",\n  \"telefono\": \"+573001111111\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/v1/clientes",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "v1",
+                    "clientes"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Step 3: Crear Cuenta",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwtToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clienteId\": \"{{clienteId}}\",\n  \"tipoCuenta\": \"CORRIENTE\",\n  \"moneda\": \"COP\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/v1/cuentas",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "v1",
+                    "cuentas"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

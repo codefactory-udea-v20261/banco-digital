@@ -1,26 +1,14 @@
-# ════════════════════════════════════════════════════
-# Stage 1: Build
-# ════════════════════════════════════════════════════
-FROM eclipse-temurin:21-jdk-alpine AS builder
+# Multi-stage build for Core Banking Service
+FROM maven:3.9-eclipse-temurin-17 AS builder
+WORKDIR /build
+COPY pom.xml .
+COPY src/ ./src
+COPY .mvn/ ./.mvn
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
-RUN ./mvnw dependency:go-offline -q
-
-COPY src ./src
-RUN ./mvnw package -DskipTests -q
-
-# ════════════════════════════════════════════════════
-# Stage 2: Runtime (imagen mínima)
-# ════════════════════════════════════════════════════
-FROM eclipse-temurin:21-jre-alpine AS runtime
-WORKDIR /app
-
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
-
-COPY --from=builder /app/target/*.jar app.jar
-
+ARG JAR_FILE=target/banco-digital-core-banking-0.0.1-SNAPSHOT.jar
+COPY --from=builder /build/${JAR_FILE} application.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "application.jar"]
