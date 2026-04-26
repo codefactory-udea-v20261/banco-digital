@@ -22,8 +22,12 @@
     <java.version>17</java.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
     <lombok.version>1.18.32</lombok.version>
+    <jjwt.version>0.12.5</jjwt.version>
     <testcontainers.version>1.19.7</testcontainers.version>
     <jacoco.version>0.8.11</jacoco.version>
+    <sonar.projectKey>udea_banco-digital</sonar.projectKey>
+    <sonar.organization>udea</sonar.organization>
+    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
   </properties>
 
   <dependencies>
@@ -82,22 +86,22 @@
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
       <version>2.4.0</version>
     </dependency>
-    <!-- ── JWT Validation (for calling Identity Service) ─── -->
+    <!-- ── JWT ─── -->
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-api</artifactId>
-      <version>0.12.5</version>
+      <version>${jjwt.version}</version>
     </dependency>
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-impl</artifactId>
-      <version>0.12.5</version>
+      <version>${jjwt.version}</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-jackson</artifactId>
-      <version>0.12.5</version>
+      <version>${jjwt.version}</version>
       <scope>runtime</scope>
     </dependency>
     <!-- ── Observability ──────────── -->
@@ -149,6 +153,7 @@
           </excludes>
         </configuration>
       </plugin>
+      <!-- ── JaCoCo ─────────────────────────── -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
@@ -162,17 +167,49 @@
             <phase>test</phase>
             <goals><goal>report</goal></goals>
           </execution>
+          <!-- Disabled coverage checks during microservices extraction phase
+          <execution>
+            <id>jacoco-check</id>
+            <goals><goal>check</goal></goals>
+            <configuration>
+              <rules>
+                <rule>
+                  <element>BUNDLE</element>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.40</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
+          </execution>
+          -->
         </executions>
       </plugin>
+      <!-- ── Compiler (MapStruct + Lombok) ───── -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+            <path>
+              <groupId>org.mapstruct</groupId>
+              <artifactId>mapstruct-processor</artifactId>
+              <version>${mapstruct.version}</version>
+            </path>
+          </annotationProcessorPaths>
         </configuration>
       </plugin>
     </plugins>
   </build>
-
 </project>

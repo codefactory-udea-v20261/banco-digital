@@ -1,0 +1,69 @@
+openapi: 3.0.3
+info:
+  title: Banco Digital - Reporting API
+  description: API de consultas analíticas y reportes del dominio bancario.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1/reportes
+    description: Servidor Local
+paths:
+  /saldo-total:
+    get:
+      tags:
+        - Reportes
+      summary: Consultar saldo total consolidado
+      description: Ejecuta una consulta analitica para consolidar el saldo de todas las cuentas activas del cliente autenticado.
+      responses:
+        '200':
+          description: Reporte generado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaldoTotalResponse'
+  /movimientos:
+    get:
+      tags:
+        - Reportes
+      summary: Consultar movimientos del cliente
+      description: Endpoint reservado para el historial de movimientos con filtros de cuenta, fecha y tipo.
+      parameters:
+        - name: cuentaId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: fechaDesde
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: fechaHasta
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: tipo
+          in: query
+          schema:
+            type: string
+      responses:
+        '501':
+          description: Estructura disponible, implementacion pendiente
+
+components:
+  schemas:
+    SaldoTotalResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            clienteId:
+              type: string
+              format: uuid
+            saldoTotal:
+              type: number
+              example: 150000.00

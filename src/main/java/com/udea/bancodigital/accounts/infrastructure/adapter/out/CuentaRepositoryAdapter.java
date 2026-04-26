@@ -8,7 +8,6 @@ import com.udea.bancodigital.accounts.infrastructure.repository.CuentaJpaReposit
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,10 +46,5 @@ public class CuentaRepositoryAdapter implements CuentaRepositoryPort {
     @Override
     public boolean existsByNumeroCuenta(String numeroCuenta) {
         return jpaRepository.existsByNumeroCuenta(numeroCuenta);
-    }
-
-    @Override
-    public BigDecimal obtenerSaldoTotalCliente(UUID clienteId) {
-        return jpaRepository.obtenerSaldoTotalCliente(clienteId);
     }
 }
