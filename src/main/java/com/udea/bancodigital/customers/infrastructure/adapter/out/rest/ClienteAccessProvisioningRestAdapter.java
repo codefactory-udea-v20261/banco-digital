@@ -21,6 +21,7 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
+@org.springframework.context.annotation.Primary
 @RequiredArgsConstructor
 public class ClienteAccessProvisioningRestAdapter implements ClienteAccessProvisioningPort {
 

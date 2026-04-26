@@ -1,4 +1,4 @@
-package com.udea.bancodigital.transactions.domain.port.in;
+package com.udea.bancodigital.transactions.domain.port.out;
 
 import com.udea.bancodigital.transactions.domain.model.Transaccion;
 

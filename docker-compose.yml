@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: admin
-      POSTGRES_MULTIPLE_DATABASES: banco_digital_core,banco_digital_identity,banco_digital_audit
+      POSTGRES_MULTIPLE_DATABASES: banco_digital_core,banco_digital_identity,banco_digital_audit,banco_digital_reporting
     ports:
       - "5433:5432"
     volumes:
@@ -41,6 +41,7 @@ services:
       DB_PASSWORD: admin
       IDENTITY_SERVICE_URL: http://identity:8081
       AUDIT_SERVICE_URL: http://audit:8082
+      REPORTING_SERVICE_URL: http://reporting:8083
       JWT_SECRET: dev_secret_replace_in_prod_must_be_256bits
       JWT_EXPIRATION_MS: 3600000
       APP_PROFILE: local
@@ -54,7 +55,7 @@ services:
   # Identity Service
   identity:
     build:
-      context: ./core/banco-digital-identity
+      context: ../banco-digital-identity
       dockerfile: Dockerfile
       args:
         SERVICE_NAME: identity
@@ -82,7 +83,7 @@ services:
   # Audit Service
   audit:
     build:
-      context: ./core/banco-digital-audit
+      context: ../banco-digital-audit
       dockerfile: Dockerfile
       args:
         SERVICE_NAME: audit
@@ -99,6 +100,34 @@ services:
       JWT_SECRET: dev_secret_replace_in_prod_must_be_256bits
       JWT_EXPIRATION_MS: 3600000
       APP_PORT: 8082
+      APP_PROFILE: local
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - banco-digital-network
+    restart: unless-stopped
+
+  # Reporting Service
+  reporting:
+    build:
+      context: ../banco-digital-reporting
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: reporting
+        JAR_FILE: target/banco-digital-reporting-0.0.1-SNAPSHOT.jar
+    container_name: banco-digital-reporting
+    ports:
+      - "8083:8083"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: banco_digital_reporting
+      DB_USERNAME: postgres
+      DB_PASSWORD: admin
+      JWT_SECRET: dev_secret_replace_in_prod_must_be_256bits
+      JWT_EXPIRATION_MS: 3600000
+      APP_PORT: 8083
       APP_PROFILE: local
     depends_on:
       postgres:
