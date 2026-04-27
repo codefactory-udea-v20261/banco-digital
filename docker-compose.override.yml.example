@@ -1,9 +1,0 @@
-# Copia este archivo a docker-compose.override.yml (está en .gitignore)
-# y ajusta los valores locales.
-services:
-  app:
-    environment:
-      SPRING_PROFILES_ACTIVE: local
-      SPRING_DEVTOOLS_RESTART_ENABLED: "true"
-    volumes:
-      - ./target:/app/target
