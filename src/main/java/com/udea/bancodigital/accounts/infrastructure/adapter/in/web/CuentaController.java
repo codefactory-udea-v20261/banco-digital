@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.udea.bancodigital.accounts.application.dto.ConsultarSaldoResponseDto;
@@ -34,6 +35,7 @@ public class CuentaController {
     private final AuthenticatedClientProvider authenticatedClientProvider;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('CAJERO', 'ADMIN')")
     @Operation(
             summary = "Crear cuenta financiera",
             description = "Crea una cuenta financiera para un cliente existente y activo."

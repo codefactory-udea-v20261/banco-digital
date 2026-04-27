@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -49,6 +50,7 @@ public class ClienteController {
      * @return ResponseEntity con los datos del cliente recién creado.
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('CAJERO', 'ADMIN')")
     @Operation(
         summary = "Registrar nuevo cliente",
         description = "Crea un nuevo perfil de cliente. El correo electrónico y el número de documento de identidad deben ser únicos en el sistema."
@@ -83,6 +85,7 @@ public class ClienteController {
      * @return ResponseEntity con la información del cliente solicitado.
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('CAJERO', 'ADMIN')")
     @Operation(
             summary = "Consultar cliente por ID",
             description = "Obtiene el perfil detallado de un cliente específico utilizando su identificador único."
@@ -115,6 +118,7 @@ public class ClienteController {
      * @return ResponseEntity con la información actualizada del cliente.
      */
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('CAJERO', 'ADMIN')")
     @Operation(
             summary = "Actualizar perfil de cliente",
             description = "Actualiza de manera parcial los datos de un cliente. Ciertos campos, como el documento de identidad, son inmutables."

@@ -11,6 +11,7 @@ import com.udea.bancodigital.accounts.domain.port.in.ConsultarSaldoPort;
 import com.udea.bancodigital.accounts.domain.port.out.AuthServicePort;
 import com.udea.bancodigital.auth.infrastructure.config.JwtAuthenticationFilter;
 import com.udea.bancodigital.infrastructure.config.SecurityConfig;
+import com.udea.bancodigital.shared.security.AuthenticatedClientProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,9 @@ class CuentaControllerTest {
 
     @MockBean
     private AuthServicePort authServicePort;
+
+    @MockBean
+    private AuthenticatedClientProvider authenticatedClientProvider;
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
