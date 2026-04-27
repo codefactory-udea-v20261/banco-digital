@@ -16,18 +16,47 @@ public class TransaccionMapper {
         }
 
         return TransaccionEntity.builder()
+
+                // ⚠️ ID puede ser null → DB lo genera
                 .id(domain.getId())
-                .cuentaOrigenId(domain.getCuentaOrigenId())
-                .cuentaDestinoId(domain.getCuentaDestinoId())
-                .tipoId(domain.getTipoId())
-                .monto(domain.getMonto())
-                .saldoAnterior(domain.getSaldoAnterior())
-                .saldoPosterior(domain.getSaldoPosterior())
-                .descripcion(domain.getDescripcion())
-                .referencia(domain.getReferencia())
-                .estado(domain.getEstado())
-                .createdAt(domain.getCreatedAt())
-                .createdBy(domain.getCreatedBy())
+
+                .cuentaOrigenId(
+                        domain.getCuentaOrigenId())
+
+                .cuentaDestinoId(
+                        domain.getCuentaDestinoId())
+
+                .tipoId(
+                        domain.getTipoId())
+
+                .monto(
+                        domain.getMonto())
+
+                .saldoAnterior(
+                        domain.getSaldoAnterior())
+
+                .saldoPosterior(
+                        domain.getSaldoPosterior())
+
+                .descripcion(
+                        domain.getDescripcion())
+
+                .referencia(
+                        domain.getReferencia())
+
+                .estado(
+                        domain.getEstado())
+
+                // ⚠️ createdAt obligatorio
+                .createdAt(
+                        domain.getCreatedAt())
+
+                // ⚠️ createdBy obligatorio
+                .createdBy(
+                        domain.getCreatedBy() != null
+                                ? domain.getCreatedBy()
+                                : "SYSTEM")
+
                 .build();
     }
 
@@ -39,18 +68,42 @@ public class TransaccionMapper {
         }
 
         return Transaccion.builder()
+
                 .id(entity.getId())
-                .cuentaOrigenId(entity.getCuentaOrigenId())
-                .cuentaDestinoId(entity.getCuentaDestinoId())
-                .tipoId(entity.getTipoId())
-                .monto(entity.getMonto())
-                .saldoAnterior(entity.getSaldoAnterior())
-                .saldoPosterior(entity.getSaldoPosterior())
-                .descripcion(entity.getDescripcion())
-                .referencia(entity.getReferencia())
-                .estado(entity.getEstado())
-                .createdAt(entity.getCreatedAt())
-                .createdBy(entity.getCreatedBy())
+
+                .cuentaOrigenId(
+                        entity.getCuentaOrigenId())
+
+                .cuentaDestinoId(
+                        entity.getCuentaDestinoId())
+
+                .tipoId(
+                        entity.getTipoId())
+
+                .monto(
+                        entity.getMonto())
+
+                .saldoAnterior(
+                        entity.getSaldoAnterior())
+
+                .saldoPosterior(
+                        entity.getSaldoPosterior())
+
+                .descripcion(
+                        entity.getDescripcion())
+
+                .referencia(
+                        entity.getReferencia())
+
+                .estado(
+                        entity.getEstado())
+
+                .createdAt(
+                        entity.getCreatedAt())
+
+                .createdBy(
+                        entity.getCreatedBy())
+
                 .build();
     }
 
