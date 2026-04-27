@@ -10,6 +10,7 @@ import com.udea.bancodigital.transactions.domain.port.out.TransaccionRepositoryP
 
 @Configuration
 public class TransaccionServiceConfig {
+
     @Bean
     public TransferirDineroPort transferirDineroPort(
             CuentaJpaRepository cuentaRepository,

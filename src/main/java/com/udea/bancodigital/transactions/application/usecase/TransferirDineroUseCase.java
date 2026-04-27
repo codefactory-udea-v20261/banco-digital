@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @RequiredArgsConstructor
 public class TransferirDineroUseCase
@@ -26,112 +25,126 @@ public class TransferirDineroUseCase
 
     private final TransaccionRepositoryPort transaccionRepository;
 
-    @Override
-    @Transactional
-    public TransferenciaResponseDto transferir(
-            TransferenciaRequestDto request,
-            String usuario) {
+@Override
+@Transactional
+public TransferenciaResponseDto transferir(
+        TransferenciaRequestDto request,
+        String usuario) {
 
-        UUID origenId = request.getCuentaOrigenId();
-        UUID destinoId = request.getCuentaDestinoId();
-        BigDecimal monto = request.getMonto();
+    String numeroOrigen =
+            request.getNumeroCuentaOrigen();
 
-        // Validar monto
+    String numeroDestino =
+            request.getNumeroCuentaDestino();
 
-        if (monto.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Monto inválido");
-        }
+    BigDecimal monto =
+            request.getMonto();
 
-        // Validar misma cuenta
-
-        if (origenId.equals(destinoId)) {
-            throw new RuntimeException(
-                    "No puede transferir a la misma cuenta");
-        }
-
-        // Buscar cuentas
-
-        CuentaEntity origen =
-                cuentaRepository.findById(origenId)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Cuenta origen no existe"));
-
-        CuentaEntity destino =
-                cuentaRepository.findById(destinoId)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Cuenta destino no existe"));
-
-        // Validar cuentas activas
-
-        if (!origen.getEstado().equals("ACTIVA")) {
-            throw new RuntimeException(
-                    "Cuenta origen inactiva");
-        }
-
-        if (!destino.getEstado().equals("ACTIVA")) {
-            throw new RuntimeException(
-                    "Cuenta destino inactiva");
-        }
-
-        // Validar saldo
-
-        if (origen.getSaldo().compareTo(monto) < 0) {
-            throw new RuntimeException(
-                    "Saldo insuficiente");
-        }
-
-        // Guardar saldo anterior
-
-        BigDecimal saldoAnterior =
-                origen.getSaldo();
-
-        // Realizar transferencia
-
-        origen.setSaldo(
-                origen.getSaldo().subtract(monto));
-
-        destino.setSaldo(
-                destino.getSaldo().add(monto));
-
-        cuentaRepository.save(origen);
-        cuentaRepository.save(destino);
-
-        // Generar referencia
-
-        String referencia =
-                "TRF-" + System.currentTimeMillis();
-
-        // Crear transacción
-
-        Transaccion transaccion =
-                Transaccion.builder()
-                        .id(UUID.randomUUID())
-                        .cuentaOrigenId(origenId)
-                        .cuentaDestinoId(destinoId)
-                        .tipoId((short) 1)
-                        .monto(monto)
-                        .saldoAnterior(saldoAnterior)
-                        .saldoPosterior(origen.getSaldo())
-                        .descripcion("Transferencia bancaria")
-                        .referencia(referencia)
-                        .estado(EstadoTransaccion.COMPLETADA)
-                        .createdAt(OffsetDateTime.now())
-                        .createdBy(usuario)
-                        .build();
-
-        Transaccion saved =
-                transaccionRepository.save(transaccion);
-
-        return TransferenciaResponseDto.builder()
-                .transaccionId(saved.getId())
-                .cuentaOrigenId(saved.getCuentaOrigenId())
-                .cuentaDestinoId(saved.getCuentaDestinoId())
-                .monto(saved.getMonto())
-                .referencia(saved.getReferencia())
-                .estado(saved.getEstado().name())
-                .build();
+    if (monto.compareTo(BigDecimal.ZERO) <= 0) {
+        throw new RuntimeException("Monto inválido");
     }
+
+    if (numeroOrigen.equals(numeroDestino)) {
+        throw new RuntimeException(
+                "No puede transferir a la misma cuenta");
+    }
+
+    CuentaEntity origen =
+            cuentaRepository
+                    .findByNumeroCuenta(numeroOrigen)
+                    .orElseThrow(() ->
+                            new RuntimeException(
+                                    "Cuenta origen no existe"));
+
+    CuentaEntity destino =
+            cuentaRepository
+                    .findByNumeroCuenta(numeroDestino)
+                    .orElseThrow(() ->
+                            new RuntimeException(
+                                    "Cuenta destino no existe"));
+
+    if (!origen.getEstado().equals("ACTIVA")) {
+        throw new RuntimeException(
+                "Cuenta origen inactiva");
+    }
+
+    if (!destino.getEstado().equals("ACTIVA")) {
+        throw new RuntimeException(
+                "Cuenta destino inactiva");
+    }
+
+    if (origen.getSaldo().compareTo(monto) < 0) {
+        throw new RuntimeException(
+                "Saldo insuficiente");
+    }
+
+    BigDecimal saldoAnteriorOrigen =
+            origen.getSaldo();
+
+    BigDecimal saldoAnteriorDestino =
+            destino.getSaldo();
+
+    // Ejecutar transferencia
+
+    origen.setSaldo(
+            origen.getSaldo().subtract(monto));
+
+    destino.setSaldo(
+            destino.getSaldo().add(monto));
+
+    cuentaRepository.save(origen);
+    cuentaRepository.save(destino);
+
+    String referencia =
+            "TRF-" + System.currentTimeMillis();
+
+    // Movimiento DÉBITO (origen)
+
+    Transaccion debito =
+            Transaccion.builder()
+                    .cuentaOrigenId(origen.getId())
+                    .cuentaDestinoId(destino.getId())
+                    .tipoId((short) 1)
+                    .monto(monto)
+                    .saldoAnterior(saldoAnteriorOrigen)
+                    .saldoPosterior(origen.getSaldo())
+                    .descripcion("Transferencia enviada")
+                    .referencia(referencia)
+                    .estado(EstadoTransaccion.COMPLETADA)
+                    .createdAt(OffsetDateTime.now())
+                    .createdBy(usuario)
+                    .build();
+
+    // Movimiento CRÉDITO (destino)
+
+    Transaccion credito =
+            Transaccion.builder()
+                    .cuentaOrigenId(origen.getId())
+                    .cuentaDestinoId(destino.getId())
+                    .tipoId((short) 1)
+                    .monto(monto)
+                    .saldoAnterior(saldoAnteriorDestino)
+                    .saldoPosterior(destino.getSaldo())
+                    .descripcion("Transferencia recibida")
+                    .referencia(referencia)
+                    .estado(EstadoTransaccion.COMPLETADA)
+                    .createdAt(OffsetDateTime.now())
+                    .createdBy(usuario)
+                    .build();
+
+    Transaccion savedDebito =
+            transaccionRepository.save(debito);
+
+    transaccionRepository.save(credito);
+
+    return TransferenciaResponseDto.builder()
+            .transaccionId(savedDebito.getId())
+            .cuentaOrigenId(origen.getId())
+            .cuentaDestinoId(destino.getId())
+            .monto(monto)
+            .referencia(referencia)
+            .estado(savedDebito.getEstado().name())
+            .build();
+}
 
 }

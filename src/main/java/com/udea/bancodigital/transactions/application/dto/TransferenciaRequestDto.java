@@ -3,7 +3,6 @@ package com.udea.bancodigital.transactions.application.dto;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -12,9 +11,9 @@ import java.util.UUID;
 @AllArgsConstructor
 public class TransferenciaRequestDto {
 
-    private UUID cuentaOrigenId;
+    private String numeroCuentaOrigen;
 
-    private UUID cuentaDestinoId;
+    private String numeroCuentaDestino;
 
     private BigDecimal monto;
 
