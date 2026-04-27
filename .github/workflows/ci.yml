@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main, develop]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   JAVA_VERSION: '21'
 
@@ -13,6 +20,7 @@ jobs:
   build-and-test:
     name: Build & Test
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     services:
       postgres:
@@ -24,7 +32,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U app_user -d banco_digital_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -32,6 +40,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
@@ -40,8 +50,11 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - name: Build & Unit Tests
-        run: ./mvnw verify -P ci
+      - name: Ensure Maven Wrapper is executable
+        run: chmod +x ./mvnw
+
+      - name: Build & Test
+        run: ./mvnw -B verify -P ci
         env:
           DB_HOST: localhost
           DB_PORT: 5432
@@ -51,25 +64,51 @@ jobs:
           JWT_SECRET: ci_test_secret_replace_in_prod_256bits
 
       - name: Upload JaCoCo Coverage Report
-        uses: actions/upload-artifact@v4
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: jacoco-report
           path: target/site/jacoco/
 
-      - name: SonarCloud Analysis
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+  sonar:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    timeout-minutes: 20
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Ensure Maven Wrapper is executable
+        run: chmod +x ./mvnw
+
+      - name: Run SonarCloud
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./mvnw sonar:sonar -Dsonar.projectKey=udea_banco-digital -Dsonar.organization=udea
+        run: ./mvnw -B verify sonar:sonar -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=codefactory-udea-v20261 -Dsonar.projectKey=codefactory-udea-v20261_banco-digital
 
   docker-build:
     name: Docker Build Check
     runs-on: ubuntu-latest
     needs: build-and-test
+    timeout-minutes: 15
     if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Build Docker image
         run: docker build -t banco-digital:${{ github.sha }} .
