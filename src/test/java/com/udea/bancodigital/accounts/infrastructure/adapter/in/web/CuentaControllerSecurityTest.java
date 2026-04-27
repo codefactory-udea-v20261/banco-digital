@@ -8,6 +8,7 @@ import com.udea.bancodigital.accounts.domain.port.in.ConsultarSaldoPort;
 import com.udea.bancodigital.accounts.domain.port.out.AuthServicePort;
 import com.udea.bancodigital.auth.infrastructure.config.JwtAuthenticationFilter;
 import com.udea.bancodigital.infrastructure.config.SecurityConfig;
+import com.udea.bancodigital.shared.security.AuthenticatedClientProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
@@ -54,6 +55,9 @@ class CuentaControllerSecurityTest {
 
     @MockBean
     private AuthServicePort authServicePort;
+
+    @MockBean
+    private AuthenticatedClientProvider authenticatedClientProvider;
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -108,7 +112,7 @@ class CuentaControllerSecurityTest {
         UUID cuentaId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
         
-        when(authServicePort.getClienteId()).thenReturn(clienteId);
+        when(authenticatedClientProvider.getClienteId()).thenReturn(clienteId);
         when(consultarSaldoPort.consultarSaldo(eq(cuentaId), eq(clienteId)))
                 .thenReturn(ConsultarSaldoResponseDto.builder()
                         .saldo(new BigDecimal("50000.00"))
@@ -126,7 +130,7 @@ class CuentaControllerSecurityTest {
         UUID cuentaId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
         
-        when(authServicePort.getClienteId()).thenReturn(clienteId);
+        when(authenticatedClientProvider.getClienteId()).thenReturn(clienteId);
         when(consultarSaldoPort.consultarSaldo(eq(cuentaId), eq(clienteId)))
                 .thenReturn(ConsultarSaldoResponseDto.builder()
                         .saldo(new BigDecimal("100000.00"))
@@ -143,7 +147,7 @@ class CuentaControllerSecurityTest {
         UUID cuentaId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
         
-        when(authServicePort.getClienteId()).thenReturn(clienteId);
+        when(authenticatedClientProvider.getClienteId()).thenReturn(clienteId);
         when(consultarSaldoPort.consultarSaldo(eq(cuentaId), eq(clienteId)))
                 .thenReturn(ConsultarSaldoResponseDto.builder()
                         .saldo(new BigDecimal("200000.00"))
