@@ -19,6 +19,7 @@ import com.udea.bancodigital.transactions.domain.enums.EstadoTransaccion;
 public class TransaccionEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
     private UUID id;
 
@@ -34,10 +35,16 @@ public class TransaccionEntity {
     @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal monto;
 
-    @Column(name = "saldo_anterior", nullable = false, precision = 18, scale = 2)
+    @Column(name = "saldo_anterior",
+            nullable = false,
+            precision = 18,
+            scale = 2)
     private BigDecimal saldoAnterior;
 
-    @Column(name = "saldo_posterior", nullable = false, precision = 18, scale = 2)
+    @Column(name = "saldo_posterior",
+            nullable = false,
+            precision = 18,
+            scale = 2)
     private BigDecimal saldoPosterior;
 
     @Column(length = 255)
@@ -50,10 +57,15 @@ public class TransaccionEntity {
     @Column(nullable = false, length = 20)
     private EstadoTransaccion estado;
 
-    @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt;
+    @Column(name = "created_at",
+            nullable = false)
+    @Builder.Default
+    private OffsetDateTime createdAt =
+            OffsetDateTime.now();
 
-    @Column(name = "created_by", nullable = false, length = 100)
+    @Column(name = "created_by",
+            nullable = false,
+            length = 100)
     private String createdBy;
 
 }
