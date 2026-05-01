@@ -12,10 +12,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import com.udea.bancodigital.transactions.application.dto.HistorialTransaccionDto;
+import com.udea.bancodigital.transactions.application.usecase.ConsultarHistorialUseCase;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Controlador REST para la gestión de transacciones financieras.
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Transacciones", description = "API para operaciones financieras y movimientos de cuenta")
 public class TransaccionController {
     private final RealizarRetiroUseCase realizarRetiroUseCase;
+    private final ConsultarHistorialUseCase consultarHistorialUseCase;
 
     /**
      * Procesa un retiro de dinero de una cuenta específica.
@@ -70,4 +72,32 @@ public class TransaccionController {
         // Usamos ApiResponse.ok() para mantener la consistencia con ClienteController
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
+
+    @GetMapping("/historial/{cuentaId}")
+    @Operation(
+            summary = "Consultar historial de movimientos",
+            description = "Retorna las transacciones de una cuenta ordenadas de la más reciente a la más antigua"
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Historial consultado exitosamente",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "La cuenta no existe",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
+    public ResponseEntity<ApiResponse<List<HistorialTransaccionDto>>> consultarHistorial(
+            @PathVariable UUID cuentaId) {
+
+        List<HistorialTransaccionDto> response =
+                consultarHistorialUseCase.ejecutar(cuentaId);
+
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
 }

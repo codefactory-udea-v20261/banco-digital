@@ -33,4 +33,6 @@ public enum TipoTransaccion {
                 .orElse(null);
         // O puedes lanzar: .orElseThrow(() -> new IllegalArgumentException("ID de transacción inválido: " + id));
     }
+
+
 }
