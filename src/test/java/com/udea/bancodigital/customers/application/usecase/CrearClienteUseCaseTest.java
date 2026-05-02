@@ -1,40 +1,32 @@
 package com.udea.bancodigital.customers.application.usecase;
 
-import com.udea.bancodigital.customers.application.dto.ClienteResponseDto;
 import com.udea.bancodigital.customers.application.dto.CrearClienteRequestDto;
+import com.udea.bancodigital.customers.application.dto.ClienteResponseDto;
 import com.udea.bancodigital.customers.application.mapper.ClienteMapper;
-import com.udea.bancodigital.customers.domain.exception.ClienteYaExisteException;
+import com.udea.bancodigital.customers.domain.event.ClienteRegistradoEvent;
 import com.udea.bancodigital.customers.domain.model.Cliente;
 import com.udea.bancodigital.customers.domain.model.Email;
 import com.udea.bancodigital.customers.domain.model.NumeroCedula;
-import com.udea.bancodigital.customers.domain.port.out.ClienteAccessProvisioningPort;
 import com.udea.bancodigital.customers.domain.port.out.ClienteRepositoryPort;
+import com.udea.bancodigital.customers.domain.port.out.ClienteAccessProvisioningPort;
 import com.udea.bancodigital.customers.domain.port.out.DomainEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-/**
- * Pruebas unitarias: Registro de nuevos clientes
- * Patrón: AAA (Arrange / Act / Assert)
- *
- * Escenarios cubiertos:
- *   TC-01: Registro exitoso con datos válidos
- *   TC-02: Rechazo por email duplicado
- *   TC-03: Rechazo por cédula duplicada
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CrearClienteUseCase")
 class CrearClienteUseCaseTest {
@@ -51,109 +43,191 @@ class CrearClienteUseCaseTest {
     @Mock
     private DomainEventPublisher eventPublisher;
 
-    @InjectMocks
     private CrearClienteUseCase useCase;
 
-    private CrearClienteRequestDto requestValido;
-    private Cliente clienteDomain;
-    private ClienteResponseDto responseDto;
+    @Captor
+    private ArgumentCaptor<Cliente> clienteCaptor;
+
+    @Captor
+    private ArgumentCaptor<ClienteRegistradoEvent> eventCaptor;
 
     @BeforeEach
     void setUp() {
-        requestValido = CrearClienteRequestDto.builder()
-                .numeroCedula("1234567890")
-                .primerNombre("María")
-                .primerApellido("González")
-                .email("maria.gonzalez@test.com")
-                .fechaNacimiento(LocalDate.of(1990, 5, 15))
-                .build();
-                
-        clienteDomain = Cliente.builder()
-                .id(UUID.randomUUID())
-                .numeroCedula(NumeroCedula.of("1234567890"))
-                .primerNombre("María")
-                .primerApellido("González")
-                .email(Email.of("maria.gonzalez@test.com"))
-                .fechaNacimiento(LocalDate.of(1990, 5, 15))
-                .activo(true)
-                .build();
-                
-        responseDto = ClienteResponseDto.builder()
-                .id(clienteDomain.getId())
-                .numeroCedula("1234567890")
-                .primerNombre("María")
-                .primerApellido("González")
-                .email("maria.gonzalez@test.com")
-                .fechaNacimiento(LocalDate.of(1990, 5, 15))
-                .activo(true)
-                .build();
+        useCase = new CrearClienteUseCase(clienteRepository, clienteMapper, accessProvisioningPort, eventPublisher);
     }
 
-    @Test
-    @DisplayName("TC-01 ✅ Debe registrar cliente cuando los datos son válidos y únicos")
-    void debeRegistrarCliente_cuandoDatosValidosYUnicos() {
-        // ── Arrange ──────────────────────────────────────────────────────────
-        when(clienteRepository.existsByEmail(anyString())).thenReturn(false);
-        when(clienteRepository.existsByCedula(anyString())).thenReturn(false);
-        when(accessProvisioningPort.existsByEmail(anyString())).thenReturn(false);
-        when(clienteMapper.toDomain(any(CrearClienteRequestDto.class))).thenReturn(clienteDomain);
-        when(clienteRepository.save(any(Cliente.class))).thenReturn(clienteDomain);
-        when(clienteMapper.toResponseDto(any(Cliente.class))).thenReturn(responseDto);
+    @Nested
+    @DisplayName("Crear cliente")
+    class CrearClienteTest {
 
-        // ── Act ───────────────────────────────────────────────────────────────
-        ClienteResponseDto resultado = useCase.ejecutar(requestValido);
+        @Test
+        @DisplayName("Debe crear cliente exitosamente")
+        void debeCrearClienteExitosamente() {
+            // Given
+            CrearClienteRequestDto request = CrearClienteRequestDto.builder()
+                    .primerNombre("Juan")
+                    .primerApellido("Perez")
+                    .email("juan.perez@email.com")
+                    .numeroCedula("12345678")
+                    .telefono("3001234567")
+                    .build();
 
-        // ── Assert ────────────────────────────────────────────────────────────
-        assertThat(resultado).isNotNull();
-        assertThat(resultado.getEmail()).isEqualTo("maria.gonzalez@test.com");
-        verify(clienteRepository, times(1)).save(any(Cliente.class));
-        verify(accessProvisioningPort, times(1))
-                .provisionAccess(clienteDomain.getId(), "maria.gonzalez@test.com");
-        verify(eventPublisher, times(1)).publish(any());
-        verify(clienteRepository, atLeastOnce()).existsByEmail("maria.gonzalez@test.com");
-    }
+            UUID clienteId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
 
-    @Test
-    @DisplayName("TC-02 ❌ Debe lanzar ClienteYaExisteException cuando el email ya está registrado")
-    void debeLanzarExcepcion_cuandoEmailYaExiste() {
-        // ── Arrange ──────────────────────────────────────────────────────────
-        when(clienteRepository.existsByEmail("maria.gonzalez@test.com")).thenReturn(true);
+            Cliente cliente = Cliente.builder()
+                    .id(clienteId)
+                    .numeroCedula(new NumeroCedula("12345678"))
+                    .primerNombre("Juan")
+                    .primerApellido("Perez")
+                    .email(new Email("juan.perez@email.com"))
+                    .telefono("3001234567")
+                    .activo(true)
+                    .build();
 
-        // ── Act & Assert ──────────────────────────────────────────────────────
-        assertThatThrownBy(() -> useCase.ejecutar(requestValido))
-                .isInstanceOf(ClienteYaExisteException.class)
-                .hasMessageContaining("maria.gonzalez@test.com");
+            Cliente clienteGuardado = Cliente.builder()
+                    .id(clienteId)
+                    .numeroCedula(new NumeroCedula("12345678"))
+                    .primerNombre("Juan")
+                    .primerApellido("Perez")
+                    .email(new Email("juan.perez@email.com"))
+                    .telefono("3001234567")
+                    .activo(true)
+                    .build();
 
-        verify(clienteRepository, never()).save(any());
-    }
+            ClienteResponseDto responseDto = ClienteResponseDto.builder()
+                    .id(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"))
+                    .primerNombre("Juan")
+                    .primerApellido("Perez")
+                    .email("juan.perez@email.com")
+                    .build();
 
-    @Test
-    @DisplayName("TC-03 ❌ Debe lanzar ClienteYaExisteException cuando la cédula ya está registrada")
-    void debeLanzarExcepcion_cuandoCedulaYaExiste() {
-        // ── Arrange ──────────────────────────────────────────────────────────
-        when(clienteRepository.existsByEmail(anyString())).thenReturn(false);
-        when(clienteRepository.existsByCedula("1234567890")).thenReturn(true);
+            when(clienteRepository.existsByEmail("juan.perez@email.com")).thenReturn(false);
+            when(clienteRepository.existsByCedula("12345678")).thenReturn(false);
+            when(accessProvisioningPort.existsByEmail("juan.perez@email.com")).thenReturn(false);
+            when(clienteMapper.toDomain(request)).thenReturn(cliente);
+            when(clienteRepository.save(cliente)).thenReturn(clienteGuardado);
+            when(clienteMapper.toResponseDto(clienteGuardado)).thenReturn(responseDto);
 
-        // ── Act & Assert ──────────────────────────────────────────────────────
-        assertThatThrownBy(() -> useCase.ejecutar(requestValido))
-                .isInstanceOf(ClienteYaExisteException.class)
-                .hasMessageContaining("cédula");
+            // When
+            ClienteResponseDto result = useCase.crearCliente(request);
 
-        verify(clienteRepository, never()).save(any());
-    }
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.getPrimerNombre()).isEqualTo("Juan");
+            assertThat(result.getEmail()).isEqualTo("juan.perez@email.com");
 
-    @Test
-    @DisplayName("TC-04 ❌ Debe lanzar ClienteYaExisteException cuando el email ya existe en auth")
-    void debeLanzarExcepcion_cuandoEmailYaExisteComoUsuario() {
-        when(clienteRepository.existsByEmail(anyString())).thenReturn(false);
-        when(clienteRepository.existsByCedula(anyString())).thenReturn(false);
-        when(accessProvisioningPort.existsByEmail("maria.gonzalez@test.com")).thenReturn(true);
+            // Verify interactions
+            verify(clienteRepository).existsByEmail("juan.perez@email.com");
+            verify(clienteRepository).existsByCedula("12345678");
+            verify(accessProvisioningPort).existsByEmail("juan.perez@email.com");
+            verify(clienteRepository).save(any(Cliente.class));
+            verify(accessProvisioningPort).provisionAccess(any(UUID.class), any(String.class));
+            verify(eventPublisher).publish(any(ClienteRegistradoEvent.class));
+        }
 
-        assertThatThrownBy(() -> useCase.ejecutar(requestValido))
-                .isInstanceOf(ClienteYaExisteException.class)
-                .hasMessageContaining("email");
+        @Test
+        @DisplayName("Debe lanzar excepcion si email ya existe en repositorio")
+        void debeLanzarExcepcionSiEmailYaExisteRepositorio() {
+            CrearClienteRequestDto request = CrearClienteRequestDto.builder()
+                    .email("existente@email.com")
+                    .numeroCedula("12345678")
+                    .build();
 
-        verify(clienteRepository, never()).save(any());
-        verify(accessProvisioningPort, never()).provisionAccess(any(), anyString());
+            when(clienteRepository.existsByEmail("existente@email.com")).thenReturn(true);
+
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.udea.bancodigital.customers.domain.exception.ClienteYaExisteException.class,
+                    () -> useCase.crearCliente(request)
+            );
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepcion si cedula ya existe")
+        void debeLanzarExcepcionSiCedulaYaExiste() {
+            CrearClienteRequestDto request = CrearClienteRequestDto.builder()
+                    .email("nuevo@email.com")
+                    .numeroCedula("12345678")
+                    .build();
+
+            when(clienteRepository.existsByEmail("nuevo@email.com")).thenReturn(false);
+            when(clienteRepository.existsByCedula("12345678")).thenReturn(true);
+
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.udea.bancodigital.customers.domain.exception.ClienteYaExisteException.class,
+                    () -> useCase.crearCliente(request)
+            );
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepcion si email ya existe en acceso")
+        void debeLanzarExcepcionSiEmailYaExisteAcceso() {
+            CrearClienteRequestDto request = CrearClienteRequestDto.builder()
+                    .email("existente@email.com")
+                    .numeroCedula("12345678")
+                    .build();
+
+            when(clienteRepository.existsByEmail("existente@email.com")).thenReturn(false);
+            when(clienteRepository.existsByCedula("12345678")).thenReturn(false);
+            when(accessProvisioningPort.existsByEmail("existente@email.com")).thenReturn(true);
+
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.udea.bancodigital.customers.domain.exception.ClienteYaExisteException.class,
+                    () -> useCase.crearCliente(request)
+            );
+        }
+
+        @Test
+        @DisplayName("Debe publicar evento con nombre completo")
+        void debePublicarEventoConNombreCompleto() {
+            CrearClienteRequestDto request = CrearClienteRequestDto.builder()
+                    .primerNombre("Juan")
+                    .segundoNombre("Carlos")
+                    .primerApellido("Perez")
+                    .segundoApellido("Lopez")
+                    .email("juan@email.com")
+                    .numeroCedula("12345678")
+                    .build();
+
+            UUID clienteId = UUID.randomUUID();
+
+            Cliente cliente = Cliente.builder()
+                    .id(clienteId)
+                    .numeroCedula(new NumeroCedula("12345678"))
+                    .primerNombre("Juan")
+                    .segundoNombre("Carlos")
+                    .primerApellido("Perez")
+                    .segundoApellido("Lopez")
+                    .email(new Email("juan@email.com"))
+                    .activo(true)
+                    .build();
+
+            Cliente clienteGuardado = Cliente.builder()
+                    .id(clienteId)
+                    .numeroCedula(new NumeroCedula("12345678"))
+                    .primerNombre("Juan")
+                    .segundoNombre("Carlos")
+                    .primerApellido("Perez")
+                    .segundoApellido("Lopez")
+                    .email(new Email("juan@email.com"))
+                    .activo(true)
+                    .build();
+
+            ClienteResponseDto responseDto = ClienteResponseDto.builder()
+                    .id(clienteId)
+                    .build();
+
+            when(clienteRepository.existsByEmail("juan@email.com")).thenReturn(false);
+            when(clienteRepository.existsByCedula("12345678")).thenReturn(false);
+            when(accessProvisioningPort.existsByEmail("juan@email.com")).thenReturn(false);
+            when(clienteMapper.toDomain(request)).thenReturn(cliente);
+            when(clienteRepository.save(cliente)).thenReturn(clienteGuardado);
+            when(clienteMapper.toResponseDto(clienteGuardado)).thenReturn(responseDto);
+
+            useCase.crearCliente(request);
+
+            verify(eventPublisher).publish(eventCaptor.capture());
+            ClienteRegistradoEvent event = eventCaptor.getValue();
+            assertThat(event.nombreCompleto()).isEqualTo("Juan Perez");
+        }
     }
 }

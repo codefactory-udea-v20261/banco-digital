@@ -18,13 +18,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Component
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+@Component("authJwtAuthenticationFilter")
+public class AuthJwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final TokenBlacklistPort tokenBlacklistPort;
 
-    public JwtAuthenticationFilter(JwtProvider jwtProvider, TokenBlacklistPort tokenBlacklistPort) {
+    public AuthJwtAuthenticationFilter(JwtProvider jwtProvider, TokenBlacklistPort tokenBlacklistPort) {
         this.jwtProvider = jwtProvider;
         this.tokenBlacklistPort = tokenBlacklistPort;
     }

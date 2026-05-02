@@ -3,7 +3,7 @@ package com.udea.bancodigital.customers.infrastructure.adapter.in.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.udea.bancodigital.customers.application.dto.ActualizarClienteRequestDto;
 import com.udea.bancodigital.customers.application.dto.ClienteResponseDto;
-import com.udea.bancodigital.auth.infrastructure.config.JwtAuthenticationFilter;
+import com.udea.bancodigital.auth.infrastructure.config.AuthJwtAuthenticationFilter;
 import com.udea.bancodigital.customers.application.dto.CrearClienteRequestDto;
 import com.udea.bancodigital.customers.domain.port.in.ActualizarClientePort;
 import com.udea.bancodigital.customers.domain.port.in.CrearClientePort;
@@ -20,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -38,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(ClienteController.class)
 @Import(SecurityConfig.class)
+@ActiveProfiles("test")
 class ClienteControllerSecurityTest {
 
     @Autowired
@@ -59,7 +61,10 @@ class ClienteControllerSecurityTest {
     private ClienteAccessControlPort clienteAccessControlPort;
 
     @MockBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private AuthJwtAuthenticationFilter authJwtAuthenticationFilter;
+
+    @MockBean
+    private com.udea.bancodigital.infrastructure.security.IdentityServiceClient identityServiceClient;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -70,7 +75,7 @@ class ClienteControllerSecurityTest {
                     invocation.getArgument(1, ServletResponse.class)
             );
             return null;
-        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+        }).when(authJwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
     }
 
     @Test
