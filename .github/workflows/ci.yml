@@ -15,6 +15,7 @@ concurrency:
 
 env:
   JAVA_VERSION: '17'
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: localhost:9092
 
 jobs:
   build-and-test:
@@ -52,6 +53,9 @@ jobs:
 
       - name: Ensure Maven Wrapper is executable
         run: chmod +x ./mvnw
+
+      - name: Docker support
+        uses: docker/setup-docker-action@v3
 
       - name: Build & Test
         run: ./mvnw -B verify -P ci
