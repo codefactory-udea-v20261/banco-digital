@@ -35,7 +35,7 @@ public class CuentaController {
     private final AuthenticatedClientProvider authenticatedClientProvider;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('CAJERO', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_CREATE_ACCOUNTS')")
     @Operation(
             summary = "Crear cuenta financiera",
             description = "Crea una cuenta financiera para un cliente existente y activo."

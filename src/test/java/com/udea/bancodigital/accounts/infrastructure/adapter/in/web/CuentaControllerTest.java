@@ -1,4 +1,5 @@
 package com.udea.bancodigital.accounts.infrastructure.adapter.in.web;
+import com.udea.bancodigital.infrastructure.security.JwtAuthenticationFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.udea.bancodigital.accounts.application.dto.CrearCuentaRequestDto;
@@ -9,7 +10,7 @@ import com.udea.bancodigital.accounts.domain.model.TipoCuenta;
 import com.udea.bancodigital.accounts.domain.port.in.CrearCuentaPort;
 import com.udea.bancodigital.accounts.domain.port.in.ConsultarSaldoPort;
 import com.udea.bancodigital.accounts.domain.port.out.AuthServicePort;
-import com.udea.bancodigital.auth.infrastructure.config.AuthJwtAuthenticationFilter;
+
 import com.udea.bancodigital.infrastructure.config.SecurityConfig;
 import com.udea.bancodigital.shared.security.AuthenticatedClientProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,7 +62,7 @@ class CuentaControllerTest {
     private AuthenticatedClientProvider authenticatedClientProvider;
 
     @MockBean
-    private AuthJwtAuthenticationFilter authJwtAuthenticationFilter;
+    private JwtAuthenticationFilter authJwtAuthenticationFilter;
 
     @MockBean
     private com.udea.bancodigital.infrastructure.security.IdentityServiceClient identityServiceClient;
@@ -79,7 +80,7 @@ class CuentaControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "CAJERO")
+    @WithMockUser(authorities = "PERM_CREATE_ACCOUNTS")
     void deberiaCrearCuentaYRetornarApiResponse() throws Exception {
         UUID cuentaId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();

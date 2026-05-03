@@ -1,4 +1,5 @@
 package com.udea.bancodigital.customers.infrastructure.adapter.in.web;
+import com.udea.bancodigital.infrastructure.security.JwtAuthenticationFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.udea.bancodigital.customers.application.dto.ActualizarClienteRequestDto;
@@ -14,7 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import com.udea.bancodigital.auth.infrastructure.config.AuthJwtAuthenticationFilter;
+
 
 import java.time.Instant;
 import java.util.UUID;
@@ -40,7 +41,7 @@ class ClienteControllerTest {
     private ActualizarClientePort actualizarClientePort;
 
     @MockBean
-    private AuthJwtAuthenticationFilter authJwtAuthenticationFilter;
+    private JwtAuthenticationFilter authJwtAuthenticationFilter;
 
     @MockBean
     private com.udea.bancodigital.infrastructure.security.IdentityServiceClient identityServiceClient;

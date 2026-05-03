@@ -1,9 +1,10 @@
 package com.udea.bancodigital.customers.infrastructure.adapter.in.web;
+import com.udea.bancodigital.infrastructure.security.JwtAuthenticationFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.udea.bancodigital.customers.application.dto.ActualizarClienteRequestDto;
 import com.udea.bancodigital.customers.application.dto.ClienteResponseDto;
-import com.udea.bancodigital.auth.infrastructure.config.AuthJwtAuthenticationFilter;
+
 import com.udea.bancodigital.customers.application.dto.CrearClienteRequestDto;
 import com.udea.bancodigital.customers.domain.port.in.ActualizarClientePort;
 import com.udea.bancodigital.customers.domain.port.in.CrearClientePort;
@@ -61,7 +62,7 @@ class ClienteControllerSecurityTest {
     private ClienteAccessControlPort clienteAccessControlPort;
 
     @MockBean
-    private AuthJwtAuthenticationFilter authJwtAuthenticationFilter;
+    private JwtAuthenticationFilter authJwtAuthenticationFilter;
 
     @MockBean
     private com.udea.bancodigital.infrastructure.security.IdentityServiceClient identityServiceClient;
@@ -79,7 +80,7 @@ class ClienteControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "CLIENTE")
+    @WithMockUser(authorities = "PERM_READ_OWN_PROFILE")
     void deberiaRetornar403_siUsuarioNoEsAsesorNiAdmin() throws Exception {
         mockMvc.perform(post("/api/v1/clientes")
                         .contentType("application/json")
@@ -88,7 +89,7 @@ class ClienteControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "CAJERO")
+    @WithMockUser(authorities = "PERM_MANAGE_CLIENTS")
     void deberiaPermitirRegistro_siUsuarioEsAsesor() throws Exception {
         mockMvc.perform(post("/api/v1/clientes")
                         .contentType("application/json")
@@ -97,7 +98,7 @@ class ClienteControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "CLIENTE")
+    @WithMockUser(authorities = "PERM_READ_OWN_PROFILE")
     void deberiaRetornar403_siClienteIntentaActualizarPerfil() throws Exception {
         mockMvc.perform(patch("/api/v1/clientes/{id}", UUID.randomUUID())
                         .contentType("application/json")
@@ -106,7 +107,7 @@ class ClienteControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "CAJERO")
+    @WithMockUser(authorities = "PERM_MANAGE_CLIENTS")
     void deberiaPermitirActualizacion_siUsuarioEsAsesor() throws Exception {
         UUID id = UUID.randomUUID();
         when(actualizarClientePort.actualizarCliente(eq(id), any(ActualizarClienteRequestDto.class)))
@@ -127,7 +128,7 @@ class ClienteControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "CAJERO")
+    @WithMockUser(authorities = "PERM_MANAGE_CLIENTS")
     void deberiaPermitirConsultaSiUsuarioEsAsesor() throws Exception {
         UUID id = UUID.randomUUID();
         doNothing().when(clienteAccessControlPort).validateCanView(id);
@@ -147,7 +148,7 @@ class ClienteControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "AUDITOR")
+    @WithMockUser(authorities = "PERM_VIEW_AUDIT")
     void deberiaRetornar403SiAuditorIntentaConsultarCliente() throws Exception {
         mockMvc.perform(get("/api/v1/clientes/{id}", UUID.randomUUID()))
                 .andExpect(status().isForbidden());
