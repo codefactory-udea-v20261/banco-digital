@@ -34,3 +34,20 @@ server:
   error:
     include-message: never
     include-stacktrace: never
+
+# Identity service URL for inter-service communication
+services:
+  identity-service:
+    url: ${IDENTITY_SERVICE_URL:http://localhost:8081}
+  identity:
+    url: ${IDENTITY_SERVICE_URL:http://localhost:8081}
+  audit:
+    url: ${AUDIT_SERVICE_URL:http://localhost:8082}
+
+# Disable tracing/zipkin in Cloud Run
+management:
+  tracing:
+    enabled: false
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
