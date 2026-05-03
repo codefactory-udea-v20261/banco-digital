@@ -50,7 +50,7 @@ public class ClienteController {
      * @return ResponseEntity con los datos del cliente recién creado.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('CAJERO', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_MANAGE_CLIENTS')")
     @Operation(
         summary = "Registrar nuevo cliente",
         description = "Crea un nuevo perfil de cliente. El correo electrónico y el número de documento de identidad deben ser únicos en el sistema."
@@ -85,7 +85,7 @@ public class ClienteController {
      * @return ResponseEntity con la información del cliente solicitado.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('CAJERO', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('PERM_READ_OWN_PROFILE', 'PERM_MANAGE_CLIENTS')")
     @Operation(
             summary = "Consultar cliente por ID",
             description = "Obtiene el perfil detallado de un cliente específico utilizando su identificador único."
@@ -118,7 +118,7 @@ public class ClienteController {
      * @return ResponseEntity con la información actualizada del cliente.
      */
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('CAJERO', 'ADMIN')")
+    @PreAuthorize("hasAuthority('PERM_MANAGE_CLIENTS')")
     @Operation(
             summary = "Actualizar perfil de cliente",
             description = "Actualiza de manera parcial los datos de un cliente. Ciertos campos, como el documento de identidad, son inmutables."

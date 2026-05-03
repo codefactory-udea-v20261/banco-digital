@@ -1,6 +1,7 @@
 package com.udea.bancodigital.infrastructure.security;
 
 import com.udea.bancodigital.infrastructure.security.dto.TokenValidationResponse;
+import com.udea.bancodigital.shared.security.AuthenticatedUser;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,9 +15,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Component
+@Component("customJwtAuthenticationFilter")
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final IdentityServiceClient identityServiceClient;
@@ -35,9 +37,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(jwt)) {
                 TokenValidationResponse validationResponse = identityServiceClient.validateToken(jwt);
 
-                if (validationResponse.isActive() && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                if (validationResponse.isActive()) {
+                    
+                    UUID userId = null;
+                    UUID clienteId = null;
+                    
+                    if (validationResponse.getClienteId() != null && !validationResponse.getClienteId().isEmpty()) {
+                        clienteId = UUID.fromString(validationResponse.getClienteId());
+                    }
+
+                    if (validationResponse.getUid() != null && !validationResponse.getUid().isEmpty()) {
+                        userId = UUID.fromString(validationResponse.getUid());
+                    }
+
+                    AuthenticatedUser authenticatedUser = new AuthenticatedUser(
+                            userId,
                             validationResponse.getSub(),
+                            clienteId
+                    );
+
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            authenticatedUser,
                             null,
                             validationResponse.getAuthorities().stream()
                                     .map(SimpleGrantedAuthority::new)

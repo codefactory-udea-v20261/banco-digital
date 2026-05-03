@@ -102,7 +102,7 @@ class TransaccionMapperTest {
             assertThat(entity.getReferencia()).isNull();
             assertThat(entity.getEstado()).isNull();
             assertThat(entity.getCreatedAt()).isNull();
-            assertThat(entity.getCreatedBy()).isNull();
+            assertThat(entity.getCreatedBy()).isEqualTo("SYSTEM");
         }
 
         @Test

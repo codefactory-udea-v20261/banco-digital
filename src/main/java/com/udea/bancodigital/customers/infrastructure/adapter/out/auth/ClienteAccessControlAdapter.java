@@ -12,9 +12,8 @@ import java.util.UUID;
 @Component
 public class ClienteAccessControlAdapter implements ClienteAccessControlPort {
 
-    private static final String ROLE_ADMIN = "ROLE_ADMIN";
-    private static final String ROLE_CAJERO = "ROLE_CAJERO";
-    private static final String ROLE_CLIENTE = "ROLE_CLIENTE";
+    private static final String PERM_MANAGE_CLIENTS = "PERM_MANAGE_CLIENTS";
+    private static final String PERM_READ_OWN_PROFILE = "PERM_READ_OWN_PROFILE";
 
     @Override
     public void validateCanView(UUID clienteId) {
@@ -22,7 +21,7 @@ public class ClienteAccessControlAdapter implements ClienteAccessControlPort {
             return;
         }
 
-        if (hasRole(ROLE_CLIENTE) && clienteId.equals(extractClienteId())) {
+        if (hasAuthority(PERM_READ_OWN_PROFILE) && clienteId.equals(extractClienteId())) {
             return;
         }
 
@@ -31,17 +30,17 @@ public class ClienteAccessControlAdapter implements ClienteAccessControlPort {
 
     @Override
     public boolean canManageClientes() {
-        return hasRole(ROLE_ADMIN) || hasRole(ROLE_CAJERO);
+        return hasAuthority(PERM_MANAGE_CLIENTS);
     }
 
-    private boolean hasRole(String role) {
+    private boolean hasAuthority(String authorityName) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getAuthorities() == null) {
             return false;
         }
 
         return authentication.getAuthorities().stream()
-                .anyMatch(authority -> role.equals(authority.getAuthority()));
+                .anyMatch(authority -> authorityName.equals(authority.getAuthority()));
     }
 
     private UUID extractClienteId() {

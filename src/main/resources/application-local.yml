@@ -2,7 +2,15 @@ spring:
   datasource:
     # Local development - Core Banking user
     username: core_user
-    password: ${DB_PASSWORD:CoreBanking123!}
+    password: ${CORE_DB_PASSWORD:CoreBanking123!}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+
+  cloud:
+    vault:
+      enabled: false
+
   jpa:
     show-sql: true
 

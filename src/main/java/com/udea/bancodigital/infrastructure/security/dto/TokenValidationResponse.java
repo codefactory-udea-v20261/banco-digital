@@ -7,6 +7,7 @@ public class TokenValidationResponse {
     private String sub;
     private List<String> authorities;
     private String clienteId;
+    private String uid;
 
     // Getters y Setters
     public boolean isActive() {
@@ -39,5 +40,13 @@ public class TokenValidationResponse {
 
     public void setClienteId(String clienteId) {
         this.clienteId = clienteId;
+    }
+
+    public String getUid() {
+        return uid;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 }
