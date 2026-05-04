@@ -10,6 +10,7 @@ public class DocumentNumberValidator implements ConstraintValidator<ValidDocumen
 
     @Override
     public void initialize(ValidDocumentNumber annotation) {
+        // No initialization required for this validator
     }
 
     @Override
