@@ -19,7 +19,6 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Manejador global de excepciones.
@@ -78,7 +77,7 @@ public class GlobalExceptionHandler {
         List<String> details = ex.getBindingResult().getFieldErrors()
                 .stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(Collectors.toList());
+                .toList();
         log.warn("[{}] ValidationException: {} — path={}", traceId, details, request.getRequestURI());
         ApiError error = ApiError.builder()
                 .errorCode("VALIDATION_ERROR")
@@ -97,7 +96,7 @@ public class GlobalExceptionHandler {
         List<String> details = ex.getConstraintViolations()
                 .stream()
                 .map(cv -> cv.getPropertyPath() + ": " + cv.getMessage())
-                .collect(Collectors.toList());
+                .toList();
         log.warn("[{}] ConstraintViolationException: {} — path={}", traceId, details, request.getRequestURI());
         ApiError error = ApiError.builder()
                 .errorCode("VALIDATION_ERROR")
