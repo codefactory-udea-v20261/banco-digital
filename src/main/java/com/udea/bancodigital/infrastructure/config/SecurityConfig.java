@@ -14,7 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -31,8 +30,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev") ||
-                       Arrays.asList(environment.getActiveProfiles()).contains("local");
 
         http
             .csrf(AbstractHttpConfigurer::disable)
