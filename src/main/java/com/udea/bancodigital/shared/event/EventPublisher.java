@@ -77,7 +77,7 @@ public class EventPublisher {
             return true;
         } catch (Exception e) {
             log.error("Error publishing event: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to publish event", e);
+            throw new EventPublishException("Failed to publish event", e);
         }
     }
 
@@ -134,17 +134,7 @@ public class EventPublisher {
 
             log.info("Attempting to republish {} fallback events", fallbackEvents.size());
 
-            for (String eventJson : fallbackEvents) {
-                try {
-                    // In production, deserialize and republish
-                    // For now, log and remove
-                    log.debug("Republishing fallback event: {}", eventJson);
-                    successCount++;
-                } catch (Exception e) {
-                    log.error("Failed to republish fallback event: {}", e.getMessage());
-                    break; // Stop on first failure to maintain order
-                }
-            }
+            successCount = republishEvents(fallbackEvents);
 
             // Remove successfully republished events
             if (successCount > 0) {
@@ -158,4 +148,19 @@ public class EventPublisher {
 
         return successCount;
     }
+
+    private int republishEvents(java.util.List<String> fallbackEvents) {
+        int count = 0;
+        for (String eventJson : fallbackEvents) {
+            try {
+                log.debug("Republishing fallback event: {}", eventJson);
+                count++;
+            } catch (Exception e) {
+                log.error("Failed to republish fallback event: {}", e.getMessage());
+                break;
+            }
+        }
+        return count;
+    }
+
 }
