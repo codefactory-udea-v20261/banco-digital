@@ -18,6 +18,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EurekaHealthIndicator implements HealthIndicator {
 
+    private static final String EUREKA_KEY = EUREKA_KEY;
+
+
     private final DiscoveryClient discoveryClient;
 
     @Override
@@ -29,13 +32,13 @@ public class EurekaHealthIndicator implements HealthIndicator {
             if (services == null || services.isEmpty()) {
                 log.warn("No services found in service registry");
                 return Health.down()
-                        .withDetail("eureka", "No services registered")
+                        .withDetail(EUREKA_KEY, "No services registered")
                         .build();
             }
 
             log.debug("Eureka health check passed. Registered services: {}", services.size());
             return Health.up()
-                    .withDetail("eureka", "Connected")
+                    .withDetail(EUREKA_KEY, "Connected")
                     .withDetail("registered_services", services.size())
                     .withDetail("services", services)
                     .build();
@@ -43,7 +46,7 @@ public class EurekaHealthIndicator implements HealthIndicator {
         } catch (Exception e) {
             log.error("Eureka health check failed: {}", e.getMessage());
             return Health.down()
-                    .withDetail("eureka", "Connection failed")
+                    .withDetail(EUREKA_KEY, "Connection failed")
                     .withDetail("reason", e.getMessage())
                     .build();
         }
