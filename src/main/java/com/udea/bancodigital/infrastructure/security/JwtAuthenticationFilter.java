@@ -16,7 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component("customJwtAuthenticationFilter")
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -61,7 +60,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             null,
                             validationResponse.getAuthorities().stream()
                                     .map(SimpleGrantedAuthority::new)
-                                    .collect(Collectors.toList()));
+                                    .toList());
 
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
