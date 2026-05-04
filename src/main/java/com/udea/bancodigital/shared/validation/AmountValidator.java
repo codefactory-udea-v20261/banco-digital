@@ -11,6 +11,7 @@ public class AmountValidator implements ConstraintValidator<ValidAmount, Object>
 
     @Override
     public void initialize(ValidAmount annotation) {
+        // No initialization required for this validator
     }
 
     @Override
