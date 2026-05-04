@@ -32,6 +32,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PendingAccessProvisioningConsumer {
 
+    private static final String CLIENTE_ID_KEY = CLIENTE_ID_KEY;
+    private static final String RETRY_COUNT_KEY = RETRY_COUNT_KEY;
+
+
     private static final String PENDING_TOPIC = "cliente-access-provisioning-pending";
     private static final String DLQ_TOPIC = "cliente-access-provisioning-dlq";
     private static final String CONSUMER_GROUP = "access-provisioning-pending";
@@ -49,17 +53,13 @@ public class PendingAccessProvisioningConsumer {
     )
     public void consumePendingEvent(Map<String, Object> event) {
         try {
-            String clienteId = String.valueOf(event.get("clienteId"));
+            String clienteId = String.valueOf(event.get(CLIENTE_ID_KEY));
             String email = String.valueOf(event.get("email"));
-            int retryCount = (int) event.getOrDefault("retryCount", 0);
+            int retryCount = (int) event.getOrDefault(RETRY_COUNT_KEY, 0);
 
             log.info("Processing pending access provisioning event: "
                 + "clienteId={}, email={}, retryCount={}/{}",
                 clienteId, email, retryCount, MAX_RETRIES);
-
-            // TODO: Call Identity Service to provision access
-            // This would normally be done via the CircuitBreakerAdapter
-            // If Identity Service is still down, this will fail and be retried
             provisionAccess(clienteId, email);
 
             log.info("Successfully replayed access provisioning for clienteId={}", clienteId);
@@ -73,7 +73,7 @@ public class PendingAccessProvisioningConsumer {
      * Handle retry logic with exponential backoff and DLQ routing.
      */
     private void handleRetry(Map<String, Object> event, Exception e) {
-        int retryCount = (int) event.getOrDefault("retryCount", 0);
+        int retryCount = (int) event.getOrDefault(RETRY_COUNT_KEY, 0);
 
         if (retryCount >= MAX_RETRIES) {
             // Max retries reached, move to DLQ
@@ -94,16 +94,16 @@ public class PendingAccessProvisioningConsumer {
 
         log.warn("Retry failed for clienteId={}. Scheduling retry {} of {}, "
             + "backoff={}ms",
-            event.get("clienteId"), nextRetry, MAX_RETRIES, backoffMs);
+            event.get(CLIENTE_ID_KEY), nextRetry, MAX_RETRIES, backoffMs);
 
         // Update retry count
-        event.put("retryCount", nextRetry);
+        event.put(RETRY_COUNT_KEY, nextRetry);
         event.put("lastRetryAt", Instant.now().toString());
         event.put("nextRetryScheduledAt", 
             Instant.now().plusMillis(backoffMs).toString());
 
         // Re-queue to pending topic
-        kafkaTemplate.send(PENDING_TOPIC, String.valueOf(event.get("clienteId")), event);
+        kafkaTemplate.send(PENDING_TOPIC, String.valueOf(event.get(CLIENTE_ID_KEY)), event);
     }
 
     /**
@@ -112,7 +112,7 @@ public class PendingAccessProvisioningConsumer {
     private void moveToDLQ(Map<String, Object> event, String reason) {
         log.error("Moving access provisioning event to DLQ. "
             + "clienteId={}, reason={}",
-            event.get("clienteId"), reason);
+            event.get(CLIENTE_ID_KEY), reason);
 
         // Add failure metadata
         event.put("failedAt", Instant.now().toString());
@@ -120,11 +120,11 @@ public class PendingAccessProvisioningConsumer {
         event.put("movedToDLQAt", Instant.now().toString());
 
         // Send to DLQ
-        kafkaTemplate.send(DLQ_TOPIC, String.valueOf(event.get("clienteId")), event);
+        kafkaTemplate.send(DLQ_TOPIC, String.valueOf(event.get(CLIENTE_ID_KEY)), event);
 
         log.info("Event moved to DLQ for manual intervention. "
             + "Topic={}, clienteId={}",
-            DLQ_TOPIC, event.get("clienteId"));
+            DLQ_TOPIC, event.get(CLIENTE_ID_KEY));
     }
 
     /**
@@ -132,11 +132,6 @@ public class PendingAccessProvisioningConsumer {
      * In production, this would call Identity Service via CircuitBreakerAdapter.
      */
     private void provisionAccess(String clienteId, String email) {
-        // TODO: In production environment:
-        // clienteAccessProvisioningCircuitBreakerAdapter.provisionAccess(
-        //     UUID.fromString(clienteId),
-        //     email
-        // );
         
         log.debug("Provisioning access for clienteId={}, email={}", clienteId, email);
     }
