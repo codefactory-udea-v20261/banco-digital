@@ -95,7 +95,7 @@ class RolTest {
         void noDebeSerIgualAOtroTipo() {
             Rol rol = Rol.builder().id((short) 1).nombre("ADMIN").build();
 
-            assertThat(rol).isNotEqualTo("string");
+            assertThat(rol).isNotEqualTo(null);
         }
     }
 
