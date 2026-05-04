@@ -10,7 +10,7 @@ public class CuentaNoPerteneceAlClienteException extends BusinessException {
     public CuentaNoPerteneceAlClienteException(UUID cuentaId) {
         super(
                 "CUENTA_NO_AUTORIZADA",
-                "La cuenta no pertenece al cliente",
+                "La cuenta " + cuentaId + " no pertenece al cliente",
                 HttpStatus.FORBIDDEN
         );
     }
