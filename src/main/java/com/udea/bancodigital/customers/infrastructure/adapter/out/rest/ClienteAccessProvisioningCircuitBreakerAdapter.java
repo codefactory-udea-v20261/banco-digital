@@ -105,7 +105,7 @@ public class ClienteAccessProvisioningCircuitBreakerAdapter implements ClienteAc
             if (response.getStatusCode().isError()) {
                 log.error("Failed to provision access for client {} with email {}: HTTP {}",
                     clienteId, email, response.getStatusCode());
-                throw new com.udea.bancodigital.shared.exception.ServiceUnavailableException("Identity Service returned error: " + response.getStatusCode());
+                throw new RuntimeException("Identity Service returned error: " + response.getStatusCode());
             } else {
                 log.info("Successfully provisioned access for client {} with email {}", clienteId, email);
             }
