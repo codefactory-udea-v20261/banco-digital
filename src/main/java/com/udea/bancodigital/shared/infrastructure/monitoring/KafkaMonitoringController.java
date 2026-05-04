@@ -52,12 +52,12 @@ public class KafkaMonitoringController {
         CircuitBreaker kafkaPublisherCb = circuitBreakerRegistry.circuitBreaker(KAFKA_PUBLISHER);
         if (kafkaPublisherCb != null) {
             status.put("circuit_breaker_state", kafkaPublisherCb.getState().toString());
-            status.put("circuit_breaker_metrics", new HashMap<String, Object>() {{
-                var metrics = kafkaPublisherCb.getMetrics();
-                put("failed_calls", metrics.getNumberOfFailedCalls());
-                put("successful_calls", metrics.getNumberOfSuccessfulCalls());
-                put("buffered_calls", metrics.getNumberOfBufferedCalls());
-            }});
+            var metrics = kafkaPublisherCb.getMetrics();
+            Map<String, Object> cbMetrics = new HashMap<>();
+            cbMetrics.put("failed_calls", metrics.getNumberOfFailedCalls());
+            cbMetrics.put("successful_calls", metrics.getNumberOfSuccessfulCalls());
+            cbMetrics.put("buffered_calls", metrics.getNumberOfBufferedCalls());
+            status.put("circuit_breaker_metrics", cbMetrics);
         }
         
         status.put("timestamp", System.currentTimeMillis());
