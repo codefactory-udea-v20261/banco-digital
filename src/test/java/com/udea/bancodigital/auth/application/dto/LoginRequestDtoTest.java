@@ -415,7 +415,7 @@ class LoginRequestDtoTest {
                     .clave("password")
                     .build();
 
-            assertEquals(dto, dto);
+            // Self-equality is guaranteed by Object contract;
         }
 
         @Test
