@@ -44,11 +44,6 @@ public class ClienteEventListener {
         log.info("Email: {}", event.email());
         log.info("Nombre: {}", event.nombreCompleto());
         log.info("Ocurrió: {}", event.occurredOn());
-
-        // AQUÍ otros módulos harían su trabajo:
-        // - notificationService.enviarEmailBienvenida(event.email(), event.nombreCompleto());
-        // - accountService.crearCuentaInicial(event.clienteId());
-        // - analyticsService.registrarNuevoCliente();
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
