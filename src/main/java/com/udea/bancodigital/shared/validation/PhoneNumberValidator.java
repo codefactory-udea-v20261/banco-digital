@@ -15,7 +15,10 @@ public class PhoneNumberValidator implements ConstraintValidator<ValidPhoneNumbe
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        if (value == null || value.isBlank()) {
+        if (value == null) {
+            return true;
+        }
+        if (value.isBlank()) {
             return false;
         }
         // Accept +57XXXXXXXXX or 0XXXXXXXXXX (9-10 digits)

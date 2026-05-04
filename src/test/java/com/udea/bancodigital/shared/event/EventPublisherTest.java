@@ -69,4 +69,42 @@ class EventPublisherTest {
         boolean result = eventPublisher.publishEvent(null);
         assertFalse(result, "Should return false for null event");
     }
+
+    @Test
+    void publishEventFallback_ShouldStoreInFallback() {
+        DomainEvent event = DomainEvent.builder().eventId("123").build();
+        when(fallbackStorage.storeEventInFallback(event)).thenReturn(true);
+
+        boolean result = eventPublisher.publishEventFallback(event, new RuntimeException("Test"));
+
+        assertTrue(result);
+        verify(fallbackStorage).storeEventInFallback(event);
+    }
+
+    @Test
+    void publishEventToDLQ_ShouldSendToKafka() {
+        DomainEvent event = DomainEvent.builder().eventId("123").build();
+        eventPublisher.publishEventToDLQ(event, "Test reason");
+        verify(kafkaTemplate).send(any(Message.class));
+    }
+
+    @Test
+    void publishEventToDLQ_ShouldFallbackOnException() {
+        DomainEvent event = DomainEvent.builder().eventId("123").build();
+        when(kafkaTemplate.send(any(Message.class))).thenThrow(new RuntimeException("Kafka error"));
+        
+        eventPublisher.publishEventToDLQ(event, "Test reason");
+        
+        verify(fallbackStorage).storeEventInFallback(event);
+    }
+
+    @Test
+    void republishFallbackEvents_ShouldRepublishAndRemove() {
+        when(fallbackStorage.retrieveFallbackEvents(100)).thenReturn(java.util.List.of("event1", "event2"));
+        
+        int count = eventPublisher.republishFallbackEvents();
+        
+        assertEquals(2, count);
+        verify(fallbackStorage).removeFallbackEvents(2);
+    }
 }

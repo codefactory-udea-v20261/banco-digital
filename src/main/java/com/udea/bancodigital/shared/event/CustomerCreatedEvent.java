@@ -2,9 +2,9 @@ package com.udea.bancodigital.shared.event;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.util.UUID;
@@ -13,11 +13,11 @@ import java.util.UUID;
  * Event emitted when a new customer is created in the system.
  * This event triggers downstream services (Identity, Audit) to take action.
  */
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@EqualsAndHashCode(callSuper = false)
 public class CustomerCreatedEvent extends DomainEvent {
 
     @JsonProperty("customer_id")

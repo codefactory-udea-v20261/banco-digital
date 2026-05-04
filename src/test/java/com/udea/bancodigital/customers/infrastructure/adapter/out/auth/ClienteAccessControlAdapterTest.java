@@ -60,4 +60,10 @@ class ClienteAccessControlAdapterTest {
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
+
+    @Test
+    void deberiaRetornarFalsoYNoLanzarExcepcionConAuthNula() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        assertThrows(ClienteNoAutorizadoException.class, () -> adapter.validateCanView(UUID.randomUUID()));
+    }
 }

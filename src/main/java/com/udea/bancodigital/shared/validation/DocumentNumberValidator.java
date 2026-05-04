@@ -15,10 +15,13 @@ public class DocumentNumberValidator implements ConstraintValidator<ValidDocumen
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        if (value == null || value.isBlank()) {
+        if (value == null) {
+            return true;
+        }
+        if (value.isBlank()) {
             return false;
         }
         // Accept 6-20 alphanumeric characters
-        return value.matches("^[A-Za-z0-9]{6,20}$");
+        return value.matches("^[A-Za-z\\d]{6,20}$");
     }
 }

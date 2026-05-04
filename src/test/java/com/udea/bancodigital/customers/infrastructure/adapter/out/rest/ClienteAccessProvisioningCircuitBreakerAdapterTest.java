@@ -1,0 +1,71 @@
+package com.udea.bancodigital.customers.infrastructure.adapter.out.rest;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Map;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class ClienteAccessProvisioningCircuitBreakerAdapterTest {
+
+    @Mock
+    private RestTemplate restTemplate;
+
+    @Mock
+    private KafkaTemplate<String, Map<String, Object>> kafkaTemplate;
+
+    @InjectMocks
+    private ClienteAccessProvisioningCircuitBreakerAdapter adapter;
+
+    @Test
+    void existsByEmail_ShouldReturnTrueIfResponseOk() {
+        when(restTemplate.getForEntity(anyString(), eq(Map.class)))
+                .thenReturn(new ResponseEntity<>(Map.of("exists", true), HttpStatus.OK));
+
+        boolean exists = adapter.existsByEmail("test@test.com");
+
+        assertThat(exists).isTrue();
+    }
+
+    @Test
+    void existsByEmail_ShouldThrowOnRestClientException() {
+        when(restTemplate.getForEntity(anyString(), eq(Map.class)))
+                .thenThrow(new RestClientException("Connection error"));
+
+        assertThatThrownBy(() -> adapter.existsByEmail("test@test.com"))
+                .isInstanceOf(RestClientException.class);
+    }
+
+    @Test
+    void provisionAccess_ShouldPostSuccessfully() {
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        adapter.provisionAccess(UUID.randomUUID(), "test@test.com");
+
+        verify(restTemplate).postForEntity(anyString(), any(HttpEntity.class), eq(Void.class));
+    }
+
+    @Test
+    void getCircuitBreakerStatus_ShouldReturnMap() {
+        org.springframework.test.util.ReflectionTestUtils.setField(adapter, "identityServiceUrl", "http://test-url");
+        Map<String, Object> status = adapter.getCircuitBreakerStatus();
+        assertThat(status).containsKey("circuitBreakerName");
+    }
+}

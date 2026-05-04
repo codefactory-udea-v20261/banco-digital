@@ -2,9 +2,9 @@ package com.udea.bancodigital.shared.event;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
@@ -14,11 +14,11 @@ import java.util.UUID;
  * Event emitted when a transaction is completed.
  * This event is published to audit and reporting services for compliance and analytics.
  */
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@EqualsAndHashCode(callSuper = false)
 public class TransactionCompletedEvent extends DomainEvent {
 
     @JsonProperty("transaction_id")
