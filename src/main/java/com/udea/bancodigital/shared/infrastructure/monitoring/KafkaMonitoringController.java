@@ -24,6 +24,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class KafkaMonitoringController {
 
+    private static final String KAFKA_PUBLISHER = KAFKA_PUBLISHER;
+    private static final String STATUS = "status";
+    private static final String MESSAGE = "message";
+    private static final String ERROR = "error";
+
+
     private final EventFallbackStorage fallbackStorage;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
 
@@ -43,7 +49,7 @@ public class KafkaMonitoringController {
         status.put("fallback_queue_operational", fallbackQueueSize >= 0);
         
         // Circuit breaker status
-        CircuitBreaker kafkaPublisherCb = circuitBreakerRegistry.circuitBreaker("kafka-publisher");
+        CircuitBreaker kafkaPublisherCb = circuitBreakerRegistry.circuitBreaker(KAFKA_PUBLISHER);
         if (kafkaPublisherCb != null) {
             status.put("circuit_breaker_state", kafkaPublisherCb.getState().toString());
             status.put("circuit_breaker_metrics", new HashMap<String, Object>() {{
@@ -55,7 +61,7 @@ public class KafkaMonitoringController {
         }
         
         status.put("timestamp", System.currentTimeMillis());
-        status.put("status", fallbackQueueSize == 0 ? "healthy" : "degraded");
+        status.put(STATUS, fallbackQueueSize == 0 ? "healthy" : "degraded");
         
         return ResponseEntity.ok(status);
     }
@@ -88,10 +94,10 @@ public class KafkaMonitoringController {
     @GetMapping("/circuit-breaker")
     public ResponseEntity<Map<String, Object>> getCircuitBreakerMetrics() {
         Map<String, Object> metrics = new HashMap<>();
-        CircuitBreaker cb = circuitBreakerRegistry.circuitBreaker("kafka-publisher");
+        CircuitBreaker cb = circuitBreakerRegistry.circuitBreaker(KAFKA_PUBLISHER);
         
         if (cb == null) {
-            metrics.put("status", "not_initialized");
+            metrics.put(STATUS, "not_initialized");
             return ResponseEntity.ok(metrics);
         }
         
@@ -121,21 +127,21 @@ public class KafkaMonitoringController {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            CircuitBreaker cb = circuitBreakerRegistry.circuitBreaker("kafka-publisher");
+            CircuitBreaker cb = circuitBreakerRegistry.circuitBreaker(KAFKA_PUBLISHER);
             if (cb != null) {
                 cb.reset();
                 log.warn("Circuit breaker for kafka-publisher reset manually");
-                result.put("status", "success");
-                result.put("message", "Circuit breaker reset successfully");
+                result.put(STATUS, "success");
+                result.put(MESSAGE, "Circuit breaker reset successfully");
                 result.put("new_state", cb.getState().toString());
             } else {
-                result.put("status", "error");
-                result.put("message", "Circuit breaker not found");
+                result.put(STATUS, "error");
+                result.put(MESSAGE, "Circuit breaker not found");
             }
         } catch (Exception e) {
             log.error("Failed to reset circuit breaker: {}", e.getMessage(), e);
-            result.put("status", "error");
-            result.put("message", e.getMessage());
+            result.put(STATUS, "error");
+            result.put(MESSAGE, e.getMessage());
         }
         
         return ResponseEntity.ok(result);
@@ -155,13 +161,13 @@ public class KafkaMonitoringController {
             fallbackStorage.clearFallbackQueue();
             
             log.warn("Fallback event queue cleared manually. Lost {} events", beforeSize);
-            result.put("status", "success");
-            result.put("message", "Fallback queue cleared");
+            result.put(STATUS, "success");
+            result.put(MESSAGE, "Fallback queue cleared");
             result.put("events_discarded", beforeSize);
         } catch (Exception e) {
             log.error("Failed to clear fallback queue: {}", e.getMessage(), e);
-            result.put("status", "error");
-            result.put("message", e.getMessage());
+            result.put(STATUS, "error");
+            result.put(MESSAGE, e.getMessage());
         }
         
         return ResponseEntity.ok(result);
@@ -179,16 +185,16 @@ public class KafkaMonitoringController {
         long queueSize = fallbackStorage.getFallbackQueueSize();
         
         if (queueSize > 0) {
-            health.put("status", "DEGRADED");
-            health.put("message", "Operating in fallback mode with " + queueSize + " queued events");
+            health.put(STATUS, "DEGRADED");
+            health.put(MESSAGE, "Operating in fallback mode with " + queueSize + " queued events");
             if (queueSize > 5000) {
                 health.put("alert", "CRITICAL - Fallback queue critically full");
             } else if (queueSize > 1000) {
                 health.put("alert", "WARNING - Fallback queue high");
             }
         } else {
-            health.put("status", "UP");
-            health.put("message", "Kafka is operational");
+            health.put(STATUS, "UP");
+            health.put(MESSAGE, "Kafka is operational");
         }
         
         health.put("fallback_queue_size", queueSize);
