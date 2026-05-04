@@ -119,7 +119,7 @@ class CuentaControllerSecurityTest {
         UUID clienteId = UUID.randomUUID();
         
         when(authenticatedClientProvider.getClienteId()).thenReturn(clienteId);
-        when(consultarSaldoPort.consultarSaldo(eq(cuentaId), eq(clienteId)))
+        when(consultarSaldoPort.consultarSaldo(cuentaId, clienteId))
                 .thenReturn(ConsultarSaldoResponseDto.builder()
                         .saldo(new BigDecimal("50000.00"))
                         .build());
@@ -137,7 +137,7 @@ class CuentaControllerSecurityTest {
         UUID clienteId = UUID.randomUUID();
         
         when(authenticatedClientProvider.getClienteId()).thenReturn(clienteId);
-        when(consultarSaldoPort.consultarSaldo(eq(cuentaId), eq(clienteId)))
+        when(consultarSaldoPort.consultarSaldo(cuentaId, clienteId))
                 .thenReturn(ConsultarSaldoResponseDto.builder()
                         .saldo(new BigDecimal("100000.00"))
                         .build());
@@ -154,7 +154,7 @@ class CuentaControllerSecurityTest {
         UUID clienteId = UUID.randomUUID();
         
         when(authenticatedClientProvider.getClienteId()).thenReturn(clienteId);
-        when(consultarSaldoPort.consultarSaldo(eq(cuentaId), eq(clienteId)))
+        when(consultarSaldoPort.consultarSaldo(cuentaId, clienteId))
                 .thenReturn(ConsultarSaldoResponseDto.builder()
                         .saldo(new BigDecimal("200000.00"))
                         .build());
