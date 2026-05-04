@@ -55,7 +55,7 @@ public class CrearClienteRequestDto {
         private String email;
 
         @Pattern(
-                regexp = "^[0-9]{7,20}$",
+                regexp = "^\\d{7,20}$",
                 message = "El teléfono debe contener solo números y tener entre 7 y 20 dígitos"
         )
         private String telefono;
