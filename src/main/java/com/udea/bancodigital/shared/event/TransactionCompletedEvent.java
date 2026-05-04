@@ -45,6 +45,10 @@ public class TransactionCompletedEvent extends DomainEvent {
     @JsonProperty("description")
     private String description;
 
+    /**
+     * Creates a TransactionCompletedEvent from individual parameters.
+     */
+    @SuppressWarnings("java:S107") // Parameter count is justified by the domain event structure
     public static TransactionCompletedEvent from(
             String transactionId,
             String fromAccountId,
