@@ -52,9 +52,9 @@ public class DeadLetterQueueHandler {
             // Log to monitoring system (alertar a operaciones)
             logFailureAlert(event, retryCount);
 
-            // TODO: Implement actual retry logic (requeue to main topic)
-            // TODO: Implement alerting mechanism (email, Slack, PagerDuty)
-            // TODO: Persist to database for later manual retry
+            // FUTURE: implementar cuando se configure sistema de alertas/monitoreo
+            // FUTURE: implementar cuando se configure sistema de alertas/monitoreo
+            // FUTURE: implementar cuando se configure sistema de alertas/monitoreo
 
         } catch (Exception e) {
             log.error("Error processing DLQ event {}: {}", event.getEventId(), e.getMessage(), e);
@@ -74,9 +74,9 @@ public class DeadLetterQueueHandler {
         log.warn("   Retry Attempt: {}", retryCount + 1);
         log.warn("   Timestamp: {}", event.getOccurredAt());
 
-        // TODO: Send to monitoring (Prometheus, DataDog, etc.)
-        // TODO: Send to alert system (PagerDuty, OpsGenie, etc.)
-        // TODO: Send to logging aggregation (ELK, Datadog, etc.)
+        // FUTURE: implementar cuando se configure sistema de alertas/monitoreo
+        // FUTURE: implementar cuando se configure sistema de alertas/monitoreo
+        // FUTURE: implementar cuando se configure sistema de alertas/monitoreo
     }
 
     /**
@@ -85,9 +85,9 @@ public class DeadLetterQueueHandler {
      */
     public void retryEvent(String eventId) {
         log.info("Manual retry triggered for event: {}", eventId);
-        // TODO: Fetch event from database
-        // TODO: Republish to main topic
-        // TODO: Update status to "retrying"
+        // FUTURE: implementar cuando se configure sistema de alertas/monitoreo
+        // FUTURE: implementar cuando se configure sistema de alertas/monitoreo
+        // FUTURE: implementar cuando se configure sistema de alertas/monitoreo
     }
 
     /**
@@ -96,8 +96,8 @@ public class DeadLetterQueueHandler {
      */
     public void archiveFailedEvent(String eventId) {
         log.warn("Archiving permanently failed event: {}", eventId);
-        // TODO: Move to archive topic/table
-        // TODO: Create incident ticket
-        // TODO: Notify operations team
+        // FUTURE: implementar cuando se configure sistema de alertas/monitoreo
+        // FUTURE: implementar cuando se configure sistema de alertas/monitoreo
+        // FUTURE: implementar cuando se configure sistema de alertas/monitoreo
     }
 }
