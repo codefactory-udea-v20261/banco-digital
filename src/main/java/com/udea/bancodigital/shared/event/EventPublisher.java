@@ -77,7 +77,7 @@ public class EventPublisher {
             return true;
         } catch (Exception e) {
             log.error("Error publishing event: {}", e.getMessage(), e);
-            throw new EventPublishException("Failed to publish event", e);
+            throw new RuntimeException("Failed to publish event", e);
         }
     }
 
