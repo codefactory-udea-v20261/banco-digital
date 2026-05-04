@@ -1,4 +1,5 @@
 package com.udea.bancodigital.accounts.infrastructure.adapter.in.web;
+import com.udea.bancodigital.infrastructure.security.JwtAuthenticationFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.udea.bancodigital.accounts.application.dto.CrearCuentaRequestDto;
@@ -9,7 +10,7 @@ import com.udea.bancodigital.accounts.domain.model.TipoCuenta;
 import com.udea.bancodigital.accounts.domain.port.in.CrearCuentaPort;
 import com.udea.bancodigital.accounts.domain.port.in.ConsultarSaldoPort;
 import com.udea.bancodigital.accounts.domain.port.out.AuthServicePort;
-import com.udea.bancodigital.auth.infrastructure.config.JwtAuthenticationFilter;
+
 import com.udea.bancodigital.infrastructure.config.SecurityConfig;
 import com.udea.bancodigital.shared.security.AuthenticatedClientProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import jakarta.servlet.FilterChain;
@@ -38,6 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(CuentaController.class)
 @Import({SecurityConfig.class, CuentaMapper.class})
+@ActiveProfiles("test")
 class CuentaControllerTest {
 
     @Autowired
@@ -59,7 +62,10 @@ class CuentaControllerTest {
     private AuthenticatedClientProvider authenticatedClientProvider;
 
     @MockBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private JwtAuthenticationFilter authJwtAuthenticationFilter;
+
+    @MockBean
+    private com.udea.bancodigital.infrastructure.security.IdentityServiceClient identityServiceClient;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -70,11 +76,11 @@ class CuentaControllerTest {
                     invocation.getArgument(1, ServletResponse.class)
             );
             return null;
-        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+        }).when(authJwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
     }
 
     @Test
-    @WithMockUser(roles = "CAJERO")
+    @WithMockUser(authorities = "PERM_CREATE_ACCOUNTS")
     void deberiaCrearCuentaYRetornarApiResponse() throws Exception {
         UUID cuentaId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();

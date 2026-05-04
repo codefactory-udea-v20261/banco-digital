@@ -4,95 +4,123 @@ import com.udea.bancodigital.customers.application.dto.ClienteResponseDto;
 import com.udea.bancodigital.customers.application.mapper.ClienteMapper;
 import com.udea.bancodigital.customers.domain.exception.ClienteNoEncontradoException;
 import com.udea.bancodigital.customers.domain.model.Cliente;
-import com.udea.bancodigital.customers.domain.model.Email;
-import com.udea.bancodigital.customers.domain.model.NumeroCedula;
+import com.udea.bancodigital.customers.domain.port.out.ClienteAccessControlPort;
 import com.udea.bancodigital.customers.domain.port.out.ClienteRepositoryPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
-import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ObtenerClienteUseCase")
-public class ObtenerClienteUseCaseTest {
+class ObtenerClienteUseCaseTest {
+
     @Mock
     private ClienteRepositoryPort clienteRepository;
 
     @Mock
     private ClienteMapper clienteMapper;
 
-    @InjectMocks
-    private ObtenerClienteUseCase useCase;
+    @Mock
+    private ClienteAccessControlPort accessControl;
 
-    private UUID id;
-    private Cliente cliente;
-    private ClienteResponseDto responseDto;
+    private ObtenerClienteUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        id = UUID.randomUUID();
-
-        cliente = Cliente.builder()
-                .id(id)
-                .numeroCedula(NumeroCedula.of("1234567890"))
-                .primerNombre("María")
-                .primerApellido("González")
-                .email(Email.of("maria@test.com"))
-                .fechaNacimiento(LocalDate.of(1990, 5, 15))
-                .activo(true)
-                .build();
-
-        responseDto = ClienteResponseDto.builder()
-                .id(id)
-                .numeroCedula("1234567890")
-                .primerNombre("María")
-                .primerApellido("González")
-                .email("maria@test.com")
-                .fechaNacimiento(LocalDate.of(1990, 5, 15))
-                .activo(true)
-                .build();
+        useCase = new ObtenerClienteUseCase(clienteRepository, clienteMapper, accessControl);
     }
 
-    @Test
-    @DisplayName("TC-01 Debe retornar cliente cuando el ID existe")
-    void debeRetornarCliente_cuandoIdExiste() {
-        // ── Arrange ──────────────────────────────────────────────────────────
-        when(clienteRepository.findById(id)).thenReturn(Optional.of(cliente));
-        when(clienteMapper.toResponseDto(cliente)).thenReturn(responseDto);
+    @Nested
+    @DisplayName("Obtener por ID")
+    class ObtenerPorIdTest {
 
-        // ── Act ───────────────────────────────────────────────────────────────
-        ClienteResponseDto resultado = useCase.ejecutar(id);
+        @Test
+        @DisplayName("Debe retornar cliente cuando existe")
+        void debeRetornarClienteCuandoExiste() {
+            UUID id = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+            
+            Cliente cliente = Cliente.builder()
+                    .id(id)
+                    .primerNombre("Juan")
+                    .primerApellido("Perez")
+                    .email(new com.udea.bancodigital.customers.domain.model.Email("juan@email.com"))
+                    .activo(true)
+                    .build();
 
-        // ── Assert ────────────────────────────────────────────────────────────
-        assertThat(resultado).isNotNull();
-        assertThat(resultado.getId()).isEqualTo(id);
-        assertThat(resultado.getEmail()).isEqualTo("maria@test.com");
+            ClienteResponseDto responseDto = ClienteResponseDto.builder()
+                    .id(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"))
+                    .primerNombre("Juan")
+                    .primerApellido("Perez")
+                    .email("juan@email.com")
+                    .activo(true)
+                    .build();
 
-        verify(clienteRepository, times(1)).findById(id);
-        verify(clienteMapper, times(1)).toResponseDto(cliente);
+            when(clienteRepository.findById(id)).thenReturn(java.util.Optional.of(cliente));
+            when(clienteMapper.toResponseDto(cliente)).thenReturn(responseDto);
+
+            ClienteResponseDto result = useCase.obtenerPorId(id);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getPrimerNombre()).isEqualTo("Juan");
+            assertThat(result.getEmail()).isEqualTo("juan@email.com");
+        }
+
+        @Test
+        @DisplayName("Debe lanzar excepción cuando cliente no existe")
+        void debeLanzarExcepcionCuandoNoExiste() {
+            UUID id = UUID.randomUUID();
+            
+            when(clienteRepository.findById(id)).thenReturn(java.util.Optional.empty());
+
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    ClienteNoEncontradoException.class,
+                    () -> useCase.obtenerPorId(id)
+            );
+        }
     }
 
-    @Test
-    @DisplayName("TC-02 Debe lanzar ClienteNoEncontradoException cuando el ID no existe")
-    void debeLanzarExcepcion_cuandoClienteNoExiste() {
-        // ── Arrange ──────────────────────────────────────────────────────────
-        when(clienteRepository.findById(id)).thenReturn(Optional.empty());
+    @Nested
+    @DisplayName("Ejecutar")
+    class EjecutarTest {
 
-        // ── Act & Assert ──────────────────────────────────────────────────────
-        assertThatThrownBy(() -> useCase.ejecutar(id))
-                .isInstanceOf(ClienteNoEncontradoException.class);
+        @Test
+        @DisplayName("Debe retornar cliente cuando ejecuta con ID válido")
+        void debeRetornarClienteCuandoEjecuta() {
+            UUID id = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+            
+            Cliente cliente = Cliente.builder()
+                    .id(id)
+                    .primerNombre("María")
+                    .primerApellido("López")
+                    .email(new com.udea.bancodigital.customers.domain.model.Email("maria@email.com"))
+                    .activo(true)
+                    .build();
 
-        verify(clienteRepository, times(1)).findById(id);
-        verify(clienteMapper, never()).toResponseDto(any());
+            ClienteResponseDto responseDto = ClienteResponseDto.builder()
+                    .id(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"))
+                    .primerNombre("María")
+                    .primerApellido("López")
+                    .email("maria@email.com")
+                    .build();
+
+            when(clienteRepository.findById(id)).thenReturn(java.util.Optional.of(cliente));
+            when(clienteMapper.toResponseDto(cliente)).thenReturn(responseDto);
+
+            ClienteResponseDto result = useCase.ejecutar(id);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getPrimerNombre()).isEqualTo("María");
+        }
     }
 }

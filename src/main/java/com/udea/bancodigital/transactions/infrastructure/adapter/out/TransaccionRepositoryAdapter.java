@@ -8,6 +8,8 @@ import com.udea.bancodigital.transactions.infrastructure.repository.TransaccionJ
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -28,6 +30,16 @@ public class TransaccionRepositoryAdapter
                 repository.save(entity);
 
         return mapper.toDomain(saved);
+    }
+
+    @Override
+    public List<Transaccion> findByCuentaIdOrderByFechaDesc(UUID cuentaId) {
+
+        return repository
+                .findByCuentaOrigenIdOrderByCreatedAtDesc(cuentaId)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 
 }

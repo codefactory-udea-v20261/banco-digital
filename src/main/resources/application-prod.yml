@@ -1,8 +1,31 @@
 spring:
-  datasource:
-    url: jdbc:postgresql:///${DB_NAME:banco_digital_core}?cloudSqlInstance=${CLOUD_SQL_INSTANCE}&socketFactory=com.google.cloud.sql.postgres.SocketFactory&user=${DB_USERNAME:postgres}&password=${DB_PASSWORD:admin}
+  cloud:
+    vault:
+      enabled: false
+    config:
+      enabled: false
+    stream:
+      kafka:
+        binder:
+          auto-startup: false
+          brokers: localhost:19092
+      function:
+        definition: ""
   jpa:
     show-sql: false
+  kafka:
+    bootstrap-servers: localhost:19092
+    listener:
+      auto-startup: false
+    consumer:
+      auto-startup: false
+
+# Disable Eureka for Cloud Run
+eureka:
+  client:
+    enabled: false
+    registerWithEureka: false
+    fetchRegistry: false
 
 logging:
   level:
@@ -13,3 +36,20 @@ server:
   error:
     include-message: never
     include-stacktrace: never
+
+# Identity service URL for inter-service communication
+services:
+  identity-service:
+    url: ${IDENTITY_SERVICE_URL:http://localhost:8081}
+  identity:
+    url: ${IDENTITY_SERVICE_URL:http://localhost:8081}
+  audit:
+    url: ${AUDIT_SERVICE_URL:http://localhost:8082}
+
+# Disable tracing/zipkin in Cloud Run
+management:
+  tracing:
+    enabled: false
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans

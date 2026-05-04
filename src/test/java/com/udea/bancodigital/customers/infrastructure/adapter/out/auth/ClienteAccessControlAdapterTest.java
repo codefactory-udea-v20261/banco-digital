@@ -25,7 +25,7 @@ class ClienteAccessControlAdapterTest {
 
     @Test
     void deberiaPermitirConsultaCuandoUsuarioEsCajero() {
-        setAuthentication("ROLE_CAJERO");
+        setAuthentication("PERM_MANAGE_CLIENTS");
 
         assertDoesNotThrow(() -> adapter.validateCanView(UUID.randomUUID()));
     }
@@ -33,7 +33,7 @@ class ClienteAccessControlAdapterTest {
     @Test
     void deberiaPermitirConsultaCuandoClienteConsultaSuPropioPerfil() {
         UUID clienteId = UUID.randomUUID();
-        setAuthentication("ROLE_CLIENTE", clienteId);
+        setAuthentication("PERM_READ_OWN_PROFILE", clienteId);
 
         assertDoesNotThrow(() -> adapter.validateCanView(clienteId));
     }
@@ -42,7 +42,7 @@ class ClienteAccessControlAdapterTest {
     void deberiaLanzarExcepcionCuandoClienteConsultaOtroPerfil() {
         UUID clienteId = UUID.randomUUID();
         UUID otroClienteId = UUID.randomUUID();
-        setAuthentication("ROLE_CLIENTE", clienteId);
+        setAuthentication("PERM_READ_OWN_PROFILE", clienteId);
 
         assertThrows(ClienteNoAutorizadoException.class, () -> adapter.validateCanView(otroClienteId));
     }
