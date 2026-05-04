@@ -6,7 +6,6 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDate;
 
 /**
  * DTO de entrada para actualización parcial de cliente (PATCH).
@@ -53,15 +52,10 @@ public class ActualizarClienteRequestDto {
     private String email;
 
     @Pattern(
-            regexp = "^$|^[0-9]{7,20}$",
+            regexp = "^$|^\\d{7,20}$",
             message = "El teléfono debe contener solo números y tener entre 7 y 20 dígitos"
     )
     private String telefono;
-
-    // No lleva @Past ni @NotNull porque es parcial
-    //private LocalDate fechaNacimiento;
-
-    // Campo opcional permitir activar/desactivar
     private Boolean activo;
 
 
