@@ -15,6 +15,9 @@ spring:
           brokers: localhost:19092
       function:
         definition: ""
+      bindings: {}
+    function:
+      definition: ""
   data:
     redis:
       host: localhost
@@ -70,4 +73,6 @@ management:
     kafka:
       enabled: false
     diskspace:
+      enabled: false
+    binders:
       enabled: false
