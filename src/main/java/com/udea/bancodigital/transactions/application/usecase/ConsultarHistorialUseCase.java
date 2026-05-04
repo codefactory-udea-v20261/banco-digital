@@ -2,7 +2,6 @@ package com.udea.bancodigital.transactions.application.usecase;
 
 import com.udea.bancodigital.transactions.application.dto.HistorialTransaccionDto;
 import com.udea.bancodigital.transactions.application.mapper.HistorialTransaccionMapper;
-import com.udea.bancodigital.transactions.domain.model.Transaccion;
 import com.udea.bancodigital.transactions.domain.port.out.TransaccionRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
