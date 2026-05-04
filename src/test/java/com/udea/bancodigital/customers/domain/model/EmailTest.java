@@ -122,8 +122,9 @@ class EmailTest {
         @Test
         @DisplayName("Debe ser igual si mismo objeto")
         void debeSerIgualMismoObjeto() {
-            Email email = new Email("test@banco.com");
-            assertThat(email).isEqualTo(email);
+            Email email1 = new Email("test@banco.com");
+            Email email2 = new Email("test@banco.com");
+            assertThat(email1).isEqualTo(email2);
         }
 
         @Test
