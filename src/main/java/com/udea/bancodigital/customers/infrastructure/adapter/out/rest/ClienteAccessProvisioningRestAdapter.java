@@ -73,7 +73,7 @@ public class ClienteAccessProvisioningRestAdapter implements ClienteAccessProvis
         } catch (RestClientException e) {
             log.error("Error provisioning access for client {} with email {}: {}", 
                 clienteId, email, e.getMessage());
-            throw new RuntimeException("Failed to provision access in Identity Service", e);
+            throw new com.udea.bancodigital.shared.exception.ServiceUnavailableException("Failed to provision access in Identity Service", e);
         }
     }
 }
