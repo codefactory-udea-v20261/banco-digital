@@ -95,7 +95,7 @@ class AuthServiceAdapterTest {
 
             try (MockedStatic<SecurityContextHolder> mockedStatic = Mockito.mockStatic(SecurityContextHolder.class)) {
                 mockedStatic.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-                assertThatThrownBy(() -> adapter.getClienteId())
+                assertThatThrownBy(adapter::getClienteId)
                         .isInstanceOf(IllegalStateException.class)
                         .hasMessage("No hay un usuario autenticado en el contexto de seguridad");
             }
@@ -112,7 +112,7 @@ class AuthServiceAdapterTest {
 
             try (MockedStatic<SecurityContextHolder> mockedStatic = Mockito.mockStatic(SecurityContextHolder.class)) {
                 mockedStatic.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-                assertThatThrownBy(() -> adapter.getClienteId())
+                assertThatThrownBy(adapter::getClienteId)
                         .isInstanceOf(IllegalStateException.class)
                         .hasMessage("No hay un usuario autenticado en el contexto de seguridad");
             }
@@ -132,7 +132,7 @@ class AuthServiceAdapterTest {
 
             try (MockedStatic<SecurityContextHolder> mockedStatic = Mockito.mockStatic(SecurityContextHolder.class)) {
                 mockedStatic.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-                assertThatThrownBy(() -> adapter.getClienteId())
+                assertThatThrownBy(adapter::getClienteId)
                         .isInstanceOf(IllegalStateException.class)
                         .hasMessage("El usuario autenticado no tiene un cliente asociado");
             }
@@ -146,7 +146,7 @@ class AuthServiceAdapterTest {
 
             try (MockedStatic<SecurityContextHolder> mockedStatic = Mockito.mockStatic(SecurityContextHolder.class)) {
                 mockedStatic.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-                assertThatThrownBy(() -> adapter.getClienteId())
+                assertThatThrownBy(adapter::getClienteId)
                         .isInstanceOf(IllegalStateException.class);
             }
         }
