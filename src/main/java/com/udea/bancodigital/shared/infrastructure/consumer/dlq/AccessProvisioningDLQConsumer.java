@@ -44,18 +44,5 @@ public class AccessProvisioningDLQConsumer {
 
         log.error("ACCESS PROVISIONING DLQ EVENT - clienteId={}, retries={}, reason={}",
             clienteId, retryCount, reason);
-
-        // In production: send alert to Slack/PagerDuty
-        // alertingService.sendAlert(
-        //     "Access Provisioning Failed",
-        //     String.format("ClienteId: %s, Retries: %d, Reason: %s", 
-        //         clienteId, retryCount, reason)
-        // );
-
-        // In production: persist for investigation
-        // dlqPersistenceService.recordEvent(event, "ACCESS_PROVISIONING_DLQ");
-
-        // Increment metrics
-        // meterRegistry.counter("dlq.access-provisioning").increment();
     }
 }
