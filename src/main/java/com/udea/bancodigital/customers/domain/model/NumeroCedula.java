@@ -13,7 +13,7 @@ import java.util.Objects;
  */
 public record NumeroCedula(String valor) {
     
-    private static final String REGEX_CEDULA = "^[0-9]{7,20}$";
+    private static final String REGEX_CEDULA = "^\\d{7,20}$";
     
     public NumeroCedula {
         validar(valor);
