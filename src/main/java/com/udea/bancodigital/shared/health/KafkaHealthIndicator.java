@@ -22,6 +22,9 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class KafkaHealthIndicator implements HealthIndicator {
 
+    private static final String KAFKA_KEY = KAFKA_KEY;
+
+
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     private static final String HEALTH_CHECK_TOPIC = "health-check";
@@ -46,7 +49,7 @@ public class KafkaHealthIndicator implements HealthIndicator {
             log.debug("Kafka health check passed in {}ms", duration);
             
             return Health.up()
-                    .withDetail("kafka", "Connected and operational")
+                    .withDetail(KAFKA_KEY, "Connected and operational")
                     .withDetail("topic", HEALTH_CHECK_TOPIC)
                     .withDetail("responseTime", duration + "ms")
                     .withDetail("partition", metadata.getRecordMetadata().partition())
@@ -58,7 +61,7 @@ public class KafkaHealthIndicator implements HealthIndicator {
             
             // Return outOfService status but don't fail - service can operate without Kafka
             return Health.outOfService()
-                    .withDetail("kafka", "Connection timeout")
+                    .withDetail(KAFKA_KEY, "Connection timeout")
                     .withDetail("reason", "Request timed out after " + TIMEOUT_MS + "ms")
                     .withDetail("mode", "graceful-degradation")
                     .withDetail("impact", "Event publishing will be retried asynchronously")
@@ -71,7 +74,7 @@ public class KafkaHealthIndicator implements HealthIndicator {
             
             // Return outOfService status instead of DOWN - service should still work
             return Health.outOfService()
-                    .withDetail("kafka", "Connection failed")
+                    .withDetail(KAFKA_KEY, "Connection failed")
                     .withDetail("reason", e.getMessage())
                     .withDetail("mode", "graceful-degradation")
                     .withDetail("impact", "Events will be queued for retry")
