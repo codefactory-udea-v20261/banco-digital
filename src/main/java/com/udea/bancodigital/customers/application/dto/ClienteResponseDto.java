@@ -16,6 +16,7 @@ import java.util.UUID;
  */
 @Getter
 @Builder
+@lombok.EqualsAndHashCode(callSuper = false)
 public class ClienteResponseDto extends RepresentationModel<ClienteResponseDto> {
 
     private UUID id;
