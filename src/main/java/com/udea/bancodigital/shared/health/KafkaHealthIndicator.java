@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class KafkaHealthIndicator implements HealthIndicator {
 
-    private static final String KAFKA_KEY = KAFKA_KEY;
+    private static final String KAFKA_KEY = "kafka";
 
 
     private final KafkaTemplate<String, String> kafkaTemplate;
