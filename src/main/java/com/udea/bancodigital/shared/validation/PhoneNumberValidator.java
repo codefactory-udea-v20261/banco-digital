@@ -10,6 +10,7 @@ public class PhoneNumberValidator implements ConstraintValidator<ValidPhoneNumbe
 
     @Override
     public void initialize(ValidPhoneNumber annotation) {
+        // No initialization required for this validator
     }
 
     @Override
@@ -18,6 +19,6 @@ public class PhoneNumberValidator implements ConstraintValidator<ValidPhoneNumbe
             return false;
         }
         // Accept +57XXXXXXXXX or 0XXXXXXXXXX (9-10 digits)
-        return value.matches("^(\\+57|0)[0-9]{9,10}$");
+        return value.matches("^(\\+57|0)\\d{9,10}$");
     }
 }
