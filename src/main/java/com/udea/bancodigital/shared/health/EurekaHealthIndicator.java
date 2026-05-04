@@ -18,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EurekaHealthIndicator implements HealthIndicator {
 
-    private static final String EUREKA_KEY = EUREKA_KEY;
+    private static final String EUREKA_KEY = "eureka";
 
 
     private final DiscoveryClient discoveryClient;
