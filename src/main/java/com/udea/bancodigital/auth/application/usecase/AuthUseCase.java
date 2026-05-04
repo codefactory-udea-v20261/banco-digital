@@ -81,10 +81,8 @@ public class AuthUseCase implements AuthPort {
         }
 
         boolean requiresMfa = requiresMfa(usuario);
-        if (requiresMfa) {
-            if (request.getMfaCode() == null || request.getMfaCode().isBlank() || !request.getMfaCode().equals(usuario.getSecretoMfa())) {
-                throw new MfaRequeridoException();
-            }
+        if (requiresMfa && (request.getMfaCode() == null || request.getMfaCode().isBlank() || !request.getMfaCode().equals(usuario.getSecretoMfa()))) {
+            throw new MfaRequeridoException();
         }
 
         if (usuario.getIntentosFallidos() != null && usuario.getIntentosFallidos() > 0) {
