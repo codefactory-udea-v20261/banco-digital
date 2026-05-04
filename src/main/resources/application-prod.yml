@@ -4,8 +4,26 @@ spring:
       enabled: false
     config:
       enabled: false
+    stream:
+      kafka:
+        binder:
+          auto-startup: false
+          brokers: ""
+      default-binder: ""
+    function:
+      definition: ""
   jpa:
     show-sql: false
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.stream.binder.kafka.config.KafkaBinderConfiguration
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  kafka:
+    bootstrap-servers: ""
+    listener:
+      auto-startup: false
+    consumer:
+      auto-startup: false
 
 # Disable Eureka for Cloud Run
 eureka:
@@ -13,17 +31,6 @@ eureka:
     enabled: false
     registerWithEureka: false
     fetchRegistry: false
-
-# Disable Kafka consumers for Cloud Run
-spring.kafka:
-  bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-  listener:
-    auto-startup: false
-
-spring.cloud.stream:
-  kafka:
-    binder:
-      auto-startup: false
 
 logging:
   level:
