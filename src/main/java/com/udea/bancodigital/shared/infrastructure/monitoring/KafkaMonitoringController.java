@@ -24,7 +24,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class KafkaMonitoringController {
 
-    private static final String KAFKA_PUBLISHER = KAFKA_PUBLISHER;
+    private static final String KAFKA_PUBLISHER = "kafka-publisher";
     private static final String STATUS = "status";
     private static final String MESSAGE = "message";
     private static final String ERROR = "error";
