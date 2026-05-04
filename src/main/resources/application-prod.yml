@@ -8,18 +8,13 @@ spring:
       kafka:
         binder:
           auto-startup: false
-          brokers: ""
-      default-binder: ""
-    function:
-      definition: ""
+          brokers: localhost:19092
+      function:
+        definition: ""
   jpa:
     show-sql: false
-  autoconfigure:
-    exclude:
-      - org.springframework.cloud.stream.binder.kafka.config.KafkaBinderConfiguration
-      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
   kafka:
-    bootstrap-servers: ""
+    bootstrap-servers: localhost:19092
     listener:
       auto-startup: false
     consumer:
