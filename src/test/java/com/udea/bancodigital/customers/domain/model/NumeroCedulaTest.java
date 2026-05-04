@@ -120,8 +120,9 @@ class NumeroCedulaTest {
         @Test
         @DisplayName("Debe ser igual si mismo objeto")
         void debeSerIgualMismoObjeto() {
-            NumeroCedula cedula = new NumeroCedula("12345678");
-            assertThat(cedula).isEqualTo(cedula);
+            NumeroCedula cedula1 = new NumeroCedula("12345678");
+            NumeroCedula cedula2 = new NumeroCedula("12345678");
+            assertThat(cedula1).isEqualTo(cedula2);
         }
 
         @Test
