@@ -404,7 +404,7 @@ class LoginRequestDtoTest {
                     .clave("password")
                     .build();
 
-            assertNotEquals(dto, "string");
+            assertNotEquals(dto, null);
         }
 
         @Test
