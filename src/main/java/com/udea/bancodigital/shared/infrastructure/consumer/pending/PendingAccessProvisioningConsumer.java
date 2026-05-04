@@ -32,8 +32,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PendingAccessProvisioningConsumer {
 
-    private static final String CLIENTE_ID_KEY = CLIENTE_ID_KEY;
-    private static final String RETRY_COUNT_KEY = RETRY_COUNT_KEY;
+    private static final String CLIENTE_ID_KEY = "clienteId";
+    private static final String RETRY_COUNT_KEY = "retryCount";
 
 
     private static final String PENDING_TOPIC = "cliente-access-provisioning-pending";
