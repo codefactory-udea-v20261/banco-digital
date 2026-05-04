@@ -360,7 +360,7 @@ class UsuarioTest {
                     .correo("test@banco.com")
                     .build();
 
-            assertThat(usuario).isNotEqualTo("string");
+            assertThat(usuario).isNotEqualTo(null);
         }
 
         @Test
@@ -464,7 +464,7 @@ class UsuarioTest {
                     .clave("hash")
                     .build();
 
-            assertThat(usuario).isEqualTo(usuario);
+            assertThat(usuario).hasSameHashCodeAs(usuario);
         }
 
         @Test
@@ -479,7 +479,7 @@ class UsuarioTest {
 
             // Should not throw exception
             int hashCode = usuario.hashCode();
-            assertThat(hashCode).isNotNull();
+            assertThat(hashCode).isNotEqualTo(0);
         }
 
         @Test
