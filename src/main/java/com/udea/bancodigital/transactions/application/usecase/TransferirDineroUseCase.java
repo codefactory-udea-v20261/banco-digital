@@ -109,14 +109,13 @@ public class TransferirDineroUseCase
         cuentaRepository.save(origen);
         cuentaRepository.save(destino);
 
-        String referencia =
-                "TRF-" + System.currentTimeMillis();
+        // Ensure referencia is globally unique to avoid DB unique constraint violations
+        String referencia = "TRF-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString();
 
         // Movimiento DÉBITO
 
         Transaccion debito =
                 Transaccion.builder()
-                        .id(UUID.randomUUID())
                         .cuentaOrigenId(origen.getId())
                         .cuentaDestinoId(destino.getId())
                         .tipoId((short) 1)
@@ -134,7 +133,6 @@ public class TransferirDineroUseCase
 
         Transaccion credito =
                 Transaccion.builder()
-                        .id(UUID.randomUUID())
                         .cuentaOrigenId(origen.getId())
                         .cuentaDestinoId(destino.getId())
                         .tipoId((short) 1)
