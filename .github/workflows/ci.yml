@@ -97,13 +97,17 @@ jobs:
         run: chmod +x ./mvnw
 
       - name: OWASP Dependency Check (with Maven wrapper fallback)
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
           if ! ./mvnw -B org.owasp:dependency-check-maven:check \
+            -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
             -DfailBuildOnCVSS=11 \
             -Dformat=HTML \
             -DoutputDirectory=reports; then
             echo "Maven wrapper failed, attempting with system Maven..."
             mvn -B org.owasp:dependency-check-maven:check \
+              -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
               -DfailBuildOnCVSS=11 \
               -Dformat=HTML \
               -DoutputDirectory=reports || true
