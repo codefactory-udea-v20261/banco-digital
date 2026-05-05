@@ -114,7 +114,7 @@ public class TransferirDineroUseCase
         String baseReferencia = String.format(
                 "TRF-%013d-%s",
                 System.currentTimeMillis(),
-                UUID.randomUUID().toString().replace("-", ""));
+                UUID.randomUUID().toString().replace("-", "").substring(0, 12));
 
         // Movimiento DÉBITO
 

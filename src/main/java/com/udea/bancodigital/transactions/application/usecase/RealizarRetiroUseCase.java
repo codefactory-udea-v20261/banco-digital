@@ -44,7 +44,7 @@ public class RealizarRetiroUseCase {
         String referencia = String.format(
                 "RET-%013d-%s",
                 System.currentTimeMillis(),
-                UUID.randomUUID().toString().replace("-", ""));
+                UUID.randomUUID().toString().replace("-", "").substring(0, 12));
 
         Transaccion retiro = Transaccion.builder()
                 .id(UUID.randomUUID())

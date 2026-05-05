@@ -8,6 +8,7 @@ import com.udea.bancodigital.transactions.domain.port.out.CuentaServicePort;
 import com.udea.bancodigital.transactions.domain.port.out.TransaccionRepositoryPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -47,7 +48,11 @@ class RealizarRetiroUseCaseTest {
 
         assertThat(result).isNotNull();
         verify(cuentaService).actualizarSaldo(cuentaId, new BigDecimal("50.0"));
-        verify(transaccionRepository).save(any(Transaccion.class));
+        
+        ArgumentCaptor<Transaccion> captor = ArgumentCaptor.forClass(Transaccion.class);
+        verify(transaccionRepository).save(captor.capture());
+        assertThat(captor.getValue().getReferencia()).isNotNull();
+        assertThat(captor.getValue().getReferencia().length()).isLessThanOrEqualTo(50);
     }
 
     @Test
