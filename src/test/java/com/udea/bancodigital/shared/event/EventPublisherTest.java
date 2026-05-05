@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.UUID;
 
@@ -24,14 +25,13 @@ class EventPublisherTest {
     private JdbcTemplate jdbcTemplate;
     @Mock
     private ObjectMapper objectMapper;
-    @Mock
-    private EventFallbackStorage fallbackStorage;
 
     private EventPublisher publisher;
 
     @BeforeEach
     void setUp() {
-        publisher = new EventPublisher(jdbcTemplate, objectMapper, fallbackStorage);
+        publisher = new EventPublisher(jdbcTemplate, objectMapper);
+        ReflectionTestUtils.setField(publisher, "encryptionKey", "ZHVtbXlLZXlEZXZlbG9wbWVudFRlc3RzMTIzNDU2Nzg="); // Base64 32 bytes
     }
 
     @Test
@@ -43,12 +43,12 @@ class EventPublisherTest {
                 .build();
 
         when(objectMapper.writeValueAsString(any())).thenReturn("{}");
-        when(jdbcTemplate.update(anyString(), any(), any(), any(), any(), any())).thenReturn(1);
+        when(jdbcTemplate.update(anyString(), any(), any(), any(), any(), any(), any())).thenReturn(1);
 
         boolean result = publisher.publishEvent(event);
 
         assertThat(result).isTrue();
-        verify(jdbcTemplate).update(anyString(), any(UUID.class), anyString(), eq("123"), eq("TestEvent"), eq("{}"));
+        verify(jdbcTemplate).update(anyString(), any(UUID.class), anyString(), eq("123"), eq("TestEvent"), anyString(), eq("{}"));
     }
 
     @Test

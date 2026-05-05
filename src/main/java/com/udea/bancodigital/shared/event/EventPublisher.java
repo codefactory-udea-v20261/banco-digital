@@ -27,7 +27,6 @@ public class EventPublisher {
 
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
-    private final EventFallbackStorage fallbackStorage; // Kept for backwards compatibility
 
     @Value("${encryption.key}")
     private String encryptionKey;
