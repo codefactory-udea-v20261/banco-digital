@@ -107,10 +107,7 @@
     </dependency>
 
     <!-- ── Service Discovery (Eureka) ──────────────────── -->
-    <dependency>
-      <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-    </dependency>
+
 
     <!-- ── Feign Client ──────────────────── -->
     <dependency>

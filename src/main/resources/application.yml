@@ -36,18 +36,8 @@ spring:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
 
-# Eureka Service Discovery
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka/}
-    registerWithEureka: true
-    fetchRegistry: true
-  instance:
-    instanceId: ${spring.application.name}:${server.port}
-    preferIpAddress: true
-    leaseRenewalIntervalInSeconds: 30
-    leaseExpirationDurationInSeconds: 90
+
+
 
 # Kafka Configuration
 spring.kafka:
@@ -118,9 +108,9 @@ resilience4j:
         maxAttempts: 3
         # Exponential backoff: 1s, 2s, 4s
         waitDuration: 1000
-        intervalFunction: exponential
-        multiplier: 2.0
-        randomizedWaitDuration: false
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2.0
+        enableRandomizedWait: false
 
   bulkhead:
     instances:
@@ -149,9 +139,9 @@ management:
   endpoint:
     health:
       show-details: when_authorized
-  metrics:
-    export:
-      prometheus:
+  prometheus:
+    metrics:
+      export:
         enabled: true
 
 springdoc:
