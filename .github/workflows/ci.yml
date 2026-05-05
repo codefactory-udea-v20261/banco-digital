@@ -61,11 +61,6 @@ jobs:
             mvn -B verify -P ci -Djacoco.haltOnFailure=false -DskipITs=true
           fi
         env:
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_NAME: banco_digital_test
-          DB_USERNAME: app_user
-          DB_PASSWORD: test_password
           JWT_SECRET: ci_test_secret_replace_in_prod_256bits
           DOCKER_HOST: unix:///var/run/docker.sock
 
