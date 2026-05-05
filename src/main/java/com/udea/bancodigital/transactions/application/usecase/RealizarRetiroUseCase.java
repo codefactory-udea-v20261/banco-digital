@@ -41,6 +41,11 @@ public class RealizarRetiroUseCase {
         cuentaService.actualizarSaldo(request.getCuentaId(), nuevoSaldo);
 
         // 5. Registrar transacción
+        String referencia = String.format(
+                "RET-%013d-%s",
+                System.currentTimeMillis(),
+                UUID.randomUUID().toString().replace("-", ""));
+
         Transaccion retiro = Transaccion.builder()
                 .id(UUID.randomUUID())
                 .cuentaOrigenId(request.getCuentaId())
@@ -50,6 +55,7 @@ public class RealizarRetiroUseCase {
                 .saldoPosterior(nuevoSaldo)
                 .estado(EstadoTransaccion.COMPLETADA)
                 .descripcion(request.getDescripcion() != null ? request.getDescripcion() : "Retiro de efectivo")
+                .referencia(referencia)
                 .createdAt(OffsetDateTime.now())
                 .createdBy("SYSTEM_SWAGGER")
                 .build();

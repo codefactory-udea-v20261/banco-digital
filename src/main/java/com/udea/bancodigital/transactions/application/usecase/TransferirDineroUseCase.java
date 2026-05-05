@@ -9,6 +9,7 @@ import com.udea.bancodigital.transactions.application.dto.TransferenciaRequestDt
 import com.udea.bancodigital.transactions.application.dto.TransferenciaResponseDto;
 
 import com.udea.bancodigital.transactions.domain.enums.EstadoTransaccion;
+import com.udea.bancodigital.transactions.domain.enums.TipoTransaccion;
 import com.udea.bancodigital.transactions.domain.exception.SaldoInsuficienteException;
 import com.udea.bancodigital.transactions.domain.exception.TransferenciaInvalidaException;
 
@@ -110,7 +111,7 @@ public class TransferirDineroUseCase
         cuentaRepository.save(destino);
 
         // Ensure referencia is globally unique to avoid DB unique constraint violations
-        String referencia = String.format(
+        String baseReferencia = String.format(
                 "TRF-%013d-%s",
                 System.currentTimeMillis(),
                 UUID.randomUUID().toString().replace("-", ""));
@@ -121,12 +122,12 @@ public class TransferirDineroUseCase
                 Transaccion.builder()
                         .cuentaOrigenId(origen.getId())
                         .cuentaDestinoId(destino.getId())
-                        .tipoId((short) 1)
+                        .tipoId(TipoTransaccion.TRANSFERENCIA_ENVIADA.getId())
                         .monto(monto)
                         .saldoAnterior(saldoAnteriorOrigen)
                         .saldoPosterior(origen.getSaldo())
                         .descripcion("Transferencia enviada")
-                        .referencia(referencia)
+                        .referencia(baseReferencia + "-D")
                         .estado(EstadoTransaccion.COMPLETADA)
                         .createdAt(OffsetDateTime.now())
                         .createdBy(usuario != null ? usuario : "SYSTEM")
@@ -136,14 +137,14 @@ public class TransferirDineroUseCase
 
         Transaccion credito =
                 Transaccion.builder()
-                        .cuentaOrigenId(origen.getId())
-                        .cuentaDestinoId(destino.getId())
-                        .tipoId((short) 1)
+                        .cuentaOrigenId(destino.getId())
+                        .cuentaDestinoId(origen.getId())
+                        .tipoId(TipoTransaccion.TRANSFERENCIA_RECIBIDA.getId())
                         .monto(monto)
                         .saldoAnterior(saldoAnteriorDestino)
                         .saldoPosterior(destino.getSaldo())
                         .descripcion("Transferencia recibida")
-                        .referencia(referencia)
+                        .referencia(baseReferencia + "-C")
                         .estado(EstadoTransaccion.COMPLETADA)
                         .createdAt(OffsetDateTime.now())
                         .createdBy(usuario != null ? usuario : "SYSTEM")
@@ -159,7 +160,7 @@ public class TransferirDineroUseCase
                 .cuentaOrigenId(origen.getId())
                 .cuentaDestinoId(destino.getId())
                 .monto(monto)
-                .referencia(referencia)
+                .referencia(baseReferencia)
                 .estado(savedDebito.getEstado().name())
                 .build();
     }
