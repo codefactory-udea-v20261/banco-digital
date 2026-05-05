@@ -54,8 +54,12 @@ jobs:
       - name: Ensure Maven Wrapper is executable
         run: chmod +x ./mvnw
 
-      - name: Build & Test
-        run: ./mvnw -B verify -P ci -Djacoco.haltOnFailure=false -DskipITs=true
+      - name: Build & Test (with Maven wrapper fallback)
+        run: |
+          if ! ./mvnw -B verify -P ci -Djacoco.haltOnFailure=false -DskipITs=true; then
+            echo "Maven wrapper failed, attempting with system Maven..."
+            mvn -B verify -P ci -Djacoco.haltOnFailure=false -DskipITs=true
+          fi
         env:
           DB_HOST: localhost
           DB_PORT: 5432
@@ -92,12 +96,18 @@ jobs:
       - name: Ensure Maven Wrapper is executable
         run: chmod +x ./mvnw
 
-      - name: OWASP Dependency Check (Maven)
+      - name: OWASP Dependency Check (with Maven wrapper fallback)
         run: |
-          ./mvnw -B org.owasp:dependency-check-maven:check \
+          if ! ./mvnw -B org.owasp:dependency-check-maven:check \
             -DfailBuildOnCVSS=11 \
             -Dformat=HTML \
-            -DoutputDirectory=reports || true
+            -DoutputDirectory=reports; then
+            echo "Maven wrapper failed, attempting with system Maven..."
+            mvn -B org.owasp:dependency-check-maven:check \
+              -DfailBuildOnCVSS=11 \
+              -Dformat=HTML \
+              -DoutputDirectory=reports || true
+          fi
 
       - name: Upload Dependency Scan Report
         if: always()
@@ -128,18 +138,25 @@ jobs:
       - name: Ensure Maven Wrapper is executable
         run: chmod +x ./mvnw
 
-      - name: Run SonarCloud
+      - name: Run SonarCloud (with Maven wrapper fallback)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: >-
-          ./mvnw -B verify sonar:sonar
-          -DskipITs=true
-          -Djacoco.haltOnFailure=false
-          -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.organization=codefactory-udea-v20261
-          -Dsonar.projectKey=codefactory-udea-v20261_banco-digital
-        continue-on-error: true
+        run: |
+          if ! ./mvnw -B verify sonar:sonar \
+            -DskipITs=true \
+            -Djacoco.haltOnFailure=false \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.organization=codefactory-udea-v20261 \
+            -Dsonar.projectKey=codefactory-udea-v20261_banco-digital; then
+            echo "Maven wrapper failed, attempting with system Maven..."
+            mvn -B verify sonar:sonar \
+              -DskipITs=true \
+              -Djacoco.haltOnFailure=false \
+              -Dsonar.host.url=https://sonarcloud.io \
+              -Dsonar.organization=codefactory-udea-v20261 \
+              -Dsonar.projectKey=codefactory-udea-v20261_banco-digital || true
+          fi
 
   docker-build:
     name: Docker Build & Scan
