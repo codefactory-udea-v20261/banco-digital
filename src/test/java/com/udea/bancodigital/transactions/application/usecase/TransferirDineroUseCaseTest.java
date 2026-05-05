@@ -63,6 +63,7 @@ class TransferirDineroUseCaseTest {
 
         assertThat(response).isNotNull();
         assertThat(response.getMonto()).isEqualTo(new BigDecimal("50.0"));
+        assertThat(response.getReferencia().length()).isLessThanOrEqualTo(50);
         assertThat(origen.getSaldo()).isEqualTo(new BigDecimal("50.0"));
         assertThat(destino.getSaldo()).isEqualTo(new BigDecimal("70.0"));
 
