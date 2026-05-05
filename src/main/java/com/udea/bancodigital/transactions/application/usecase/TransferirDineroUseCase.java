@@ -110,7 +110,10 @@ public class TransferirDineroUseCase
         cuentaRepository.save(destino);
 
         // Ensure referencia is globally unique to avoid DB unique constraint violations
-        String referencia = "TRF-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString();
+        String referencia = String.format(
+                "TRF-%013d-%s",
+                System.currentTimeMillis(),
+                UUID.randomUUID().toString().replace("-", ""));
 
         // Movimiento DÉBITO
 
