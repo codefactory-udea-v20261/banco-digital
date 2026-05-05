@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS outbox_events (
+    id UUID PRIMARY KEY,
+    aggregate_type VARCHAR(100) NOT NULL,
+    aggregate_id VARCHAR(100) NOT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    payload TEXT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'FAILED', 'SENT', 'DEAD_LETTER')),
+    retry_count INT NOT NULL DEFAULT 0,
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
