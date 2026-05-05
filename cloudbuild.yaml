@@ -1,0 +1,91 @@
+steps:
+  # Step 1: Build with Maven and run tests
+  - name: maven:3.9-eclipse-temurin-17
+    id: build
+    args:
+      - clean
+      - package
+      - -DskipITs
+      - -P
+      - ci
+    env:
+      - 'MAVEN_OPTS=-Dorg.slf4j.simpleLogger.defaultLogLevel=warn'
+
+  # Step 2: Generate SonarQube report (optional - requires SonarQube server)
+  - name: maven:3.9-eclipse-temurin-17
+    id: sonar-scan
+    args:
+      - sonar:sonar
+      - -Dsonar.host.url=${_SONARQUBE_HOST}
+      - -Dsonar.login=${_SONARQUBE_TOKEN}
+      - -Dsonar.projectKey=banco-digital-core-banking
+      - -Dsonar.organization=codefactory-udea-v20261
+    env:
+      - 'MAVEN_OPTS=-Dorg.slf4j.simpleLogger.defaultLogLevel=warn'
+    waitFor: ['build']
+    onFailure: 'CONTINUE'  # Don't fail the build if SonarQube is unavailable
+
+  # Step 3: Build Docker image
+  - name: gcr.io/cloud-builders/docker
+    id: docker-build
+    args:
+      - build
+      - -t
+      - ${_REGISTRY}/${PROJECT_ID}/${_SERVICE_NAME}:${SHORT_SHA}
+      - -t
+      - ${_REGISTRY}/${PROJECT_ID}/${_SERVICE_NAME}:latest
+      - .
+    waitFor: ['build']
+
+  # Step 4: Push Docker image to Artifact Registry
+  - name: gcr.io/cloud-builders/docker
+    id: docker-push
+    args:
+      - push
+      - ${_REGISTRY}/${PROJECT_ID}/${_SERVICE_NAME}:${SHORT_SHA}
+    waitFor: ['docker-build']
+
+  # Step 5: Deploy to Cloud Run
+  - name: gcr.io/cloud-builders/gke-deploy
+    id: deploy
+    args:
+      - run
+      - --filename=k8s/
+      - --image=${_REGISTRY}/${PROJECT_ID}/${_SERVICE_NAME}:${SHORT_SHA}
+      - --location=${_REGION}
+      - --cluster=${_CLUSTER_NAME}
+    env:
+      - CLOUDSDK_COMPUTE_REGION=${_REGION}
+      - CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}
+    waitFor: ['docker-push']
+    onFailure: 'CONTINUE'  # Graceful failure for optional deployment
+
+# Build configuration
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: N1_HIGHCPU_8
+
+# Timeout (in seconds)
+timeout: 3600s
+
+# Substitutions for environment-specific values
+substitutions:
+  _REGISTRY: us-central1-docker.pkg.dev
+  _SERVICE_NAME: banco-digital-core-banking
+  _REGION: us-central1
+  _CLUSTER_NAME: banco-digital-gke  # Update with your GKE cluster name
+  _SONARQUBE_HOST: https://sonarqube.example.com  # Update with your SonarQube URL
+  _SONARQUBE_TOKEN: $SONARQUBE_TOKEN  # Set as Cloud Build secret
+
+# Images to push to registry
+images:
+  - ${_REGISTRY}/${PROJECT_ID}/${_SERVICE_NAME}:${SHORT_SHA}
+  - ${_REGISTRY}/${PROJECT_ID}/${_SERVICE_NAME}:latest
+
+# Build artifacts
+artifacts:
+  objects:
+    location: gs://${PROJECT_ID}-build-artifacts/${_SERVICE_NAME}/${SHORT_SHA}
+    paths:
+      - target/site/jacoco/**/*
+      - target/*.jar
