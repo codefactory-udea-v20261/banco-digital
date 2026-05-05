@@ -22,7 +22,7 @@ import java.util.Map;
  */
 @Slf4j
 @Configuration
-@Profile("!prod")
+@Profile({"local", "dev"})
 public class KafkaProducerConfig {
 
     @Value("${spring.kafka.bootstrap-servers:kafka:9092}")
