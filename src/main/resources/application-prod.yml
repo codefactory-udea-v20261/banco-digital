@@ -8,16 +8,6 @@ spring:
       enabled: false
     loadbalancer:
       enabled: false
-    stream:
-      kafka:
-        binder:
-          auto-startup: false
-          brokers: localhost:19092
-      function:
-        definition: ""
-      bindings: {}
-    function:
-      definition: ""
   data:
     redis:
       host: localhost
@@ -27,7 +17,7 @@ spring:
   jpa:
     show-sql: false
   kafka:
-    bootstrap-servers: localhost:19092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     listener:
       auto-startup: false
     consumer:

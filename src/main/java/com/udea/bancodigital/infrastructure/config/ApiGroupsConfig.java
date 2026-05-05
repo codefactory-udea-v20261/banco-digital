@@ -9,19 +9,6 @@ import org.springframework.context.annotation.Configuration;
 public class ApiGroupsConfig {
 
     @Bean
-    public GroupedOpenApi authApi() {
-        return GroupedOpenApi.builder()
-                .group("auth")
-                .pathsToMatch("/api/v1/auth/**", "/api/v1/internal/users/**")
-                .addOpenApiCustomizer(openApi -> openApi.info(
-                        new Info()
-                                .title("Banco Digital API - Autenticacion")
-                                .version("v1.0.0")
-                                .description("API de autenticacion, consulta de identidad y contratos internos del futuro identity-service.")))
-                .build();
-    }
-
-    @Bean
     public GroupedOpenApi customersApi() {
         return buildGroup(
                 "clientes",
@@ -42,12 +29,22 @@ public class ApiGroupsConfig {
     }
 
     @Bean
-    public GroupedOpenApi reportingApi() {
+    public GroupedOpenApi transactionsApi() {
         return buildGroup(
-                "reportes",
-                "/api/v1/reportes/**",
-                "Banco Digital API - Reportes",
-                "API de consultas analiticas y reportes construida para evolucionar a un servicio independiente."
+                "transacciones",
+                "/api/v1/transacciones/**",
+                "Banco Digital API - Transacciones",
+                "API de movimientos, retiros y consultas transaccionales del core bancario."
+        );
+    }
+
+    @Bean
+    public GroupedOpenApi transfersApi() {
+        return buildGroup(
+                "transferencias",
+                "/api/v1/transferencias/**",
+                "Banco Digital API - Transferencias",
+                "API de transferencias entre cuentas administradas por el core bancario."
         );
     }
 
