@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 public class TransferirDineroUseCase
@@ -115,6 +116,7 @@ public class TransferirDineroUseCase
 
         Transaccion debito =
                 Transaccion.builder()
+                        .id(UUID.randomUUID())
                         .cuentaOrigenId(origen.getId())
                         .cuentaDestinoId(destino.getId())
                         .tipoId((short) 1)
@@ -132,6 +134,7 @@ public class TransferirDineroUseCase
 
         Transaccion credito =
                 Transaccion.builder()
+                        .id(UUID.randomUUID())
                         .cuentaOrigenId(origen.getId())
                         .cuentaDestinoId(destino.getId())
                         .tipoId((short) 1)
