@@ -45,7 +45,8 @@ public class Cuenta {
                 .numeroCuenta(numeroCuenta)
                 .clienteId(clienteId)
                 .tipoCuenta(tipoCuenta)
-                .saldo(BigDecimal.ZERO)
+                // TODO: Reemplazar este saldo inicial temporal con un endpoint para recargar saldo.
+                .saldo(new BigDecimal("100000"))
                 .estado(EstadoCuenta.ACTIVA)
                 .fechaApertura(LocalDate.now())
                 .build();

@@ -29,18 +29,21 @@ class IdentityServiceContractTest {
     public V4Pact createPactForValidateToken(PactDslWithProvider builder) {
         return builder
                 .uponReceiving("a request to validate a JWT token")
-                .path("/api/v1/auth/validate")
+                .path("/api/v1/auth/validate-token")
                 .method("POST")
                 .headers(Map.of("Content-Type", "application/json"))
-                .body(new PactDslJsonBody()
-                        .stringType("token", "eyJhbGciOiJIUzI1NiJ9.test.signature"))
+                .body("\"eyJhbGciOiJIUzI1NiJ9.test.signature\"")
                 .willRespondWith()
                 .status(200)
                 .headers(Map.of("Content-Type", "application/json"))
                 .body(new PactDslJsonBody()
-                        .booleanType("valid", true)
-                        .stringType("userId", "550e8400-e29b-41d4-a716-446655440000")
-                        .stringType("username", "testuser"))
+                        .booleanType("active", true)
+                        .stringType("sub", "testuser")
+                        .stringValue("uid", "550e8400-e29b-41d4-a716-446655440000")
+                        .stringValue("clienteId", "550e8400-e29b-41d4-a716-446655440001")
+                        .array("authorities")
+                        .stringValue("ROLE_CLIENTE")
+                        .closeArray())
                 .toPact(V4Pact.class);
     }
 
@@ -48,15 +51,15 @@ class IdentityServiceContractTest {
     @Test
     void testValidateTokenContract(MockServer mockServer) throws Exception {
         try (CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpPost request = new HttpPost(mockServer.getUrl() + "/api/v1/auth/validate");
+            HttpPost request = new HttpPost(mockServer.getUrl() + "/api/v1/auth/validate-token");
             request.setHeader("Content-Type", "application/json");
-            request.setEntity(new StringEntity("{\"token\": \"eyJhbGciOiJIUzI1NiJ9.test.signature\"}", ContentType.APPLICATION_JSON));
+            request.setEntity(new StringEntity("\"eyJhbGciOiJIUzI1NiJ9.test.signature\"", ContentType.APPLICATION_JSON));
 
             client.execute(request, response -> {
                 assertEquals(200, response.getCode());
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()))) {
                     String body = reader.lines().collect(Collectors.joining());
-                    assertTrue(body.contains("\"valid\":true") || body.contains("\"valid\":true"));
+                    assertTrue(body.contains("\"active\":true"));
                 } catch (Exception e) {
                     fail("Failed to read response: " + e.getMessage());
                 }
