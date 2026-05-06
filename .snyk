@@ -1,0 +1,15 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.25.1
+# ignores vulnerabilities until expiry date; change duration by modifying expiry date
+ignore:
+  SNYK-JAVA-COMMONSCONFIGURATION-10116124:
+    - '*':
+        reason: 'Transitive dependency from Eureka, no fix available'
+        expires: 2026-06-04T20:20:39.571Z
+        created: 2026-05-05T20:20:39.573Z
+  SNYK-JAVA-COMMONSLANG-10734077:
+    - '*':
+        reason: 'Transitive dependency from Eureka, no fix available'
+        expires: 2026-06-04T20:20:44.339Z
+        created: 2026-05-05T20:20:44.342Z
+patch: {}
