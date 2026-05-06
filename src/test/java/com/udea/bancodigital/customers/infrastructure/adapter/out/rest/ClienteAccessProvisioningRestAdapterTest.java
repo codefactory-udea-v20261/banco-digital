@@ -50,6 +50,36 @@ class ClienteAccessProvisioningRestAdapterTest {
     }
 
     @Test
+    void existsByEmail_ShouldReturnFalseWhenNotOk() {
+        when(restTemplate.getForEntity(anyString(), eq(Map.class)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+
+        boolean exists = adapter.existsByEmail("test@test.com");
+
+        assertThat(exists).isFalse();
+    }
+
+    @Test
+    void existsByEmail_ShouldReturnFalseWhenBodyIsNull() {
+        when(restTemplate.getForEntity(anyString(), eq(Map.class)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        boolean exists = adapter.existsByEmail("test@test.com");
+
+        assertThat(exists).isFalse();
+    }
+
+    @Test
+    void existsByEmail_ShouldReturnFalseWhenExistsKeyMissing() {
+        when(restTemplate.getForEntity(anyString(), eq(Map.class)))
+                .thenReturn(new ResponseEntity<>(Map.of("other", "value"), HttpStatus.OK));
+
+        boolean exists = adapter.existsByEmail("test@test.com");
+
+        assertThat(exists).isFalse();
+    }
+
+    @Test
     void provisionAccess_ShouldPostSuccessfully() {
         when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Void.class)))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
@@ -66,5 +96,25 @@ class ClienteAccessProvisioningRestAdapterTest {
 
         assertThatThrownBy(() -> adapter.provisionAccess(UUID.randomUUID(), "test@test.com"))
                 .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void provisionAccess_ShouldLogErrorOnErrorStatus() {
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+
+        adapter.provisionAccess(UUID.randomUUID(), "test@test.com");
+
+        verify(restTemplate).postForEntity(anyString(), any(HttpEntity.class), eq(Void.class));
+    }
+
+    @Test
+    void existsByEmail_ShouldReturnFalseWhenExistsFalse() {
+        when(restTemplate.getForEntity(anyString(), eq(Map.class)))
+                .thenReturn(new ResponseEntity<>(Map.of("exists", false), HttpStatus.OK));
+
+        boolean exists = adapter.existsByEmail("test@test.com");
+
+        assertThat(exists).isFalse();
     }
 }

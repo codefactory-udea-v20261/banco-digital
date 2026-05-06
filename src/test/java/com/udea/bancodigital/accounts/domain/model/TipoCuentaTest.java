@@ -87,6 +87,12 @@ class TipoCuentaTest {
         }
 
         @Test
+        @DisplayName("Debe retornar null cuando nombre tiene solo espacios en blanco")
+        void debeRetornarNullCuandoNombreBlanco() {
+            assertThat(TipoCuenta.fromNombre("   ")).isNull();
+        }
+
+        @Test
         @DisplayName("Debe lanzar excepción para nombre inválido")
         void debeLanzarExcepcionParaNombreInvalido() {
             assertThatThrownBy(() -> TipoCuenta.fromNombre("INVERSIONES"))
