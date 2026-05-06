@@ -1,41 +1,70 @@
 spring:
+  main:
+    allow-bean-definition-overriding: true
+  
+  # Deshabilitamos las Service Connections de Spring Boot 3.4+ para que NO use las variables de la CI
+  # y deshabilitamos Cloud Stream para que no intente conectar a Kafka
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.service.connection.ServiceConnectionAutoConfiguration
+      - org.springframework.cloud.stream.config.BindingServiceConfiguration
+
   datasource:
-    url: jdbc:h2:mem:testdb
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
     driver-class-name: org.h2.Driver
     username: sa
-    password:
+    password: ""
+  
   jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
-    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: false
+    properties:
+      hibernate.default_schema: public
+  
   flyway:
     enabled: false
+  
+  cloud:
+    vault:
+      enabled: false
+    discovery:
+      enabled: false
+    refresh:
+      enabled: false
+    gcp:
+      sql:
+        enabled: false
+    stream:
+      function:
+        definition: none
+      bindings:
+        input:
+          destination: none
+        output:
+          destination: none
+
   kafka:
     bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-    consumer:
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: com.udea.bancodigital.*
     listener:
-      ack-mode: record
+      auto-startup: false
+
+eureka:
+  client:
+    enabled: false
+  instance:
+    enabled: false
 
 services:
   identity:
     url: http://localhost:8081
+  audit:
+    url: http://localhost:8082
 
-spring.cloud.vault:
-  enabled: false
-  token: test-token
-  uri: http://localhost:8200
-  fail-fast: false
-  discovery:
-    enabled: false
+jwt:
+  secret: "9a4fbc6615a206829774619712a4c88f6a9170e17625148011f0a207271d533b"
 
-spring.cloud.discovery:
-  enabled: false
-  client:
-    enabled: false
+management:
+  endpoints:
+    enabled-by-default: false
