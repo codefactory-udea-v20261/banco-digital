@@ -2,7 +2,7 @@ name: CI Pipeline — Banco Digital
 
 on:
   push:
-    branches: [main, develop, nvd_test]
+    branches: [main, develop]
   pull_request:
     branches: [main, develop]
 
