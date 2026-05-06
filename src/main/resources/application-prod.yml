@@ -23,12 +23,7 @@ spring:
     consumer:
       auto-startup: false
 
-# Disable Eureka for Cloud Run
-eureka:
-  client:
-    enabled: false
-    registerWithEureka: false
-    fetchRegistry: false
+
 
 logging:
   level:
