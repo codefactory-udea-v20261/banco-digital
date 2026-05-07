@@ -1,110 +1,88 @@
 package com.udea.bancodigital.shared.event;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
-import org.springframework.messaging.Message;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for EventPublisher component.
- * Validates event publishing to Kafka.
- */
-@DisplayName("EventPublisher Tests")
+@ExtendWith(MockitoExtension.class)
 class EventPublisherTest {
 
+    @Mock
+    private JdbcTemplate jdbcTemplate;
+
+    @Mock
+    private ObjectMapper objectMapper;
+
+    @InjectMocks
     private EventPublisher eventPublisher;
-    private KafkaTemplate<String, DomainEvent> kafkaTemplate;
-    private EventFallbackStorage fallbackStorage;
+
+    private String validEncryptionKey;
 
     @BeforeEach
     void setUp() {
-        kafkaTemplate = mock(KafkaTemplate.class);
-        fallbackStorage = mock(EventFallbackStorage.class);
-        eventPublisher = new EventPublisher(kafkaTemplate, fallbackStorage);
+        // Generate a 256-bit key (32 bytes)
+        byte[] key = new byte[32];
+        new java.security.SecureRandom().nextBytes(key);
+        validEncryptionKey = Base64.getEncoder().encodeToString(key);
+        ReflectionTestUtils.setField(eventPublisher, "encryptionKey", validEncryptionKey);
     }
 
     @Test
-    @DisplayName("Should publish CustomerCreatedEvent successfully")
-    void testPublishCustomerCreatedEvent() {
-        String customerId = UUID.randomUUID().toString();
-        String email = "customer@example.com";
-        String fullName = "John Doe";
-        String documentType = "CC";
-        String documentNumber = "12345678";
-        String phone = "+573001234567";
-        String userId = "user-123";
+    void publishEvent_Success() throws Exception {
+        DomainEvent event = new DomainEvent() {
+            @Override public String getEventType() { return "TEST_EVENT"; }
+            @Override public String getAggregateId() { return "123"; }
+        };
+        event.setEventId(UUID.randomUUID().toString());
 
-        CustomerCreatedEvent event = CustomerCreatedEvent.from(
-                customerId, email, fullName, documentType, documentNumber, phone, userId
-        );
-
-        CompletableFuture<SendResult<String, DomainEvent>> future = CompletableFuture.completedFuture(mock(SendResult.class));
-        when(kafkaTemplate.send(any(Message.class))).thenReturn(future);
+        when(objectMapper.writeValueAsString(any())).thenReturn("{\"test\":\"data\"}");
+        when(jdbcTemplate.update(anyString(), any(), any(), any(), any(), any(), any())).thenReturn(1);
 
         boolean result = eventPublisher.publishEvent(event);
 
-        assertTrue(result, "Event should be published successfully");
-        assertNotNull(event.getEventId(), "Event ID should not be null");
-        assertEquals("CustomerCreated", event.getEventType());
-        assertEquals(customerId, event.getAggregateId());
-        verify(kafkaTemplate).send(any(Message.class));
-    }
-
-    @Test
-    @DisplayName("Should handle null event gracefully")
-    void testPublishNullEvent() {
-        boolean result = eventPublisher.publishEvent(null);
-        assertFalse(result, "Should return false for null event");
-    }
-
-    @Test
-    void publishEventFallback_ShouldStoreInFallback() {
-        DomainEvent event = DomainEvent.builder().eventId("123").build();
-        when(fallbackStorage.storeEventInFallback(event)).thenReturn(true);
-
-        boolean result = eventPublisher.publishEventFallback(event, new RuntimeException("Test"));
-
         assertTrue(result);
-        verify(fallbackStorage).storeEventInFallback(event);
+        verify(jdbcTemplate).update(contains("INSERT INTO outbox_events"), any(), any(), any(), any(), any(), any());
     }
 
     @Test
-    void publishEventToDLQ_ShouldSendToKafka() {
-        DomainEvent event = DomainEvent.builder().eventId("123").build();
-        eventPublisher.publishEventToDLQ(event, "Test reason");
-        verify(kafkaTemplate).send(any(Message.class));
+    void publishEvent_NullEvent_ReturnsFalse() {
+        assertFalse(eventPublisher.publishEvent(null));
     }
 
     @Test
-    void publishEventToDLQ_ShouldFallbackOnException() {
-        DomainEvent event = DomainEvent.builder().eventId("123").build();
-        when(kafkaTemplate.send(any(Message.class))).thenThrow(new RuntimeException("Kafka error"));
+    void publishEvent_MissingEncryptionKey_ThrowsException() {
+        ReflectionTestUtils.setField(eventPublisher, "encryptionKey", null);
+        DomainEvent event = new DomainEvent() {
+            @Override public String getEventType() { return "TEST_EVENT"; }
+            @Override public String getAggregateId() { return "123"; }
+        };
         
-        eventPublisher.publishEventToDLQ(event, "Test reason");
-        
-        verify(fallbackStorage).storeEventInFallback(event);
+        assertThrows(RuntimeException.class, () -> eventPublisher.publishEvent(event));
     }
 
     @Test
-    void republishFallbackEvents_ShouldRepublishAndRemove() {
-        when(fallbackStorage.retrieveFallbackEvents(100)).thenReturn(java.util.List.of("event1", "event2"));
-        
-        int count = eventPublisher.republishFallbackEvents();
-        
-        assertEquals(2, count);
-        verify(fallbackStorage).removeFallbackEvents(2);
+    void publishEvent_JdbcError_ThrowsException() throws Exception {
+        DomainEvent event = new DomainEvent() {
+            @Override public String getEventType() { return "TEST_EVENT"; }
+            @Override public String getAggregateId() { return "123"; }
+        };
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        when(jdbcTemplate.update(anyString(), any(), any(), any(), any(), any(), any()))
+                .thenThrow(new RuntimeException("DB Error"));
+
+        assertThrows(RuntimeException.class, () -> eventPublisher.publishEvent(event));
     }
 }

@@ -1,5 +1,6 @@
 package com.udea.bancodigital.customers.infrastructure.adapter.out.rest;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -9,17 +10,18 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ClienteAccessProvisioningCircuitBreakerAdapterTest {
@@ -33,39 +35,45 @@ class ClienteAccessProvisioningCircuitBreakerAdapterTest {
     @InjectMocks
     private ClienteAccessProvisioningCircuitBreakerAdapter adapter;
 
-    @Test
-    void existsByEmail_ShouldReturnTrueIfResponseOk() {
-        when(restTemplate.getForEntity(anyString(), eq(Map.class)))
-                .thenReturn(new ResponseEntity<>(Map.of("exists", true), HttpStatus.OK));
-
-        boolean exists = adapter.existsByEmail("test@test.com");
-
-        assertThat(exists).isTrue();
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(adapter, "identityServiceUrl", "http://test-identity");
     }
 
     @Test
-    void existsByEmail_ShouldThrowOnRestClientException() {
-        when(restTemplate.getForEntity(anyString(), eq(Map.class)))
-                .thenThrow(new RestClientException("Connection error"));
+    void existsByEmail_Success() {
+        Map<String, Object> body = Collections.singletonMap("exists", true);
+        ResponseEntity<Map> response = new ResponseEntity<>(body, HttpStatus.OK);
+        when(restTemplate.getForEntity(anyString(), eq(Map.class))).thenReturn(response);
 
-        assertThatThrownBy(() -> adapter.existsByEmail("test@test.com"))
-                .isInstanceOf(RestClientException.class);
+        boolean result = adapter.existsByEmail("test@example.com");
+
+        assertTrue(result);
     }
 
     @Test
-    void provisionAccess_ShouldPostSuccessfully() {
+    void existsByEmail_Error_ThrowsException() {
+        when(restTemplate.getForEntity(anyString(), eq(Map.class)))
+                .thenThrow(new RestClientException("Error"));
+
+        assertThrows(RestClientException.class, () -> adapter.existsByEmail("test@example.com"));
+    }
+
+    @Test
+    void provisionAccess_Success() {
+        ResponseEntity<Void> response = new ResponseEntity<>(HttpStatus.CREATED);
         when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Void.class)))
-                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+                .thenReturn(response);
 
-        adapter.provisionAccess(UUID.randomUUID(), "test@test.com");
-
-        verify(restTemplate).postForEntity(anyString(), any(HttpEntity.class), eq(Void.class));
+        assertDoesNotThrow(() -> adapter.provisionAccess(UUID.randomUUID(), "test@example.com"));
     }
 
     @Test
-    void getCircuitBreakerStatus_ShouldReturnMap() {
-        org.springframework.test.util.ReflectionTestUtils.setField(adapter, "identityServiceUrl", "http://test-url");
+    void getCircuitBreakerStatus_ReturnsInfo() {
         Map<String, Object> status = adapter.getCircuitBreakerStatus();
-        assertThat(status).containsKey("circuitBreakerName");
+        assertEquals("identity-service", status.get("circuitBreakerName"));
     }
+
+    // Testing private fallback methods via reflection or by triggering them is hard with just unit tests
+    // But we can test the public surface.
 }

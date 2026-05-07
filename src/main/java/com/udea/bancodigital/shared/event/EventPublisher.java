@@ -1,44 +1,36 @@
 package com.udea.bancodigital.shared.event;
 
-import com.udea.bancodigital.shared.event.EventFallbackStorage;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.retry.annotation.Retryable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import org.springframework.beans.factory.annotation.Value;
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Base64;
+import java.util.UUID;
+
 /**
- * Publishes domain events to Kafka topic for consumption by other services.
- * Uses Kafka as the event bus for asynchronous inter-service communication.
- * Implements graceful degradation with fallback storage and circuit breaker pattern.
+ * Publishes domain events using the Transactional Outbox Pattern.
+ * Saves events to the database within the current transaction context.
+ * An external processor will later relay these to Kafka.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class EventPublisher {
 
-    private final KafkaTemplate<String, DomainEvent> kafkaTemplate;
-    private final EventFallbackStorage fallbackStorage;
+    private final JdbcTemplate jdbcTemplate;
+    private final ObjectMapper objectMapper;
 
-    private static final String EVENTS_TOPIC = "banco-digital-events";
-    private static final String DLQ_TOPIC = "banco-digital-events-dlq";
+    @Value("${encryption.key}")
+    private String encryptionKey;
 
-    /**
-     * Publishes a domain event to the Kafka event bus with fallback support.
-     * If Kafka is unavailable, event is stored in Redis cache for later retry.
-     *
-     * @param event The domain event to publish
-     * @return true if published successfully or stored in fallback, false otherwise
-     */
-    @CircuitBreaker(name = "kafka-publisher", fallbackMethod = "publishEventFallback")
-    @Retryable(
-            maxAttempts = 3,
-            backoff = @org.springframework.retry.annotation.Backoff(delay = 1000, multiplier = 2.0)
-    )
     public boolean publishEvent(DomainEvent event) {
         try {
             if (event == null) {
@@ -46,121 +38,43 @@ public class EventPublisher {
                 return false;
             }
 
-            String eventId = event.getEventId();
-            String eventType = event.getEventType();
+            String eventId = event.getEventId() != null ? event.getEventId() : UUID.randomUUID().toString();
+            String payload = objectMapper.writeValueAsString(event);
+            String encryptedPayload = encryptPayload(payload);
 
-            log.info("Publishing event: {} (id: {}, aggregateId: {})",
-                    eventType, eventId, event.getAggregateId());
+            // Writing to both encrypted_payload and payload (deprecated) for backward compatibility
+            String sql = "INSERT INTO outbox_events (id, aggregate_type, aggregate_id, event_type, encrypted_payload, payload) VALUES (?, ?, ?, ?, ?, ?)";
+            
+            jdbcTemplate.update(sql,
+                    UUID.fromString(eventId.replace("evt-", "").length() == 36 ? eventId.replace("evt-", "") : UUID.randomUUID().toString()),
+                    "Aggregate", // Or extract from event if available
+                    event.getAggregateId(),
+                    event.getEventType(),
+                    encryptedPayload,
+                    payload);
 
-            Message<DomainEvent> message = MessageBuilder
-                    .withPayload(event)
-                    .setHeader(KafkaHeaders.TOPIC, EVENTS_TOPIC)
-                    .setHeader(KafkaHeaders.KEY, event.getAggregateId())
-                    .setHeader("event_type", eventType)
-                    .setHeader("event_id", eventId)
-                    .setHeader("correlation_id", event.getCorrelationId())
-                    .setHeader("source_service", event.getSourceService())
-                    .build();
-
-            kafkaTemplate.send(message)
-                    .whenComplete((result, ex) -> {
-                        if (ex != null) {
-                            log.error("Failed to publish event {}: {}",
-                                    eventId, ex.getMessage());
-                        } else {
-                            log.debug("Event published successfully: {} to partition: {}",
-                                    eventId,
-                                    result.getRecordMetadata().partition());
-                        }
-                    });
-
+            log.info("Event {} saved to outbox (encrypted)", eventId);
             return true;
         } catch (Exception e) {
-            log.error("Error publishing event: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to publish event", e);
+            log.error("Failed to save event to outbox: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to save event to outbox", e);
         }
     }
 
-    /**
-     * Fallback method for graceful degradation when Kafka is unavailable.
-     * Stores the event in Redis for later retry.
-     */
-    public boolean publishEventFallback(DomainEvent event, Exception ex) {
-        log.warn("Kafka circuit breaker triggered - using fallback mechanism. Cause: {}", ex.getMessage());
-        return fallbackStorage.storeEventInFallback(event);
-    }
-
-    /**
-     * Publishes an event directly to the Dead Letter Queue (for processing failures).
-     *
-     * @param event The event that failed processing
-     * @param reason The reason it was sent to DLQ
-     */
-    public void publishEventToDLQ(DomainEvent event, String reason) {
-        try {
-            log.warn("Sending event {} to DLQ. Reason: {}", event.getEventId(), reason);
-
-            Message<DomainEvent> message = MessageBuilder
-                    .withPayload(event)
-                    .setHeader(KafkaHeaders.TOPIC, DLQ_TOPIC)
-                    .setHeader(KafkaHeaders.KEY, event.getAggregateId())
-                    .setHeader("dlq_reason", reason)
-                    .setHeader("original_event_type", event.getEventType())
-                    .build();
-
-            kafkaTemplate.send(message);
-        } catch (Exception e) {
-            log.error("Failed to send event {} to DLQ: {}", event.getEventId(), e.getMessage(), e);
-            // Fallback: store in Redis cache
-            fallbackStorage.storeEventInFallback(event);
+    private String encryptPayload(String plaintext) throws Exception {
+        if (encryptionKey == null || encryptionKey.isEmpty()) {
+            throw new IllegalStateException("Encryption key not configured");
         }
+        byte[] keyBytes = Base64.getDecoder().decode(encryptionKey);
+        SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "AES");
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        byte[] iv = new byte[12];
+        new SecureRandom().nextBytes(iv);
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(128, iv));
+        byte[] encrypted = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
+        byte[] combined = new byte[iv.length + encrypted.length];
+        System.arraycopy(iv, 0, combined, 0, iv.length);
+        System.arraycopy(encrypted, 0, combined, iv.length, encrypted.length);
+        return Base64.getEncoder().encodeToString(combined);
     }
-
-    /**
-     * Retrieves and republishes events from the fallback queue.
-     * Called when Kafka becomes available again.
-     *
-     * @return number of events successfully republished
-     */
-    public int republishFallbackEvents() {
-        int successCount = 0;
-        try {
-            var fallbackEvents = fallbackStorage.retrieveFallbackEvents(100);
-            
-            if (fallbackEvents.isEmpty()) {
-                log.debug("No fallback events to republish");
-                return 0;
-            }
-
-            log.info("Attempting to republish {} fallback events", fallbackEvents.size());
-
-            successCount = republishEvents(fallbackEvents);
-
-            // Remove successfully republished events
-            if (successCount > 0) {
-                fallbackStorage.removeFallbackEvents(successCount);
-                log.info("Successfully republished {} fallback events", successCount);
-            }
-
-        } catch (Exception e) {
-            log.error("Error republishing fallback events: {}", e.getMessage(), e);
-        }
-
-        return successCount;
-    }
-
-    private int republishEvents(java.util.List<String> fallbackEvents) {
-        int count = 0;
-        for (String eventJson : fallbackEvents) {
-            try {
-                log.debug("Republishing fallback event: {}", eventJson);
-                count++;
-            } catch (Exception e) {
-                log.error("Failed to republish fallback event: {}", e.getMessage());
-                break;
-            }
-        }
-        return count;
-    }
-
 }

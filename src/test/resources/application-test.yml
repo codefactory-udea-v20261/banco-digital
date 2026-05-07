@@ -39,3 +39,4 @@ spring.cloud.discovery:
   enabled: false
   client:
     enabled: false
+encryption.key: ZHVtbXlLZXlEZXZlbG9wbWVudFRlc3RzMTIzNDU2Nzg=

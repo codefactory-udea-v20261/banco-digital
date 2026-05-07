@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banco-digital
+  namespace: banco-digital
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: banco-digital
+  template:
+    metadata:
+      labels:
+        app: banco-digital
+    spec:
+      serviceAccountName: banco-digital-ksa
+      containers:
+      - name: banco-digital
+        image: us-central1-docker.pkg.dev/project-2183efe1-b87d-4c12-966/microservices-repo/banco-digital:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"
+        - name: DB_HOST
+          value: "127.0.0.1"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: "banco_digital_core"
+        - name: DB_USERNAME
+          value: "core_user"
+        - name: DB_PASSWORD
+          value: "CoreService@2026"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: banco-digital-secrets
+              key: jwt-secret
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: banco-digital-secrets
+              key: encryption-key
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        startupProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          failureThreshold: 10
+      # Cloud SQL Auth Proxy sidecar
+      - name: cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.11.0
+        args:
+          - "--structured-logs"
+          - "--port=5432"
+          - "project-2183efe1-b87d-4c12-966:us-central1:banco-digital-db"
+        securityContext:
+          runAsNonRoot: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: banco-digital
+  namespace: banco-digital
+spec:
+  selector:
+    app: banco-digital
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: LoadBalancer
