@@ -5,9 +5,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.HashMap;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @ExtendWith(MockitoExtension.class)
 class AccessProvisioningDLQConsumerTest {
@@ -16,14 +17,12 @@ class AccessProvisioningDLQConsumerTest {
     private AccessProvisioningDLQConsumer consumer;
 
     @Test
-    void consumeDLQEvent_ShouldLogAndNotThrow() {
-        Map<String, Object> event = Map.of(
-                "clienteId", "123",
-                "retryCount", 5,
-                "failureReason", "Test failure"
-        );
-
-        assertThatCode(() -> consumer.consumeDLQEvent(event))
-                .doesNotThrowAnyException();
+    void consumeDLQEvent_Success() {
+        Map<String, Object> event = new HashMap<>();
+        event.put("clienteId", "123");
+        event.put("retryCount", 5);
+        event.put("failureReason", "Test error");
+        
+        assertDoesNotThrow(() -> consumer.consumeDLQEvent(event));
     }
 }
