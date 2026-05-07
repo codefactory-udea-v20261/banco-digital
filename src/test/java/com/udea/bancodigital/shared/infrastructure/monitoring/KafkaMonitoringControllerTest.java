@@ -9,11 +9,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,61 +35,108 @@ class KafkaMonitoringControllerTest {
     @InjectMocks
     private KafkaMonitoringController controller;
 
+    @BeforeEach
+    void setUp() {
+        lenient().when(circuitBreakerRegistry.circuitBreaker("kafka-publisher")).thenReturn(circuitBreaker);
+        lenient().when(circuitBreaker.getState()).thenReturn(CircuitBreaker.State.CLOSED);
+        lenient().when(circuitBreaker.getMetrics()).thenReturn(metrics);
+    }
+
     @Test
-    void getKafkaStatus_ShouldReturnHealthyWhenQueueEmpty() {
+    void getKafkaStatus_Healthy() {
         when(fallbackStorage.getFallbackQueueSize()).thenReturn(0L);
-        when(circuitBreakerRegistry.circuitBreaker("kafka-publisher")).thenReturn(circuitBreaker);
-        when(circuitBreaker.getState()).thenReturn(CircuitBreaker.State.CLOSED);
-        when(circuitBreaker.getMetrics()).thenReturn(metrics);
+        when(fallbackStorage.getFallbackStats()).thenReturn("Queue Size: 0, Stats: none, Last Failure: never");
 
         ResponseEntity<Map<String, Object>> response = controller.getKafkaStatus();
-        
-        assertThat(response.getStatusCodeValue()).isEqualTo(200);
-        assertThat(response.getBody().get("status")).isEqualTo("healthy");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("healthy", response.getBody().get("status"));
+        assertEquals(0L, response.getBody().get("fallback_queue_size"));
     }
 
     @Test
-    void getFallbackQueueInfo_ShouldReturnMetrics() {
-        when(fallbackStorage.getFallbackQueueSize()).thenReturn(1500L);
-        when(fallbackStorage.getFallbackStats()).thenReturn("Stats");
+    void getKafkaStatus_Degraded() {
+        when(fallbackStorage.getFallbackQueueSize()).thenReturn(10L);
+        when(fallbackStorage.getFallbackStats()).thenReturn("some stats");
+        
+        ResponseEntity<Map<String, Object>> response = controller.getKafkaStatus();
 
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("degraded", response.getBody().get("status"));
+    }
+
+    @Test
+    void getFallbackQueueInfo_Success() {
+        when(fallbackStorage.getFallbackQueueSize()).thenReturn(100L);
+        when(fallbackStorage.getFallbackStats()).thenReturn("some stats");
+        
         ResponseEntity<Map<String, Object>> response = controller.getFallbackQueueInfo();
 
-        assertThat(response.getStatusCodeValue()).isEqualTo(200);
-        assertThat(response.getBody().get("queue_size")).isEqualTo(1500L);
-        assertThat(response.getBody().get("alert_threshold_exceeded")).isEqualTo(true);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(100L, response.getBody().get("queue_size"));
+        assertEquals(1.0, response.getBody().get("queue_utilization_percent"));
     }
 
     @Test
-    void resetCircuitBreaker_ShouldResetAndReturnSuccess() {
-        when(circuitBreakerRegistry.circuitBreaker("kafka-publisher")).thenReturn(circuitBreaker);
-        when(circuitBreaker.getState()).thenReturn(CircuitBreaker.State.CLOSED);
+    void getCircuitBreakerMetrics_Success() {
+        when(metrics.getNumberOfFailedCalls()).thenReturn(5);
+        
+        ResponseEntity<Map<String, Object>> response = controller.getCircuitBreakerMetrics();
 
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("CLOSED", response.getBody().get("state"));
+        assertEquals(5, response.getBody().get("failed_calls"));
+    }
+
+    @Test
+    void getCircuitBreakerMetrics_NotFound() {
+        when(circuitBreakerRegistry.circuitBreaker("kafka-publisher")).thenReturn(null);
+        
+        ResponseEntity<Map<String, Object>> response = controller.getCircuitBreakerMetrics();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("not_initialized", response.getBody().get("status"));
+    }
+
+    @Test
+    void resetCircuitBreaker_Success() {
         ResponseEntity<Map<String, Object>> response = controller.resetCircuitBreaker();
 
-        assertThat(response.getStatusCodeValue()).isEqualTo(200);
-        assertThat(response.getBody().get("status")).isEqualTo("success");
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("success", response.getBody().get("status"));
         verify(circuitBreaker).reset();
     }
 
     @Test
-    void clearFallbackQueue_ShouldClearAndReturnSuccess() {
-        when(fallbackStorage.getFallbackQueueSize()).thenReturn(5L);
-
+    void clearFallbackQueue_Success() {
+        when(fallbackStorage.getFallbackQueueSize()).thenReturn(50L);
+        
         ResponseEntity<Map<String, Object>> response = controller.clearFallbackQueue();
 
-        assertThat(response.getStatusCodeValue()).isEqualTo(200);
-        assertThat(response.getBody().get("status")).isEqualTo("success");
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("success", response.getBody().get("status"));
+        assertEquals(50L, response.getBody().get("events_discarded"));
         verify(fallbackStorage).clearFallbackQueue();
     }
 
     @Test
-    void getKafkaHealth_ShouldReturnDegradedWhenQueueNotEmpty() {
-        when(fallbackStorage.getFallbackQueueSize()).thenReturn(10L);
-
+    void getKafkaHealth_UP() {
+        when(fallbackStorage.getFallbackQueueSize()).thenReturn(0L);
+        
         ResponseEntity<Map<String, Object>> response = controller.getKafkaHealth();
 
-        assertThat(response.getStatusCodeValue()).isEqualTo(200);
-        assertThat(response.getBody().get("status")).isEqualTo("DEGRADED");
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("UP", response.getBody().get("status"));
+    }
+
+    @Test
+    void getKafkaHealth_Degraded_Critical() {
+        when(fallbackStorage.getFallbackQueueSize()).thenReturn(6000L);
+        
+        ResponseEntity<Map<String, Object>> response = controller.getKafkaHealth();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("DEGRADED", response.getBody().get("status"));
+        assertTrue(((String)response.getBody().get("alert")).contains("CRITICAL"));
     }
 }
