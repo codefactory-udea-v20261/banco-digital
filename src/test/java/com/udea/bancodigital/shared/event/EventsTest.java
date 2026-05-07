@@ -18,6 +18,9 @@ class EventsTest {
 
         DomainEvent sagaEvent = DomainEvent.createEventWithSaga("TEST_SAGA", "agg-2", "saga-2", "test-service");
         assertThat(sagaEvent.getSagaId()).isEqualTo("saga-2");
+        
+        event.setCorrelationId("corr-1");
+        assertThat(event.getCorrelationId()).isEqualTo("corr-1");
     }
 
     @Test
@@ -33,6 +36,9 @@ class EventsTest {
         assertThat(event.getPhone()).isEqualTo("555-1234");
         assertThat(event.getUserId()).isEqualTo("user-1");
         assertThat(event.getEventType()).isEqualTo("CustomerCreated");
+        
+        event.setPhone("111-2222");
+        assertThat(event.getPhone()).isEqualTo("111-2222");
     }
 
     @Test
@@ -48,5 +54,8 @@ class EventsTest {
         assertThat(event.getTransactionType()).isEqualTo("TRANSFER");
         assertThat(event.getStatus()).isEqualTo("COMPLETED");
         assertThat(event.getDescription()).isEqualTo("Test");
+        
+        event.setSagaId("saga-txn");
+        assertThat(event.getSagaId()).isEqualTo("saga-txn");
     }
 }
