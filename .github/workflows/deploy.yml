@@ -1,136 +1,66 @@
-name: Deploy Banco Digital to Cloud Run
+name: Deploy to GKE
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  id-token: write
-
-concurrency:
-  group: deploy-Banco Digital
-  cancel-in-progress: false
-
 env:
-  SERVICE_NAME: banco-digital
-  IMAGE_NAME: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/microservices-repo/banco-digital
+  PROJECT_ID: "project-2183efe1-b87d-4c12-966"
+  GKE_CLUSTER: "banco-digital-cluster"
+  GKE_ZONE: "us-central1"
+  IMAGE: "banco-digital"
+  NAMESPACE: "banco-digital"
 
 jobs:
   deploy:
+    name: Build and Deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate Required Secrets
-        env:
-          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-          GCP_REGION: ${{ secrets.GCP_REGION }}
-          GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
-        run: |
-          required=(
-            GCP_PROJECT_ID
-            GCP_REGION
-            GCP_WORKLOAD_IDENTITY_PROVIDER
-            GCP_SERVICE_ACCOUNT
-            ENCRYPTION_KEY
-          )
-          for name in "${required[@]}"; do
-            if [ -z "${!name}" ]; then
-              echo "❌ Missing secret: $name"
-              exit 1
-            fi
-          done
-          echo "✅ All required secrets present"
-
-      - name: Authenticate to Google Cloud (Workload Identity)
-        uses: google-github-actions/auth@v2
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: 'Configure Docker'
+        run: |-
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: 'Build and Push Docker Image'
+        run: |-
+          docker build -t us-central1-docker.pkg.dev/$PROJECT_ID/microservices-repo/$IMAGE:$GITHUB_SHA .
+          docker push us-central1-docker.pkg.dev/$PROJECT_ID/microservices-repo/$IMAGE:$GITHUB_SHA
+
+      - name: 'Set up GKE credentials'
+        uses: 'google-github-actions/get-gke-credentials@v2'
         with:
-          install_components: 'gke-gcloud-auth-plugin'
+          cluster_name: '${{ env.GKE_CLUSTER }}'
+          location: '${{ env.GKE_ZONE }}'
 
-      - name: Configure Docker authentication
-        run: |
-          gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+      - name: 'Create Kubernetes Secret'
+        run: |-
+          kubectl create secret generic banco-digital-secrets \
+            --namespace $NAMESPACE \
+            --from-literal=jwt-secret="${{ secrets.JWT_SECRET }}" \
+            --from-literal=encryption-key="${{ secrets.ENCRYPTION_KEY }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: temurin
-          cache: maven
-
-      - name: Build with Maven
-        run: mvn -B clean package -DskipTests
-        env:
-          SPRING_PROFILES_ACTIVE: prod
-
-      - name: Build Docker image
-        run: |
-          docker build \
-            -t ${{ env.IMAGE_NAME }}:latest \
-            -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            .
-
-      - name: Push Docker image to Artifact Registry
-        run: |
-          docker push ${{ env.IMAGE_NAME }}:latest
-          docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
-          echo "✅ Image pushed to Artifact Registry"
-
-      - name: Deploy to Cloud Run
-        run: |
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image ${{ env.IMAGE_NAME }}:latest \
-            --platform managed \
-            --region ${{ env.GCP_REGION }} \
-            --service-account microservices-runtime@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
-            --memory 512Mi \
-            --cpu 1 \
-            --timeout 600 \
-            --set-env-vars SPRING_PROFILES_ACTIVE=prod,ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
-
-      - name: Verify Deployment
-        run: |
-          echo "⏳ Waiting for service to be ready..."
-          sleep 30
-          
-          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
-            --platform managed \
-            --region ${{ env.GCP_REGION }} \
-            --format='value(status.url)')
-          
-          echo "✅ Service deployed to: $SERVICE_URL"
-          
-          # Health check
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $SERVICE_URL/actuator/health)
-          echo "Health check: HTTP $HTTP_CODE"
-          
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "✅ Service is healthy"
-          else
-            echo "⚠️  Service returned HTTP $HTTP_CODE"
-          fi
-
-      - name: Deployment Summary
-        if: always()
-        run: |
-          echo "════════════════════════════════════════"
-          echo "🚀 Deployment Summary"
-          echo "════════════════════════════════════════"
-          echo "Service: ${{ env.SERVICE_NAME }}"
-          echo "Image: ${{ env.IMAGE_NAME }}:latest"
-          echo "Region: ${{ env.GCP_REGION }}"
-          echo "Commit: ${{ github.sha }}"
-          echo "════════════════════════════════════════"
+      - name: 'Deploy to GKE'
+        run: |-
+          # Update image in deployment
+          sed -i "s|image: .*|image: us-central1-docker.pkg.dev/$PROJECT_ID/microservices-repo/$IMAGE:$GITHUB_SHA|g" k8s/deployment.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl rollout status deployment/$IMAGE --namespace $NAMESPACE
