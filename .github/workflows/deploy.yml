@@ -18,6 +18,7 @@ env:
   GKE_LOCATION:       us-central1
   NAMESPACE:          banco-digital
   K8S_DEPLOYMENT:     core
+  ROLLOUT_TIMEOUT:    900s
   ORCHESTRATION_REPO: codefactory-udea-v20261/banco-digital-orchestration
   ORCHESTRATION_REF:  main
 
@@ -29,7 +30,7 @@ jobs:
   deploy:
     name: Build, push, rollout
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
 
     steps:
       - name: Checkout banco-digital
@@ -88,6 +89,13 @@ jobs:
 
       - name: Wait for rollout
         run: |
-          kubectl rollout status deployment/${{ env.K8S_DEPLOYMENT }} \
+          set -euo pipefail
+          if ! kubectl rollout status deployment/${{ env.K8S_DEPLOYMENT }} \
             --namespace ${{ env.NAMESPACE }} \
-            --timeout=300s
+            --timeout=${{ env.ROLLOUT_TIMEOUT }}; then
+            echo "Rollout timed out. Collecting diagnostics..."
+            kubectl get pods -n ${{ env.NAMESPACE }} -l app=${{ env.K8S_DEPLOYMENT }} -o wide || true
+            kubectl describe deployment/${{ env.K8S_DEPLOYMENT }} -n ${{ env.NAMESPACE }} || true
+            kubectl describe pods -n ${{ env.NAMESPACE }} -l app=${{ env.K8S_DEPLOYMENT }} || true
+            exit 1
+          fi
