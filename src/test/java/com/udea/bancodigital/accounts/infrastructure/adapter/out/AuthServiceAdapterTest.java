@@ -4,6 +4,7 @@ import com.udea.bancodigital.shared.security.AuthenticatedUser;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.security.core.Authentication;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @DisplayName("AuthServiceAdapter")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AuthServiceAdapterTest {
 
     private final AuthServiceAdapter adapter = new AuthServiceAdapter();

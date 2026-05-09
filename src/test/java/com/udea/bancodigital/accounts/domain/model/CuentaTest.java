@@ -3,6 +3,7 @@ package com.udea.bancodigital.accounts.domain.model;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -12,6 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Cuenta")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CuentaTest {
     @Nested
     @DisplayName("crearNueva()")
@@ -22,7 +24,6 @@ class CuentaTest {
         void debeCrearCuentaConValoresCorrectos() {
             UUID clienteId = UUID.randomUUID();
             Cuenta cuenta = Cuenta.crearNueva(clienteId, TipoCuenta.AHORRO, "CO4051234567890");
-
             assertThat(cuenta.getId()).isNotNull();
             assertThat(cuenta.getClienteId()).isEqualTo(clienteId);
             assertThat(cuenta.getTipoCuenta()).isEqualTo(TipoCuenta.AHORRO);
@@ -38,14 +39,16 @@ class CuentaTest {
             UUID clienteId = UUID.randomUUID();
             Cuenta cuenta1 = Cuenta.crearNueva(clienteId, TipoCuenta.AHORRO, "CO4051234567890");
             Cuenta cuenta2 = Cuenta.crearNueva(clienteId, TipoCuenta.CORRIENTE, "CO4059876543210");
-
             assertThat(cuenta1.getId()).isNotEqualTo(cuenta2.getId());
         }
 
         @Test
         @DisplayName("Debe fallar si clienteId es null")
         void debeFallarSiClienteIdEsNull() {
-            assertThatThrownBy(() -> Cuenta.crearNueva(null, TipoCuenta.AHORRO, "CO4051234567890"))
+            // FIX Sonar S5960: extraer la llamada que lanza excepción a una variable
+            // para que la lambda tenga solo una invocación que puede lanzar excepción
+            UUID nullId = null;
+            assertThatThrownBy(() -> Cuenta.crearNueva(nullId, TipoCuenta.AHORRO, "CO4051234567890"))
                     .isInstanceOf(NullPointerException.class)
                     .hasMessageContaining("clienteId");
         }
@@ -53,7 +56,10 @@ class CuentaTest {
         @Test
         @DisplayName("Debe fallar si tipoCuenta es null")
         void debeFallarSiTipoCuentaEsNull() {
-            assertThatThrownBy(() -> Cuenta.crearNueva(UUID.randomUUID(), null, "CO4051234567890"))
+            UUID clienteId = UUID.randomUUID();
+            TipoCuenta nullTipo = null;
+            // FIX Sonar S5960: capturar args que no lanzan excepción fuera de la lambda
+            assertThatThrownBy(() -> Cuenta.crearNueva(clienteId, nullTipo, "CO4051234567890"))
                     .isInstanceOf(NullPointerException.class)
                     .hasMessageContaining("tipoCuenta");
         }
@@ -61,7 +67,8 @@ class CuentaTest {
         @Test
         @DisplayName("Debe fallar si numeroCuenta es null")
         void debeFallarSiNumeroCuentaEsNull() {
-            assertThatThrownBy(() -> Cuenta.crearNueva(UUID.randomUUID(), TipoCuenta.AHORRO, null))
+            UUID clienteId = UUID.randomUUID();
+            assertThatThrownBy(() -> Cuenta.crearNueva(clienteId, TipoCuenta.AHORRO, null))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("numeroCuenta");
         }
@@ -69,7 +76,8 @@ class CuentaTest {
         @Test
         @DisplayName("Debe fallar si numeroCuenta está vacío")
         void debeFallarSiNumeroCuentaEstaVacio() {
-            assertThatThrownBy(() -> Cuenta.crearNueva(UUID.randomUUID(), TipoCuenta.AHORRO, ""))
+            UUID clienteId = UUID.randomUUID();
+            assertThatThrownBy(() -> Cuenta.crearNueva(clienteId, TipoCuenta.AHORRO, ""))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("numeroCuenta");
         }
@@ -77,7 +85,8 @@ class CuentaTest {
         @Test
         @DisplayName("Debe fallar si numeroCuenta es solo espacios")
         void debeFallarSiNumeroCuentaEsSoloEspacios() {
-            assertThatThrownBy(() -> Cuenta.crearNueva(UUID.randomUUID(), TipoCuenta.AHORRO, "   "))
+            UUID clienteId = UUID.randomUUID();
+            assertThatThrownBy(() -> Cuenta.crearNueva(clienteId, TipoCuenta.AHORRO, "   "))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("numeroCuenta");
         }
@@ -128,11 +137,9 @@ class CuentaTest {
                     .estado(EstadoCuenta.ACTIVA)
                     .saldo(new BigDecimal("1000"))
                     .build();
-
             Cuenta modificada = original.toBuilder()
                     .estado(EstadoCuenta.INACTIVA)
                     .build();
-
             assertThat(modificada.getId()).isEqualTo(original.getId());
             assertThat(modificada.getEstado()).isEqualTo(EstadoCuenta.INACTIVA);
             assertThat(original.getEstado()).isEqualTo(EstadoCuenta.ACTIVA);

@@ -25,14 +25,14 @@ public enum TipoTransaccion {
      * Si no se encuentra, puede devolver null o lanzar una excepción.
      */
     public static TipoTransaccion fromId(Short id) {
-        if (id == null) return null;
+        if (id == null)
+            return null;
 
         return Arrays.stream(TipoTransaccion.values())
                 .filter(t -> t.getId() == id)
                 .findFirst()
                 .orElse(null);
-        // O puedes lanzar: .orElseThrow(() -> new IllegalArgumentException("ID de transacción inválido: " + id));
-    }
 
+    }
 
 }

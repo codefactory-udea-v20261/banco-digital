@@ -31,45 +31,11 @@ public class ActualizarClienteUseCase implements ActualizarClientePort {
     @Override
     @Transactional
     public ClienteResponseDto actualizarCliente(UUID id, ActualizarClienteRequestDto request) {
-
-        // ── 1. Buscar cliente existente ─────────────────────────────────────
         Cliente cliente = repository.findById(id)
                 .orElseThrow(() -> new ClienteNoEncontradoException(id));
 
-        Cliente actualizado = cliente;
         List<String> camposModificados = new ArrayList<>();
-        
-        if (request.getPrimerNombre() != null && !Objects.equals(request.getPrimerNombre(), actualizado.getPrimerNombre())) {
-            actualizado = actualizado.withPrimerNombre(request.getPrimerNombre());
-            camposModificados.add("primerNombre");
-        }
-        if (request.getSegundoNombre() != null && !Objects.equals(request.getSegundoNombre(), actualizado.getSegundoNombre())) {
-            actualizado = actualizado.withSegundoNombre(request.getSegundoNombre());
-            camposModificados.add("segundoNombre");
-        }
-        if (request.getPrimerApellido() != null && !Objects.equals(request.getPrimerApellido(), actualizado.getPrimerApellido())) {
-            actualizado = actualizado.withPrimerApellido(request.getPrimerApellido());
-            camposModificados.add("primerApellido");
-        }
-        if (request.getSegundoApellido() != null && !Objects.equals(request.getSegundoApellido(), actualizado.getSegundoApellido())) {
-            actualizado = actualizado.withSegundoApellido(request.getSegundoApellido());
-            camposModificados.add("segundoApellido");
-        }
-        if (request.getEmail() != null && !Objects.equals(request.getEmail(), actualizado.getEmail().valor())) {
-            if (repository.existsByEmailAndIdNot(request.getEmail(), id)) {
-                throw new ClienteYaExisteException("email", request.getEmail());
-            }
-            actualizado = actualizado.withEmail(Email.of(request.getEmail()));
-            camposModificados.add("email");
-        }
-        if (request.getTelefono() != null && !Objects.equals(request.getTelefono(), actualizado.getTelefono())) {
-            actualizado = actualizado.withTelefono(request.getTelefono());
-            camposModificados.add("telefono");
-        }
-        if (request.getActivo() != null && !Objects.equals(request.getActivo(), actualizado.isActivo())) {
-            actualizado = actualizado.withActivo(request.getActivo());
-            camposModificados.add("activo");
-        }
+        Cliente actualizado = aplicarCambios(cliente, request, camposModificados, id);
 
         if (camposModificados.isEmpty()) {
             return mapper.toResponseDto(cliente);
@@ -77,7 +43,67 @@ public class ActualizarClienteUseCase implements ActualizarClientePort {
 
         Cliente guardado = repository.save(actualizado);
         eventPublisher.publish(ClienteActualizadoEvent.of(guardado.getId(), camposModificados));
-
         return mapper.toResponseDto(guardado);
+    }
+
+    private Cliente aplicarCambios(Cliente cliente, ActualizarClienteRequestDto request,
+            List<String> camposModificados, UUID id) {
+        Cliente actualizado = aplicarCambiosNombre(cliente, request, camposModificados);
+        actualizado = aplicarCambiosContacto(actualizado, request, camposModificados, id);
+        return aplicarCambioEstado(actualizado, request, camposModificados);
+    }
+
+    private Cliente aplicarCambiosNombre(Cliente actualizado, ActualizarClienteRequestDto request,
+            List<String> campos) {
+        if (cambio(request.getPrimerNombre(), actualizado.getPrimerNombre())) {
+            actualizado = actualizado.withPrimerNombre(request.getPrimerNombre());
+            campos.add("primerNombre");
+        }
+        if (cambio(request.getSegundoNombre(), actualizado.getSegundoNombre())) {
+            actualizado = actualizado.withSegundoNombre(request.getSegundoNombre());
+            campos.add("segundoNombre");
+        }
+        if (cambio(request.getPrimerApellido(), actualizado.getPrimerApellido())) {
+            actualizado = actualizado.withPrimerApellido(request.getPrimerApellido());
+            campos.add("primerApellido");
+        }
+        if (cambio(request.getSegundoApellido(), actualizado.getSegundoApellido())) {
+            actualizado = actualizado.withSegundoApellido(request.getSegundoApellido());
+            campos.add("segundoApellido");
+        }
+        return actualizado;
+    }
+
+    private Cliente aplicarCambiosContacto(Cliente actualizado, ActualizarClienteRequestDto request,
+            List<String> campos, UUID id) {
+        if (cambio(request.getEmail(), actualizado.getEmail().valor())) {
+            validarEmailUnico(request.getEmail(), id);
+            actualizado = actualizado.withEmail(Email.of(request.getEmail()));
+            campos.add("email");
+        }
+        if (cambio(request.getTelefono(), actualizado.getTelefono())) {
+            actualizado = actualizado.withTelefono(request.getTelefono());
+            campos.add("telefono");
+        }
+        return actualizado;
+    }
+
+    private Cliente aplicarCambioEstado(Cliente actualizado, ActualizarClienteRequestDto request,
+            List<String> campos) {
+        if (request.getActivo() != null && !Objects.equals(request.getActivo(), actualizado.isActivo())) {
+            actualizado = actualizado.withActivo(request.getActivo());
+            campos.add("activo");
+        }
+        return actualizado;
+    }
+
+    private void validarEmailUnico(String email, UUID id) {
+        if (repository.existsByEmailAndIdNot(email, id)) {
+            throw new ClienteYaExisteException("email", email);
+        }
+    }
+
+    private boolean cambio(String nuevoValor, String valorActual) {
+        return nuevoValor != null && !Objects.equals(nuevoValor, valorActual);
     }
 }
