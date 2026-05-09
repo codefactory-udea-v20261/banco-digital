@@ -2,10 +2,16 @@ package com.udea.bancodigital.shared.event;
 
 import org.springframework.stereotype.Component;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 
@@ -17,8 +23,6 @@ import java.util.Base64;
 @Component
 public class AesGcmCryptoUtil {
 
-    // FIX Sonar S2119: SecureRandom reutilizado como campo, no instanciado por
-    // llamada
     private final SecureRandom secureRandom = new SecureRandom();
 
     private static final int IV_LENGTH = 12;
@@ -28,7 +32,11 @@ public class AesGcmCryptoUtil {
     /**
      * Encrypts plaintext using AES-GCM with the provided Base64-encoded key.
      */
-    public String encrypt(String plaintext, String encryptionKeyBase64) throws Exception {
+    // FIX Sonar S112: reemplazar "throws Exception" con excepciones específicas de
+    // la JCA
+    public String encrypt(String plaintext, String encryptionKeyBase64)
+            throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
+            InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
         validateKey(encryptionKeyBase64);
         byte[] keyBytes = Base64.getDecoder().decode(encryptionKeyBase64);
         SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "AES");
@@ -46,7 +54,11 @@ public class AesGcmCryptoUtil {
     /**
      * Decrypts a Base64-encoded AES-GCM ciphertext using the provided key.
      */
-    public String decrypt(String ciphertext, String encryptionKeyBase64) throws Exception {
+    // FIX Sonar S112: reemplazar "throws Exception" con excepciones específicas de
+    // la JCA
+    public String decrypt(String ciphertext, String encryptionKeyBase64)
+            throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
+            InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
         validateKey(encryptionKeyBase64);
         byte[] combined = Base64.getDecoder().decode(ciphertext);
         byte[] iv = new byte[IV_LENGTH];
