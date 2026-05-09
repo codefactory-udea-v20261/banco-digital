@@ -6,8 +6,10 @@ import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -34,7 +36,6 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class ClienteAccessProvisioningCircuitBreakerAdapter implements ClienteAccessProvisioningPort {
-
     private final RestTemplate restTemplate;
     private final KafkaTemplate<String, Map<String, Object>> kafkaTemplate;
 
@@ -53,15 +54,24 @@ public class ClienteAccessProvisioningCircuitBreakerAdapter implements ClienteAc
 
         try {
             String url = identityServiceUrl + "/api/v1/internal/users/exists?email=" + email;
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+
+            // FIX Sonar S3740: usar ParameterizedTypeReference en lugar de raw type Map
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<Map<String, Object>>() {
+                    });
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 boolean exists = (boolean) response.getBody().getOrDefault("exists", false);
                 log.debug("Email {} exists in Identity Service: {}", email, exists);
                 return exists;
             }
+
             log.warn("Unexpected response from Identity Service for email check: {}", response.getStatusCode());
             return false;
+
         } catch (RestClientException e) {
             log.warn("Error checking if email exists in Identity Service: {}", e.getMessage());
             throw e; // Let circuit breaker handle it
@@ -74,13 +84,14 @@ public class ClienteAccessProvisioningCircuitBreakerAdapter implements ClienteAc
      */
     private boolean existsByEmailFallback(String email, Exception e) {
         log.warn("Identity Service unavailable for email check (circuit breaker). "
-            + "Assuming email {} doesn't exist. Error: {}", email, e.getMessage());
-        return false; // Optimistic: assume doesn't exist, let later checks handle duplicates
+                + "Assuming email {} doesn't exist. Error: {}", email, e.getMessage());
+        return false;
     }
 
     /**
      * Provision client access in Identity Service.
-     * Fallback: queue evento para procesamiento asincrónico cuando Identity está down.
+     * Fallback: queue evento para procesamiento asincrónico cuando Identity está
+     * down.
      */
     @Override
     @CircuitBreaker(name = "identity-service", fallbackMethod = "provisionAccessFallback")
@@ -104,32 +115,33 @@ public class ClienteAccessProvisioningCircuitBreakerAdapter implements ClienteAc
 
             if (response.getStatusCode().isError()) {
                 log.error("Failed to provision access for client {} with email {}: HTTP {}",
-                    clienteId, email, response.getStatusCode());
-                throw new RuntimeException("Identity Service returned error: " + response.getStatusCode());
+                        clienteId, email, response.getStatusCode());
+
+                // FIX Sonar S112: usar RestClientException (específica de Spring) en lugar de
+                // RuntimeException
+                throw new RestClientException(
+                        "Identity Service returned error: " + response.getStatusCode());
             } else {
                 log.info("Successfully provisioned access for client {} with email {}", clienteId, email);
             }
+
         } catch (RestClientException e) {
             log.error("RestClient error provisioning access for client {} with email {}: {}",
-                clienteId, email, e.getMessage());
-            throw e; // Let circuit breaker + retry handle it
+                    clienteId, email, e.getMessage());
+            throw e;
         }
     }
 
     /**
      * Fallback when Identity Service is down or circuit breaker is open.
      * Queue evento para procesamiento asincrónico (event sourcing pattern).
-     *
-     * Esta estrategia permite que Core Banking continúe funcionando
-     * aunque Identity esté down, y replaying cuando se recupera.
      */
     private void provisionAccessFallback(UUID clienteId, String email, Exception e) {
         log.warn("Identity Service unavailable (circuit breaker OPEN or exhausted retries). "
-            + "Queueing provision-access event for clienteId={}, email={}. Error: {}",
-            clienteId, email, e.getMessage());
+                + "Queueing provision-access event for clienteId={}, email={}. Error: {}",
+                clienteId, email, e.getMessage());
 
         try {
-            // Event: ClienteAccessProvisioningPendingEvent
             Map<String, Object> pendingEvent = new HashMap<>();
             pendingEvent.put("eventType", "ClienteAccessProvisioningPending");
             pendingEvent.put("clienteId", clienteId.toString());
@@ -137,27 +149,22 @@ public class ClienteAccessProvisioningCircuitBreakerAdapter implements ClienteAc
             pendingEvent.put("timestamp", Instant.now().toString());
             pendingEvent.put("retryCount", 0);
 
-            // Send to DLQ for later replay
             kafkaTemplate.send("cliente-access-provisioning-pending", clienteId.toString(), pendingEvent);
             log.info("Queued pending provisioning event for clienteId={}", clienteId);
 
         } catch (Exception kafkaError) {
             log.error("Failed to queue fallback event for clienteId={}, email={}: {}",
-                clienteId, email, kafkaError.getMessage());
-            // Critical: log but don't throw (customer creation should not fail)
-            // This will be retried by Kafka producer retry policy
+                    clienteId, email, kafkaError.getMessage());
         }
     }
 
     /**
      * Get circuit breaker status (for monitoring/health endpoints).
-     * Can be called by health indicators or monitoring endpoints.
      */
     public Map<String, Object> getCircuitBreakerStatus() {
         return Map.of(
-            "circuitBreakerName", "identity-service",
-            "identityServiceUrl", identityServiceUrl,
-            "note", "Use @EnableActuator to expose /actuator/health/identity-service"
-        );
+                "circuitBreakerName", "identity-service",
+                "identityServiceUrl", identityServiceUrl,
+                "note", "Use @EnableActuator to expose /actuator/health/identity-service");
     }
 }

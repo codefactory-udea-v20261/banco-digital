@@ -16,19 +16,18 @@ import java.util.Map;
 
 /**
  * REST controller for Kafka monitoring, alerting, and operational tasks.
- * Provides endpoints to check Kafka health, view fallback queue status, and trigger recovery operations.
+ * Provides endpoints to check Kafka health, view fallback queue status, and
+ * trigger recovery operations.
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/monitoring/kafka")
 @RequiredArgsConstructor
 public class KafkaMonitoringController {
-
     private static final String KAFKA_PUBLISHER = "kafka-publisher";
     private static final String STATUS = "status";
     private static final String MESSAGE = "message";
     private static final String ERROR = "error";
-
 
     private final EventFallbackStorage fallbackStorage;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
@@ -36,19 +35,18 @@ public class KafkaMonitoringController {
     /**
      * Get Kafka connectivity and fallback queue status.
      *
-     * @return status information including fallback queue size and circuit breaker state
+     * @return status information including fallback queue size and circuit breaker
+     *         state
      */
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> getKafkaStatus() {
         Map<String, Object> status = new HashMap<>();
-        
-        // Fallback queue status
+
         long fallbackQueueSize = fallbackStorage.getFallbackQueueSize();
         status.put("fallback_queue_size", fallbackQueueSize);
         status.put("fallback_stats", fallbackStorage.getFallbackStats());
         status.put("fallback_queue_operational", fallbackQueueSize >= 0);
-        
-        // Circuit breaker status
+
         CircuitBreaker kafkaPublisherCb = circuitBreakerRegistry.circuitBreaker(KAFKA_PUBLISHER);
         if (kafkaPublisherCb != null) {
             status.put("circuit_breaker_state", kafkaPublisherCb.getState().toString());
@@ -59,10 +57,10 @@ public class KafkaMonitoringController {
             cbMetrics.put("buffered_calls", metrics.getNumberOfBufferedCalls());
             status.put("circuit_breaker_metrics", cbMetrics);
         }
-        
+
         status.put("timestamp", System.currentTimeMillis());
         status.put(STATUS, fallbackQueueSize == 0 ? "healthy" : "degraded");
-        
+
         return ResponseEntity.ok(status);
     }
 
@@ -75,14 +73,14 @@ public class KafkaMonitoringController {
     public ResponseEntity<Map<String, Object>> getFallbackQueueInfo() {
         Map<String, Object> info = new HashMap<>();
         long queueSize = fallbackStorage.getFallbackQueueSize();
-        
+
         info.put("queue_size", queueSize);
         info.put("max_queue_size", 10000);
         info.put("queue_utilization_percent", (queueSize / 10000.0) * 100);
         info.put("stats", fallbackStorage.getFallbackStats());
         info.put("alert_threshold_exceeded", queueSize > 1000);
         info.put("critical_alert", queueSize > 5000);
-        
+
         return ResponseEntity.ok(info);
     }
 
@@ -95,14 +93,14 @@ public class KafkaMonitoringController {
     public ResponseEntity<Map<String, Object>> getCircuitBreakerMetrics() {
         Map<String, Object> metrics = new HashMap<>();
         CircuitBreaker cb = circuitBreakerRegistry.circuitBreaker(KAFKA_PUBLISHER);
-        
+
         if (cb == null) {
             metrics.put(STATUS, "not_initialized");
             return ResponseEntity.ok(metrics);
         }
-        
+
         var cbMetrics = cb.getMetrics();
-        
+
         metrics.put("state", cb.getState().toString());
         metrics.put("failed_calls", cbMetrics.getNumberOfFailedCalls());
         metrics.put("successful_calls", cbMetrics.getNumberOfSuccessfulCalls());
@@ -112,7 +110,7 @@ public class KafkaMonitoringController {
         metrics.put("failure_rate", cbMetrics.getFailureRate());
         metrics.put("slow_call_rate", cbMetrics.getSlowCallRate());
         metrics.put("last_recorded_exception", "Not available in current version");
-        
+
         return ResponseEntity.ok(metrics);
     }
 
@@ -125,7 +123,7 @@ public class KafkaMonitoringController {
     @PostMapping("/circuit-breaker/reset")
     public ResponseEntity<Map<String, Object>> resetCircuitBreaker() {
         Map<String, Object> result = new HashMap<>();
-        
+
         try {
             CircuitBreaker cb = circuitBreakerRegistry.circuitBreaker(KAFKA_PUBLISHER);
             if (cb != null) {
@@ -135,15 +133,15 @@ public class KafkaMonitoringController {
                 result.put(MESSAGE, "Circuit breaker reset successfully");
                 result.put("new_state", cb.getState().toString());
             } else {
-                result.put(STATUS, "error");
+                result.put(STATUS, ERROR); // FIX Sonar S1192: usar constante ERROR en lugar del literal "error"
                 result.put(MESSAGE, "Circuit breaker not found");
             }
         } catch (Exception e) {
             log.error("Failed to reset circuit breaker: {}", e.getMessage(), e);
-            result.put(STATUS, "error");
+            result.put(STATUS, ERROR); // FIX Sonar S1192: usar constante ERROR en lugar del literal "error"
             result.put(MESSAGE, e.getMessage());
         }
-        
+
         return ResponseEntity.ok(result);
     }
 
@@ -155,21 +153,21 @@ public class KafkaMonitoringController {
     @PostMapping("/fallback-queue/clear")
     public ResponseEntity<Map<String, Object>> clearFallbackQueue() {
         Map<String, Object> result = new HashMap<>();
-        
+
         try {
             long beforeSize = fallbackStorage.getFallbackQueueSize();
             fallbackStorage.clearFallbackQueue();
-            
+
             log.warn("Fallback event queue cleared manually. Lost {} events", beforeSize);
             result.put(STATUS, "success");
             result.put(MESSAGE, "Fallback queue cleared");
             result.put("events_discarded", beforeSize);
         } catch (Exception e) {
             log.error("Failed to clear fallback queue: {}", e.getMessage(), e);
-            result.put(STATUS, "error");
+            result.put(STATUS, ERROR); // FIX Sonar S1192: usar constante ERROR en lugar del literal "error"
             result.put(MESSAGE, e.getMessage());
         }
-        
+
         return ResponseEntity.ok(result);
     }
 
@@ -183,7 +181,7 @@ public class KafkaMonitoringController {
     public ResponseEntity<Map<String, Object>> getKafkaHealth() {
         Map<String, Object> health = new HashMap<>();
         long queueSize = fallbackStorage.getFallbackQueueSize();
-        
+
         if (queueSize > 0) {
             health.put(STATUS, "DEGRADED");
             health.put(MESSAGE, "Operating in fallback mode with " + queueSize + " queued events");
@@ -196,10 +194,11 @@ public class KafkaMonitoringController {
             health.put(STATUS, "UP");
             health.put(MESSAGE, "Kafka is operational");
         }
-        
+
         health.put("fallback_queue_size", queueSize);
         health.put("timestamp", System.currentTimeMillis());
-        
+
         return ResponseEntity.ok(health);
     }
+
 }
