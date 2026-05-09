@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Fallback event storage using Redis cache.
@@ -46,16 +45,16 @@ public class EventFallbackStorage {
             // Serialize and store event
             String eventJson = serializeEvent(event);
             redisTemplate.opsForList().rightPush(FALLBACK_QUEUE_KEY, eventJson);
-            
+
             // Update statistics
             updateFallbackStats();
             recordKafkaFailure();
-            
+
             log.warn("Event {} stored in fallback queue (size: {})",
                     event.getEventId(), queueSize != null ? queueSize + 1 : 1);
-            
+
             return true;
-            
+
         } catch (Exception e) {
             log.error("Failed to store event in fallback queue: {}", e.getMessage(), e);
             return false;
@@ -129,7 +128,7 @@ public class EventFallbackStorage {
             Long size = redisTemplate.opsForList().size(FALLBACK_QUEUE_KEY);
             String stats = (String) redisTemplate.opsForValue().get(FALLBACK_STATS_KEY);
             String lastFailure = (String) redisTemplate.opsForValue().get(LAST_KAFKA_FAILURE_KEY);
-            
+
             return String.format("Queue Size: %d, Stats: %s, Last Failure: %s",
                     size != null ? size : 0,
                     stats != null ? stats : "none",
@@ -147,8 +146,7 @@ public class EventFallbackStorage {
                 event.getEventId(),
                 event.getEventType(),
                 event.getAggregateId(),
-                System.currentTimeMillis()
-        );
+                System.currentTimeMillis());
     }
 
     private void updateFallbackStats() {

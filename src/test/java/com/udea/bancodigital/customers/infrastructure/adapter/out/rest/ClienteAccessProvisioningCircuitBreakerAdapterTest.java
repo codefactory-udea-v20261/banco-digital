@@ -6,7 +6,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -17,7 +19,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -25,7 +26,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ClienteAccessProvisioningCircuitBreakerAdapterTest {
-
     @Mock
     private RestTemplate restTemplate;
 
@@ -43,8 +43,15 @@ class ClienteAccessProvisioningCircuitBreakerAdapterTest {
     @Test
     void existsByEmail_Success() {
         Map<String, Object> body = Collections.singletonMap("exists", true);
-        ResponseEntity<Map> response = new ResponseEntity<>(body, HttpStatus.OK);
-        when(restTemplate.getForEntity(anyString(), eq(Map.class))).thenReturn(response);
+        ResponseEntity<Map<String, Object>> response = new ResponseEntity<>(body, HttpStatus.OK);
+
+        // FIX: la clase usa exchange() con ParameterizedTypeReference, no
+        // getForEntity()
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                isNull(),
+                any(ParameterizedTypeReference.class))).thenReturn(response);
 
         boolean result = adapter.existsByEmail("test@example.com");
 
@@ -53,8 +60,13 @@ class ClienteAccessProvisioningCircuitBreakerAdapterTest {
 
     @Test
     void existsByEmail_Error_ThrowsException() {
-        when(restTemplate.getForEntity(anyString(), eq(Map.class)))
-                .thenThrow(new RestClientException("Error"));
+        // FIX: la clase usa exchange() con ParameterizedTypeReference, no
+        // getForEntity()
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                isNull(),
+                any(ParameterizedTypeReference.class))).thenThrow(new RestClientException("Error"));
 
         assertThrows(RestClientException.class, () -> adapter.existsByEmail("test@example.com"));
     }
@@ -74,6 +86,4 @@ class ClienteAccessProvisioningCircuitBreakerAdapterTest {
         assertEquals("identity-service", status.get("circuitBreakerName"));
     }
 
-    // Testing private fallback methods via reflection or by triggering them is hard with just unit tests
-    // But we can test the public surface.
 }

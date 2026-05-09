@@ -19,7 +19,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
-class ClienteControllerTest {
+class ClienteControllerSimpleTest {
 
     @Mock private CrearClientePort crearClientePort;
     @Mock private ActualizarClientePort actualizarClientePort;

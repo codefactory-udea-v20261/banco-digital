@@ -1,66 +1,101 @@
-name: Deploy to GKE
+name: Deploy core to GKE
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read       # checkout
+  id-token: write      # Workload Identity OIDC token
+
 env:
-  PROJECT_ID: "project-2183efe1-b87d-4c12-966"
-  GKE_CLUSTER: "banco-digital-cluster"
-  GKE_ZONE: "us-central1"
-  IMAGE: "banco-digital"
-  NAMESPACE: "banco-digital"
+  PROJECT_ID:         project-2183efe1-b87d-4c12-966
+  REGION:             us-central1
+  GAR_REPO:           banco-digital-repo
+  IMAGE_PACKAGE:      banco-digital-core
+  GKE_CLUSTER:        banco-digital-cluster
+  GKE_LOCATION:       us-central1
+  NAMESPACE:          banco-digital
+  K8S_DEPLOYMENT:     core
+  ROLLOUT_TIMEOUT:    900s
+  ORCHESTRATION_REPO: codefactory-udea-v20261/banco-digital-orchestration
+  ORCHESTRATION_REF:  main
+
+concurrency:
+  group: deploy-core
+  cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Build and Deploy
+    name: Build, push, rollout
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: 'read'
-      id-token: 'write'
+    timeout-minutes: 40
 
     steps:
-      - name: Checkout
+      - name: Checkout banco-digital
         uses: actions/checkout@v4
 
-      - id: 'auth'
-        name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v2'
+      - name: Checkout orchestration (k8s/deployments/core-banking.yaml)
+        uses: actions/checkout@v4
         with:
-          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          repository: ${{ env.ORCHESTRATION_REPO }}
+          ref:        ${{ env.ORCHESTRATION_REF }}
+          path:       orchestration
 
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
-
-      - name: 'Configure Docker'
-        run: |-
-          gcloud auth configure-docker us-central1-docker.pkg.dev
-
-      - name: 'Build and Push Docker Image'
-        run: |-
-          docker build -t us-central1-docker.pkg.dev/$PROJECT_ID/microservices-repo/$IMAGE:$GITHUB_SHA .
-          docker push us-central1-docker.pkg.dev/$PROJECT_ID/microservices-repo/$IMAGE:$GITHUB_SHA
-
-      - name: 'Set up GKE credentials'
-        uses: 'google-github-actions/get-gke-credentials@v2'
+      - name: Authenticate to Google Cloud (Workload Identity, no SA keys)
+        uses: google-github-actions/auth@v2
         with:
-          cluster_name: '${{ env.GKE_CLUSTER }}'
-          location: '${{ env.GKE_ZONE }}'
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account:            ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - name: 'Create Kubernetes Secret'
-        run: |-
-          kubectl create secret generic banco-digital-secrets \
-            --namespace $NAMESPACE \
-            --from-literal=jwt-secret="${{ secrets.JWT_SECRET }}" \
-            --from-literal=encryption-key="${{ secrets.ENCRYPTION_KEY }}" \
-            --dry-run=client -o yaml | kubectl apply -f -
+      - name: Set up Cloud SDK + gke-gcloud-auth-plugin
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          install_components: 'gke-gcloud-auth-plugin'
 
-      - name: 'Deploy to GKE'
-        run: |-
-          # Update image in deployment
-          sed -i "s|image: .*|image: us-central1-docker.pkg.dev/$PROJECT_ID/microservices-repo/$IMAGE:$GITHUB_SHA|g" k8s/deployment.yaml
-          kubectl apply -f k8s/deployment.yaml
-          kubectl rollout status deployment/$IMAGE --namespace $NAMESPACE
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push Docker image (tag = $GITHUB_SHA, never :latest)
+        env:
+          IMAGE_BASE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPO }}/${{ env.IMAGE_PACKAGE }}
+        run: |
+          docker build -t "$IMAGE_BASE:$GITHUB_SHA" .
+          docker push "$IMAGE_BASE:$GITHUB_SHA"
+          echo "Pushed: $IMAGE_BASE:$GITHUB_SHA"
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location:     ${{ env.GKE_LOCATION }}
+
+      - name: Bump core Deployment image to $GITHUB_SHA and apply
+        env:
+          IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPO }}/${{ env.IMAGE_PACKAGE }}:${{ github.sha }}
+        run: |
+          set -euo pipefail
+          MANIFEST=orchestration/k8s/deployments/core-banking.yaml
+          sed -i "s|image: .*${IMAGE_PACKAGE}:.*|image: $IMAGE|" "$MANIFEST"
+          grep -q "$IMAGE" "$MANIFEST" || {
+            echo "ERROR: sed pattern did not match in $MANIFEST."
+            exit 1
+          }
+          # Per-service deploy: only the core Deployment is reapplied.
+          # Cluster bootstrap (Namespace, Secrets, ConfigMaps, RBAC,
+          # StatefulSets) is k8s/apply.sh's job in the orchestration repo.
+          kubectl apply -f "$MANIFEST"
+
+      - name: Wait for rollout
+        run: |
+          set -euo pipefail
+          if ! kubectl rollout status deployment/${{ env.K8S_DEPLOYMENT }} \
+            --namespace ${{ env.NAMESPACE }} \
+            --timeout=${{ env.ROLLOUT_TIMEOUT }}; then
+            echo "Rollout timed out. Collecting diagnostics..."
+            kubectl get pods -n ${{ env.NAMESPACE }} -l app=${{ env.K8S_DEPLOYMENT }} -o wide || true
+            kubectl describe deployment/${{ env.K8S_DEPLOYMENT }} -n ${{ env.NAMESPACE }} || true
+            kubectl describe pods -n ${{ env.NAMESPACE }} -l app=${{ env.K8S_DEPLOYMENT }} || true
+            exit 1
+          fi
