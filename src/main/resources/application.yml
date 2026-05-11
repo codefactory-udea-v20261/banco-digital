@@ -27,14 +27,17 @@ spring:
         default_schema: public
 
   flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
-
+   enabled: true
+   locations: classpath:db/migration
+   baseline-on-migrate: true
+   validate-on-migrate: false
   jackson:
     serialization:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
+
+encryption:
+  key: ${ENCRYPTION_KEY:ZHVtbXlLZXlEZXZlbG9wbWVudFRlc3RzMTIzNDU2Nzg=}
 
 
 
