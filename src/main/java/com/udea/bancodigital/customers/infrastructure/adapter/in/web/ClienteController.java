@@ -1,5 +1,7 @@
 package com.udea.bancodigital.customers.infrastructure.adapter.in.web;
 
+import com.udea.bancodigital.accounts.application.dto.CuentaResponseDto;
+import com.udea.bancodigital.accounts.domain.port.in.ListarCuentasClientePort;
 import com.udea.bancodigital.customers.application.dto.ClienteResponseDto;
 import com.udea.bancodigital.customers.application.dto.CrearClienteRequestDto;
 import com.udea.bancodigital.customers.application.dto.ActualizarClienteRequestDto;
@@ -42,6 +44,7 @@ public class ClienteController {
     private final ActualizarClientePort actualizarClientePort;
     private final ObtenerClientePort obtenerClientePort;
     private final ClienteAccessControlPort clienteAccessControlPort;
+    private final ListarCuentasClientePort listarCuentasClientePort;
 
     /**
      * Registra un nuevo cliente en el sistema.
@@ -160,6 +163,7 @@ public class ClienteController {
      * @return ResponseEntity con la lista de cuentas del cliente.
      */
     @GetMapping("/{id}/cuentas")
+    @PreAuthorize("hasAnyAuthority('PERM_READ_OWN_PROFILE', 'PERM_MANAGE_CLIENTS')")
     @Operation(
         summary = "Listar cuentas de un cliente",
         description = "Obtiene un listado de todas las cuentas bancarias asociadas al cliente especificado."
@@ -174,9 +178,11 @@ public class ClienteController {
                 description = "Cliente no encontrado"
             )
     })
-    public ResponseEntity<ApiResponse<List<Object>>> obtenerCuentasCliente(
+    public ResponseEntity<ApiResponse<List<CuentaResponseDto>>> obtenerCuentasCliente(
             @PathVariable UUID id) {
-        throw new UnsupportedOperationException("Operación no implementada");
+        clienteAccessControlPort.validateCanView(id);
+        List<CuentaResponseDto> cuentas = listarCuentasClientePort.listarPorClienteId(id);
+        return ResponseEntity.ok(ApiResponse.ok(cuentas));
     }
 
     private void addLinks(ClienteResponseDto response) {

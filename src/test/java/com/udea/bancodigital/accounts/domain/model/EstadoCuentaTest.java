@@ -3,12 +3,10 @@ package com.udea.bancodigital.accounts.domain.model;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("EstadoCuenta")
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class EstadoCuentaTest {
 
     @Nested
@@ -72,7 +70,10 @@ class EstadoCuentaTest {
         @Test
         @DisplayName("ACTIVA debe ser igual a ACTIVA")
         void activaIgualAActiva() {
-            assertThat(EstadoCuenta.ACTIVA).isEqualTo(EstadoCuenta.ACTIVA);
+            // FIX Sonar S5863: no comparar el mismo valor consigo mismo
+            // En lugar de assertThat(ACTIVA).isEqualTo(ACTIVA), verificar identidad de enum
+            EstadoCuenta estado = EstadoCuenta.ACTIVA;
+            assertThat(estado.name()).isEqualTo("ACTIVA");
         }
 
         @Test
