@@ -1,10 +1,13 @@
 package com.udea.bancodigital.accounts.infrastructure.config;
 
 
+import com.udea.bancodigital.accounts.application.mapper.CuentaMapper;
 import com.udea.bancodigital.accounts.application.usecase.ConsultarSaldoUseCase;
 import com.udea.bancodigital.accounts.application.usecase.CrearCuentaUseCase;
+import com.udea.bancodigital.accounts.application.usecase.ListarCuentasClienteUseCase;
 import com.udea.bancodigital.accounts.domain.port.in.ConsultarSaldoPort;
 import com.udea.bancodigital.accounts.domain.port.in.CrearCuentaPort;
+import com.udea.bancodigital.accounts.domain.port.in.ListarCuentasClientePort;
 import com.udea.bancodigital.accounts.domain.port.out.ClienteServicePort;
 import com.udea.bancodigital.accounts.domain.port.out.CuentaRepositoryPort;
 import org.springframework.context.annotation.Bean;
@@ -27,5 +30,14 @@ public class CuentaServiceConfig {
             CuentaRepositoryPort cuentaRepositoryPort) {
         
         return new ConsultarSaldoUseCase(cuentaRepositoryPort);
+    }
+
+    @Bean
+    public ListarCuentasClientePort listarCuentasClientePort(
+            CuentaRepositoryPort cuentaRepositoryPort,
+            ClienteServicePort clienteServicePort,
+            CuentaMapper cuentaMapper) {
+
+        return new ListarCuentasClienteUseCase(cuentaRepositoryPort, clienteServicePort, cuentaMapper);
     }
 }

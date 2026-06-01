@@ -2,6 +2,7 @@ package com.udea.bancodigital.accounts.domain.port.out;
 
 import com.udea.bancodigital.accounts.domain.model.Cuenta;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,4 +47,12 @@ public interface CuentaRepositoryPort {
      * @return true si existe, false en caso contrario
      */
     boolean existsByNumeroCuenta(String numeroCuenta);
+
+    /**
+     * Obtiene todas las cuentas asociadas a un cliente.
+     *
+     * @param clienteId ID del cliente
+     * @return Lista de cuentas (vacía si el cliente no tiene cuentas)
+     */
+    List<Cuenta> findAllByClienteId(UUID clienteId);
 }
