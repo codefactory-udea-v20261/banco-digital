@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -336,6 +337,50 @@ class CuentaRepositoryAdapterTest {
             boolean exists = adapter.existsByNumeroCuenta(null);
 
             assertThat(exists).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("findAllByClienteId")
+    class FindAllByClienteIdTest {
+
+        @Test
+        @DisplayName("Debe retornar cuentas del cliente ordenadas")
+        void debeRetornarCuentasDelCliente() {
+            UUID clienteId = UUID.randomUUID();
+            CuentaEntity entity = CuentaEntity.builder()
+                    .id(UUID.randomUUID())
+                    .clienteId(clienteId)
+                    .numeroCuenta("1234567890")
+                    .build();
+            Cuenta cuenta = Cuenta.builder()
+                    .id(entity.getId())
+                    .clienteId(clienteId)
+                    .numeroCuenta("1234567890")
+                    .build();
+
+            when(jpaRepository.findByClienteIdOrderByFechaAperturaDesc(clienteId))
+                    .thenReturn(List.of(entity));
+            when(mapper.toDomain(entity)).thenReturn(cuenta);
+
+            List<Cuenta> result = adapter.findAllByClienteId(clienteId);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getClienteId()).isEqualTo(clienteId);
+            verify(jpaRepository).findByClienteIdOrderByFechaAperturaDesc(clienteId);
+        }
+
+        @Test
+        @DisplayName("Debe retornar lista vacía cuando el cliente no tiene cuentas")
+        void debeRetornarListaVacia() {
+            UUID clienteId = UUID.randomUUID();
+
+            when(jpaRepository.findByClienteIdOrderByFechaAperturaDesc(clienteId))
+                    .thenReturn(List.of());
+
+            List<Cuenta> result = adapter.findAllByClienteId(clienteId);
+
+            assertThat(result).isEmpty();
         }
     }
 }

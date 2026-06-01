@@ -55,6 +55,9 @@ class ClienteControllerTest {
     @MockBean
     private ClienteAccessControlPort clienteAccessControlPort;
 
+    @MockBean
+    private com.udea.bancodigital.accounts.domain.port.in.ListarCuentasClientePort listarCuentasClientePort;
+
     @Autowired
     private ObjectMapper objectMapper;
 

@@ -62,6 +62,9 @@ class ClienteControllerSecurityTest {
     private ClienteAccessControlPort clienteAccessControlPort;
 
     @MockBean
+    private com.udea.bancodigital.accounts.domain.port.in.ListarCuentasClientePort listarCuentasClientePort;
+
+    @MockBean
     private JwtAuthenticationFilter authJwtAuthenticationFilter;
 
     @MockBean
@@ -152,6 +155,23 @@ class ClienteControllerSecurityTest {
     void deberiaRetornar403SiAuditorIntentaConsultarCliente() throws Exception {
         mockMvc.perform(get("/api/v1/clientes/{id}", UUID.randomUUID()))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(authorities = "PERM_READ_OWN_PROFILE")
+    void deberiaPermitirListarCuentasConPermisoLectura() throws Exception {
+        UUID id = UUID.randomUUID();
+        doNothing().when(clienteAccessControlPort).validateCanView(id);
+        when(listarCuentasClientePort.listarPorClienteId(id)).thenReturn(java.util.List.of());
+
+        mockMvc.perform(get("/api/v1/clientes/{id}/cuentas", id))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void deberiaRetornar401SiNoAutenticadoAlListarCuentas() throws Exception {
+        mockMvc.perform(get("/api/v1/clientes/{id}/cuentas", UUID.randomUUID()))
+                .andExpect(status().isUnauthorized());
     }
 
     private CrearClienteRequestDto requestValido() {

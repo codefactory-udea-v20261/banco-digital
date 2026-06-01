@@ -8,6 +8,7 @@ import com.udea.bancodigital.accounts.infrastructure.repository.CuentaJpaReposit
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,5 +47,12 @@ public class CuentaRepositoryAdapter implements CuentaRepositoryPort {
     @Override
     public boolean existsByNumeroCuenta(String numeroCuenta) {
         return jpaRepository.existsByNumeroCuenta(numeroCuenta);
+    }
+
+    @Override
+    public List<Cuenta> findAllByClienteId(UUID clienteId) {
+        return jpaRepository.findByClienteIdOrderByFechaAperturaDesc(clienteId).stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }
