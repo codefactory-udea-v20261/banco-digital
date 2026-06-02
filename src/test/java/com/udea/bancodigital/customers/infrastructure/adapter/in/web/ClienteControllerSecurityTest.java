@@ -169,9 +169,9 @@ class ClienteControllerSecurityTest {
     }
 
     @Test
-    void deberiaRetornar401SiNoAutenticadoAlListarCuentas() throws Exception {
+    void deberiaRetornar403SiNoAutenticadoAlListarCuentas() throws Exception {
         mockMvc.perform(get("/api/v1/clientes/{id}/cuentas", UUID.randomUUID()))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     private CrearClienteRequestDto requestValido() {
