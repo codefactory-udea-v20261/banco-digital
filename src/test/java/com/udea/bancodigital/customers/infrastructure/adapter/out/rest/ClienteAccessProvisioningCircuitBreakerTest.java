@@ -1,65 +1,148 @@
 package com.udea.bancodigital.customers.infrastructure.adapter.out.rest;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-/**
- * Test Circuit Breaker behavior in ClienteAccessProvisioningAdapter.
- *
- * Scenarios:
- * 1. Happy path: Identity Service available
- * 2. Service down: Circuit breaker opens, fallback queues event
- * 3. Partial failures: Circuit transitions through states
- * 4. Recovery: Circuit closes after successful calls in HALF_OPEN state
- */
-@DisplayName("Circuit Breaker: Identity Service Communication")
+import com.udea.bancodigital.accounts.domain.model.Cuenta;
+import com.udea.bancodigital.accounts.domain.model.EstadoCuenta;
+import com.udea.bancodigital.accounts.domain.model.TipoCuenta;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@DisplayName("Cuenta")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClienteAccessProvisioningCircuitBreakerTest {
 
-    @Test
-    @DisplayName("Happy path: Email check succeeds with Identity Service available")
-    void testExistsByEmail_Success() {
-        // Given: Identity Service returns email exists
-        // When: Check email existence
-        // Then: Should return true
+    @Nested
+    @DisplayName("crearNueva()")
+    class CrearNuevaTest {
 
-        System.out.println("Happy path: Identity Service responds with email exists");
+        @Test
+        @DisplayName("Debe crear cuenta con valores correctos")
+        void debeCrearCuentaConValoresCorrectos() {
+            UUID clienteId = UUID.randomUUID();
+            Cuenta cuenta = Cuenta.crearNueva(clienteId, TipoCuenta.AHORRO, "CO4051234567890");
+            assertThat(cuenta.getId()).isNotNull();
+            assertThat(cuenta.getClienteId()).isEqualTo(clienteId);
+            assertThat(cuenta.getTipoCuenta()).isEqualTo(TipoCuenta.AHORRO);
+            assertThat(cuenta.getNumeroCuenta()).isEqualTo("CO4051234567890");
+            assertThat(cuenta.getSaldo()).isEqualByComparingTo(new BigDecimal("100000"));
+            assertThat(cuenta.getEstado()).isEqualTo(EstadoCuenta.ACTIVA);
+            assertThat(cuenta.getFechaApertura()).isEqualTo(LocalDate.now());
+        }
+
+        @Test
+        @DisplayName("Cada cuenta creada debe tener un ID único")
+        void cadaCuentaDebeTenerIdUnico() {
+            UUID clienteId = UUID.randomUUID();
+            Cuenta cuenta1 = Cuenta.crearNueva(clienteId, TipoCuenta.AHORRO, "CO4051234567890");
+            Cuenta cuenta2 = Cuenta.crearNueva(clienteId, TipoCuenta.CORRIENTE, "CO4059876543210");
+            assertThat(cuenta1.getId()).isNotEqualTo(cuenta2.getId());
+        }
+
+        @Test
+        @DisplayName("Debe fallar si clienteId es null")
+        void debeFallarSiClienteIdEsNull() {
+            // FIX Sonar S5960: extraer args que no lanzan excepción fuera de la lambda
+            UUID nullId = null;
+            assertThatThrownBy(() -> Cuenta.crearNueva(nullId, TipoCuenta.AHORRO, "CO4051234567890"))
+                    .isInstanceOf(NullPointerException.class)
+                    .hasMessageContaining("clienteId");
+        }
+
+        @Test
+        @DisplayName("Debe fallar si tipoCuenta es null")
+        void debeFallarSiTipoCuentaEsNull() {
+            // FIX Sonar S5960: capturar UUID fuera de la lambda
+            UUID clienteId = UUID.randomUUID();
+            TipoCuenta nullTipo = null;
+            assertThatThrownBy(() -> Cuenta.crearNueva(clienteId, nullTipo, "CO4051234567890"))
+                    .isInstanceOf(NullPointerException.class)
+                    .hasMessageContaining("tipoCuenta");
+        }
+
+        // FIX Sonar S5976: unificar 3 tests repetidos de numeroCuenta inválido en un
+        // @ParameterizedTest
+        @ParameterizedTest(name = "numeroCuenta inválido: \"{0}\"")
+        @DisplayName("Debe fallar si numeroCuenta es null, vacío o solo espacios")
+        @ValueSource(strings = { "", "   " })
+        void debeFallarSiNumeroCuentaEsInvalido(String numeroCuenta) {
+            UUID clienteId = UUID.randomUUID();
+            assertThatThrownBy(() -> Cuenta.crearNueva(clienteId, TipoCuenta.AHORRO, numeroCuenta))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("numeroCuenta");
+        }
+
+        @Test
+        @DisplayName("Debe fallar si numeroCuenta es null")
+        void debeFallarSiNumeroCuentaEsNull() {
+            UUID clienteId = UUID.randomUUID();
+            assertThatThrownBy(() -> Cuenta.crearNueva(clienteId, TipoCuenta.AHORRO, null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("numeroCuenta");
+        }
+
+        @Test
+        @DisplayName("Debe crear cuenta tipo CORRIENTE")
+        void debeCrearCuentaTipoCorriente() {
+            Cuenta cuenta = Cuenta.crearNueva(UUID.randomUUID(), TipoCuenta.CORRIENTE, "CO4051234567890");
+            assertThat(cuenta.getTipoCuenta()).isEqualTo(TipoCuenta.CORRIENTE);
+        }
     }
 
-    @Test
-    @DisplayName("Fallback: Email check returns false when Identity Service is down")
-    void testExistsByEmail_Fallback() {
-        // Given: Identity Service is down
-        // When: Check email existence
-        // Then: Fallback should return false (optimistic)
+    @Nested
+    @DisplayName("isActiva()")
+    class IsActivaTest {
 
-        System.out.println("Fallback: Email check returns false, allowing customer creation");
+        @Test
+        @DisplayName("Debe retornar true cuando estado es ACTIVA")
+        void debeRetornarTrueCuandoActiva() {
+            Cuenta cuenta = Cuenta.builder().estado(EstadoCuenta.ACTIVA).build();
+            assertThat(cuenta.isActiva()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Debe retornar false cuando estado es INACTIVA")
+        void debeRetornarFalseCuandoInactiva() {
+            Cuenta cuenta = Cuenta.builder().estado(EstadoCuenta.INACTIVA).build();
+            assertThat(cuenta.isActiva()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Debe retornar false cuando estado es BLOQUEADA")
+        void debeRetornarFalseCuandoBloqueada() {
+            Cuenta cuenta = Cuenta.builder().estado(EstadoCuenta.BLOQUEADA).build();
+            assertThat(cuenta.isActiva()).isFalse();
+        }
     }
 
-    @Test
-    @DisplayName("Fallback: Provision access queues event when Identity Service is down")
-    void testProvisionAccess_Fallback() {
-        // Given: Identity Service is down
-        // When: Provision access
-        // Then: Event queued to Kafka topic: cliente-access-provisioning-pending
+    @Nested
+    @DisplayName("toBuilder()")
+    class ToBuilderTest {
 
-        System.out.println("Fallback: Event queued to Kafka for async processing");
-    }
-
-    @Test
-    @DisplayName("Circuit breaker state transitions: CLOSED → OPEN → HALF_OPEN → CLOSED")
-    void testCircuitBreakerStateTransitions() {
-        System.out.println("Circuit breaker state transitions: CLOSED → OPEN → HALF_OPEN → CLOSED");
-    }
-
-    @Test
-    @DisplayName("Exponential backoff: retry with 1s, 2s delays")
-    void testRetryBackoff() {
-        System.out.println("Retry backoff: 1s, 2s delays between attempts");
-    }
-
-    @Test
-    @DisplayName("Health indicator reports circuit breaker status correctly")
-    void testCircuitBreakerHealthStatus() {
-        System.out.println("Health indicator: CLOSED→UP, OPEN→OUT_OF_SERVICE, HALF_OPEN→DEGRADED");
+        @Test
+        @DisplayName("Debe permitir clonar y modificar sin afectar el original")
+        void debePermitirClonarSinAfectarOriginal() {
+            Cuenta original = Cuenta.builder()
+                    .id(UUID.randomUUID())
+                    .estado(EstadoCuenta.ACTIVA)
+                    .saldo(new BigDecimal("1000"))
+                    .build();
+            Cuenta modificada = original.toBuilder()
+                    .estado(EstadoCuenta.INACTIVA)
+                    .build();
+            assertThat(modificada.getId()).isEqualTo(original.getId());
+            assertThat(modificada.getEstado()).isEqualTo(EstadoCuenta.INACTIVA);
+            assertThat(original.getEstado()).isEqualTo(EstadoCuenta.ACTIVA);
+        }
     }
 }

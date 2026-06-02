@@ -2,7 +2,6 @@ package com.udea.bancodigital.transactions.infrastructure.adapter.out.persistenc
 
 import com.udea.bancodigital.accounts.domain.model.Cuenta;
 import com.udea.bancodigital.accounts.domain.port.out.CuentaRepositoryPort;
-import com.udea.bancodigital.accounts.infrastructure.entity.CuentaEntity;
 import com.udea.bancodigital.transactions.domain.port.out.CuentaServicePort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,7 +25,7 @@ public class CuentaPersistenceAdapter implements CuentaServicePort {
     @Override
     public void actualizarSaldo(UUID cuentaId, BigDecimal nuevoSaldo) {
         cuentaRepositoryPort.findById(cuentaId).ifPresent(cuenta -> {
-            // En lugar de cuenta.setSaldo(nuevoSaldo);
+
             // Creamos una nueva instancia evolucionada:
             Cuenta cuentaActualizada = cuenta.withSaldo(nuevoSaldo);
 

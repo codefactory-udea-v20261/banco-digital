@@ -4,6 +4,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @DisplayName("Cuenta")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CuentaTest {
+
     @Nested
     @DisplayName("crearNueva()")
     class CrearNuevaTest {
@@ -45,8 +48,7 @@ class CuentaTest {
         @Test
         @DisplayName("Debe fallar si clienteId es null")
         void debeFallarSiClienteIdEsNull() {
-            // FIX Sonar S5960: extraer la llamada que lanza excepción a una variable
-            // para que la lambda tenga solo una invocación que puede lanzar excepción
+            // FIX Sonar S5960: extraer args que no lanzan excepción fuera de la lambda
             UUID nullId = null;
             assertThatThrownBy(() -> Cuenta.crearNueva(nullId, TipoCuenta.AHORRO, "CO4051234567890"))
                     .isInstanceOf(NullPointerException.class)
@@ -56,12 +58,24 @@ class CuentaTest {
         @Test
         @DisplayName("Debe fallar si tipoCuenta es null")
         void debeFallarSiTipoCuentaEsNull() {
+            // FIX Sonar S5960: capturar UUID fuera de la lambda
             UUID clienteId = UUID.randomUUID();
             TipoCuenta nullTipo = null;
-            // FIX Sonar S5960: capturar args que no lanzan excepción fuera de la lambda
             assertThatThrownBy(() -> Cuenta.crearNueva(clienteId, nullTipo, "CO4051234567890"))
                     .isInstanceOf(NullPointerException.class)
                     .hasMessageContaining("tipoCuenta");
+        }
+
+        // FIX Sonar S5976: unificar 3 tests repetidos de numeroCuenta inválido en un
+        // @ParameterizedTest
+        @ParameterizedTest(name = "numeroCuenta inválido: \"{0}\"")
+        @DisplayName("Debe fallar si numeroCuenta es null, vacío o solo espacios")
+        @ValueSource(strings = { "", "   " })
+        void debeFallarSiNumeroCuentaEsInvalido(String numeroCuenta) {
+            UUID clienteId = UUID.randomUUID();
+            assertThatThrownBy(() -> Cuenta.crearNueva(clienteId, TipoCuenta.AHORRO, numeroCuenta))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("numeroCuenta");
         }
 
         @Test
@@ -69,24 +83,6 @@ class CuentaTest {
         void debeFallarSiNumeroCuentaEsNull() {
             UUID clienteId = UUID.randomUUID();
             assertThatThrownBy(() -> Cuenta.crearNueva(clienteId, TipoCuenta.AHORRO, null))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("numeroCuenta");
-        }
-
-        @Test
-        @DisplayName("Debe fallar si numeroCuenta está vacío")
-        void debeFallarSiNumeroCuentaEstaVacio() {
-            UUID clienteId = UUID.randomUUID();
-            assertThatThrownBy(() -> Cuenta.crearNueva(clienteId, TipoCuenta.AHORRO, ""))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("numeroCuenta");
-        }
-
-        @Test
-        @DisplayName("Debe fallar si numeroCuenta es solo espacios")
-        void debeFallarSiNumeroCuentaEsSoloEspacios() {
-            UUID clienteId = UUID.randomUUID();
-            assertThatThrownBy(() -> Cuenta.crearNueva(clienteId, TipoCuenta.AHORRO, "   "))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("numeroCuenta");
         }
@@ -145,5 +141,4 @@ class CuentaTest {
             assertThat(original.getEstado()).isEqualTo(EstadoCuenta.ACTIVA);
         }
     }
-
 }

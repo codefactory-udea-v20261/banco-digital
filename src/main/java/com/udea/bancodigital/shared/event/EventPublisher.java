@@ -1,12 +1,12 @@
 package com.udea.bancodigital.shared.event;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import com.udea.bancodigital.shared.event.AesGcmCryptoUtil;
 
 import java.util.UUID;
 
@@ -27,18 +27,16 @@ public class EventPublisher {
     private String encryptionKey;
 
     public boolean publishEvent(DomainEvent event) {
-        try {
-            if (event == null) {
-                log.warn("Attempted to publish null event");
-                return false;
-            }
+        if (event == null) {
+            log.warn("Attempted to publish null event");
+            return false;
+        }
 
+        try {
             String eventId = event.getEventId() != null ? event.getEventId() : UUID.randomUUID().toString();
             String payload = objectMapper.writeValueAsString(event);
             String encryptedPayload = cryptoUtil.encrypt(payload, encryptionKey);
 
-            // Writing to both encrypted_payload and payload (deprecated) for backward
-            // compatibility
             String sql = "INSERT INTO outbox_events (id, aggregate_type, aggregate_id, event_type, encrypted_payload, payload) VALUES (?, ?, ?, ?, ?, ?)";
 
             jdbcTemplate.update(sql,
@@ -52,9 +50,13 @@ public class EventPublisher {
 
             log.info("Event {} saved to outbox (encrypted)", eventId);
             return true;
+
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize event to JSON: {}", e.getMessage(), e);
+            throw new IllegalArgumentException("Failed to serialize event for outbox", e);
         } catch (Exception e) {
             log.error("Failed to save event to outbox: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to save event to outbox", e);
+            throw new IllegalStateException("Failed to save event to outbox", e);
         }
     }
 

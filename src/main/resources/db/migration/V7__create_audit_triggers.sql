@@ -46,7 +46,6 @@ CREATE OR REPLACE TRIGGER trg_auditoria_transaccion
 
 -- ════════════════════════════════════════════════════════════
 -- Función auxiliar: Resumen de movimientos por período
--- Uso: SELECT * FROM resumen_movimientos_cuenta(id, '2026-01-01', '2026-12-31');
 -- ════════════════════════════════════════════════════════════
 CREATE OR REPLACE FUNCTION resumen_movimientos_cuenta(
     p_cuenta_id UUID,
