@@ -29,12 +29,12 @@ En esta se encuentra el entregable del Sprint 2
 ## Carpeta task-three
 En esta se encuentra el entregable del Sprint 3
 1. [**Modelo entidad relación**](./task-three/databases)
-   Relacionado con el punto de refinar el Modelo Entidad-Relación (MER) y el punto de crear modelo físico con columnas y dimensión completos, claves primarias, constraints y claves foráneas.
+   Refinar el Modelo Entidad-Relación (MER).
 2. [**Scripts de db_ core**](https://github.com/codefactory-udea-v20261/banco-digital/tree/main/src/main/resources/db/migration),
 [**Scripts de db_audit**](https://github.com/codefactory-udea-v20261/banco-digital-audit/tree/main/src/main/resources/db/migration),
 [**Scripts de db_identity**](https://github.com/codefactory-udea-v20261/banco-digital-identity/tree/main/src/main/resources/db/migration),
-   Relacionado con el punto de creación de scripts de migración para la base de datos relacional, incluyendo tablas, constraints, índices, roles y permisos.
+   Relacionado con el punto de crear o refinar el script de creación de objetos en general con Trigger y procedimientos para las HU desarrolladas.
 3. [**Volumen de Datos**](./task-three/volumen-datos.md)
-   Definir volumen de datos por tabla aproximado.
+   Refinar el análisis del volumen de datos de las entidades identificadas.
 
 
