@@ -28,6 +28,7 @@
     <resilience4j.version>2.1.0</resilience4j.version>
     <sonar.organization>codefactory-udea-v20261</sonar.organization>
     <pact.version>4.6.6</pact.version>
+    <cucumber.version>7.18.0</cucumber.version>
   </properties>
 
   <dependencyManagement>
@@ -241,9 +242,37 @@
       <artifactId>postgres-socket-factory</artifactId>
       <version>1.15.1</version>
     </dependency>
+        <!-- Cucumber JUnit Platform Engine (integración con JUnit 5) -->
+    <dependency>
+        <groupId>io.cucumber</groupId>
+        <artifactId>cucumber-junit-platform-engine</artifactId>
+        <version>${cucumber.version}</version>
+        <scope>test</scope>
+    </dependency>
+ 
+    <!-- Suite de JUnit Platform para el runner -->
+    <dependency>
+        <groupId>org.junit.platform</groupId>
+        <artifactId>junit-platform-suite</artifactId>
+        <scope>test</scope>
+    </dependency>
+ 
+    <!-- Cucumber Java (step definitions) -->
+    <dependency>
+        <groupId>io.cucumber</groupId>
+        <artifactId>cucumber-java</artifactId>
+        <version>${cucumber.version}</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-picocontainer</artifactId>
+      <version>${cucumber.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
-  <build>
+ <build>
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>
@@ -258,6 +287,7 @@
           </excludes>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
@@ -279,16 +309,16 @@
                 <rule>
                   <element>PACKAGE</element>
                   <limits>
-                     <limit>
-                       <counter>LINE</counter>
-                       <value>COVEREDRATIO</value>
-                       <minimum>0.30</minimum>
-                     </limit>
-                     <limit>
-                       <counter>BRANCH</counter>
-                       <value>COVEREDRATIO</value>
-                       <minimum>0.00</minimum>
-                     </limit>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.30</minimum>
+                    </limit>
+                    <limit>
+                      <counter>BRANCH</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.00</minimum>
+                    </limit>
                   </limits>
                 </rule>
               </rules>
@@ -296,10 +326,22 @@
           </execution>
         </executions>
       </plugin>
+
+      <!--
+        Surefire: se agrega CucumberRunnerTest a los includes y se activa
+        JUnit Platform Suite para que Cucumber funcione con JUnit 5.
+        Se conservan los excludes y variables de entorno originales.
+      -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <includes>
+            <!-- Tests unitarios existentes -->
+            <include>**/*Test.java</include>
+            <!-- Runner de Cucumber (nuevo) -->
+            <include>**/CucumberRunnerTest.java</include>
+          </includes>
           <excludes>
             <exclude>**/*IT.java</exclude>
             <exclude>**/*IntegrationTest.java</exclude>
@@ -310,8 +352,16 @@
           <systemPropertyVariables>
             <docker.api.version>1.40</docker.api.version>
           </systemPropertyVariables>
+          <!-- Necesario para JUnit Platform Suite + Cucumber -->
+          <properties>
+            <configurationParameters>
+              junit.platform.output.capture.stdout=true
+              junit.platform.output.capture.stderr=true
+            </configurationParameters>
+          </properties>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -336,7 +386,8 @@
             </path>
           </annotationProcessorPaths>
         </configuration>
-        </plugin>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
@@ -350,6 +401,7 @@
           </execution>
         </executions>
       </plugin>
+
       <plugin>
         <groupId>org.sonarsource.scanner.maven</groupId>
         <artifactId>sonar-maven-plugin</artifactId>
